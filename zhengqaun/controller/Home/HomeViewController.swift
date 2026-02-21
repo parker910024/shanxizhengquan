@@ -16,62 +16,25 @@ class HomeViewController: ZQViewController {
     private let searchBar = UIView()
     private let searchTextField = UITextField()
     
-    // 数据源
-    private var bannerImages: [UIImage] = [] // Banner图片数组
-    private let menuItems = [
-        ("新股申购", "chart.line.uptrend.xyaxis"),
-        ("我的新股", "person.badge.plus"),
-        ("大宗交易", "square.stack.3d.up"),
-        ("线下配售", "building.2"),
-        ("我的自选", "square.and.arrow.up"),
-        ("沪深行情", "chart.bar"),
-        ("银证转账", "arrow.triangle.2.circlepath"),
-        ("新股日历", "calendar")
+    // 数据源（与 new UI 一致：2 行 x 5 列）
+    private var bannerImages: [UIImage] = []
+    private let menuItems: [(String, String)] = [
+        ("极速开户", "icon_home_1"),
+        ("市场行情", "icon_home_7"),
+        ("持仓记录", "icon2"),
+        ("银证转入", "icon1"),
+        ("银证转出", "icon11"),
+        ("新股申购", "icon_home_6"),
+        ("场外撮合交易", "icon_home_9"),
+        ("战略配售", "icon12"),
+        ("AI智投", "icon_home_13"),
+        ("龙虎榜", "icon4")
     ]
-    
-    // 弹窗数据（由外部传入）
-    var popupData: HomePopupData?
-    private var hasShownPopup = false // 标记是否已显示过弹窗
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupTableView()
-        
-        // 模拟弹窗数据（测试用，实际应该由外部传入）
-        popupData = HomePopupData(
-            title: "恭喜您中签",
-            subtitle: "今日中签1只新股",
-            stockName: "科马材料",
-            stockCode: "920086",
-            quantity: "10000手",
-            amount: "1166000",
-            buttonTitle: "前往认缴"
-        )
-        
-        showPopupIfNeeded()
-    }
-    
-    /// 显示弹窗（如果需要）
-    private func showPopupIfNeeded() {
-        // 只在 viewDidLoad 时显示一次，且必须有数据
-        guard !hasShownPopup, let data = popupData else {
-            return
-        }
-        
-        hasShownPopup = true
-        
-        // 延迟一点显示，确保视图已完全加载
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            let popup = HomePopupView()
-            popup.configure(with: data)
-            popup.onButtonTapped = { [weak self] in
-                // TODO: 处理按钮点击事件，如跳转到认缴页面
-                print("前往认缴按钮被点击")
-            }
-            popup.show(in: self.view)
-        }
     }
     
     private func setupUI() {
@@ -87,7 +50,8 @@ class HomeViewController: ZQViewController {
     private func setupTopBar() {
         view.addSubview(topBarView)
         topBarView.translatesAutoresizingMaskIntoConstraints = false
-        topBarView.backgroundColor = UIColor(hex: 0x003EAC)
+        // 与 Banner 图 logo 区域深蓝一致，适配白字/图标
+        topBarView.backgroundColor = UIColor(red: 28/255, green: 59/255, blue: 92/255, alpha: 1.0) // #1C3B5C
         
         // 搜索栏
         searchBar.backgroundColor = .white
@@ -102,7 +66,7 @@ class HomeViewController: ZQViewController {
         searchIcon.translatesAutoresizingMaskIntoConstraints = false
         
         // 搜索文本框
-        searchTextField.placeholder = "股票代码/简拼"
+        searchTextField.placeholder = "输入股票代码/简拼"
         searchTextField.font = UIFont.systemFont(ofSize: 14)
         searchTextField.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
         searchTextField.isUserInteractionEnabled = false // 禁用输入，只能点击跳转
@@ -172,6 +136,8 @@ class HomeViewController: ZQViewController {
         tableView.register(BannerTableViewCell.self, forCellReuseIdentifier: "BannerCell")
         tableView.register(MenuGridTableViewCell.self, forCellReuseIdentifier: "MenuGridCell")
         tableView.register(ImageBannerTableViewCell.self, forCellReuseIdentifier: "ImageBannerCell")
+        tableView.register(FundFlowTableViewCell.self, forCellReuseIdentifier: "FundFlowCell")
+        tableView.register(HotSpotMarketTableViewCell.self, forCellReuseIdentifier: "HotSpotMarketCell")
         tableView.register(NewsTableViewCell.self, forCellReuseIdentifier: "NewsCell")
         
         NSLayoutConstraint.activate([
@@ -204,7 +170,7 @@ class HomeViewController: ZQViewController {
 // MARK: - UITableViewDataSource
 extension HomeViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4 // Banner, MenuGrid, ImageBanner, News
+        return 6 // Banner, MenuGrid, ImageBanner, 资金数据, 直击热点|涨平跌|今日大盘, News
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -222,68 +188,60 @@ extension HomeViewController: UITableViewDataSource {
             // 菜单网格
             let cell = tableView.dequeueReusableCell(withIdentifier: "MenuGridCell", for: indexPath) as! MenuGridTableViewCell
             cell.configure(with: menuItems)
-            cell.onItemTap = { [weak self] index, title in
-                // 处理菜单项点击事件
-                print("Menu item tapped: \(title) at index: \(index)")
-                // 这里可以添加跳转逻辑
-                if title == "新股申购" || title == "新股日历" {
+            cell.onItemTap = { [weak self] _, title in
+                switch title {
+                case "极速开户":
+                    break
+                case "市场行情":
+                    if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
+                       let marketNav = vcs[1] as? UINavigationController,
+                       let marketVC = marketNav.viewControllers.first as? MarketViewController {
+                        tabBar.selectedIndex = 1
+                        marketVC.switchToTab(index: 1)
+                    }
+                case "持仓记录":
+                    let vc = MyHoldingsViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                case "银证转入":
+                    let vc = BankSecuritiesTransferViewController()
+                    vc.initialTabIndex = 0
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                case "银证转出":
+                    let vc = BankSecuritiesTransferViewController()
+                    vc.initialTabIndex = 1
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                case "新股申购":
                     let vc = NewStockSubscriptionViewController()
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
-                } else if title == "我的新股" {
-                    let vc = MyNewStocksViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                } else if title == "我的自选" {
-                    let vc = MyWatchlistViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                } else if title == "线下配售" {
-                    // 与个人中心「配售记录」一致，跳转到 AllotmentRecordsViewController
-                    let vc = AllotmentRecordsViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                } else if title == "银证转账" {
-                    // 与个人中心银证转入一致，跳转到 BankSecuritiesTransferViewController，默认选择转入tab
-                    let vc = BankSecuritiesTransferViewController()
-                    vc.initialTabIndex = 0   // 0: 银证转入
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                } else if title == "大宗交易" {
-                    let vc = BlockTradingViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                } else if title == "沪深行情" {
-                    // 切换 TabBar 到行情页（索引 1），并默认选中「沪深」分组
-                    if let tabBarController = self?.tabBarController as? MainTabBarController,
-                       let viewControllers = tabBarController.viewControllers,
-                       viewControllers.count > 1,
-                       let marketNav = viewControllers[1] as? UINavigationController,
-                       let marketVC = marketNav.viewControllers.first as? MarketViewController {
-                        tabBarController.selectedIndex = 1
-                        marketVC.switchToTab(index: 1) // 0:自选, 1:沪深
-                    } else {
-                        // 兜底：直接 present 一个新的行情页并切换到沪深
-                        let marketVC = MarketViewController()
-                        marketVC.switchToTab(index: 1)
-                        marketVC.hidesBottomBarWhenPushed = true
-                        self?.navigationController?.pushViewController(marketVC, animated: true)
-                    }
+                case "场外撮合交易", "战略配售", "AI智投", "龙虎榜":
+                    break
+                default:
+                    break
                 }
             }
             return cell
         case 2:
-            // 城市Banner图
             let cell = tableView.dequeueReusableCell(withIdentifier: "ImageBannerCell", for: indexPath) as! ImageBannerTableViewCell
-            // 可以传入多张图片，暂时使用空数组（会显示默认图片）
             cell.configure(with: [])
-            cell.onBannerTap = {  index in
-                // 处理城市banner点击事件
-                print("City Banner tapped at index: \(index)")
-            }
+            cell.onBannerTap = { _ in }
             return cell
         case 3:
-            // 新闻列表
+            let cell = tableView.dequeueReusableCell(withIdentifier: "FundFlowCell", for: indexPath) as! FundFlowTableViewCell
+            return cell
+        case 4:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "HotSpotMarketCell", for: indexPath) as! HotSpotMarketTableViewCell
+            cell.onHotspotTap = { [weak self] in
+                let detailVC = NewsDetailViewController()
+                detailVC.htmlContent = self?.getNewsContent(for: "今夜突发公告!多只大牛股紧急提示风险!")
+                detailVC.hidesBottomBarWhenPushed = true
+                self?.navigationController?.pushViewController(detailVC, animated: true)
+            }
+            return cell
+        case 5:
             let cell = tableView.dequeueReusableCell(withIdentifier: "NewsCell", for: indexPath) as! NewsTableViewCell
             cell.onNewsItemTapped = { [weak self] title, time in
                 // 跳转到新闻详情页
@@ -305,21 +263,25 @@ extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.row {
         case 0:
-            return 162 // Banner高度
+            return 152
         case 1:
-            return 180
+            return 168
         case 2:
-            return 110 + 32 // 城市Banner高度110 + 上下间距32
+            return 110 + 20
         case 3:
+            return 64
+        case 4:
+            return 260
+        case 5:
             return UITableView.automaticDimension
         default:
             return 44
         }
     }
-    
+
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.row {
-        case 3:
+        case 5:
             return 200
         default:
             return 100
@@ -492,10 +454,10 @@ class MenuGridTableViewCell: UITableViewCell {
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10), // 顶部间距15
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -15) // 底部间距15
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
         ])
     }
     
@@ -508,25 +470,23 @@ class MenuGridTableViewCell: UITableViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.distribution = .fillEqually
-        stackView.spacing = 20 // 上下两个item的间距是20
+        stackView.spacing = 14
         containerView.addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
-        // 创建两行
+        // 2 行 x 5 列（与 new UI 一致）
         for row in 0..<2 {
             let rowStack = UIStackView()
             rowStack.axis = .horizontal
             rowStack.distribution = .fillEqually
             rowStack.spacing = 0
-            
-            for col in 0..<4 {
-                let index = row * 4 + col
+            for col in 0..<5 {
+                let index = row * 5 + col
                 if index < items.count {
                     let iconView = createMenuIconView(title: items[index].0, iconName: items[index].1, index: index)
                     rowStack.addArrangedSubview(iconView)
                 }
             }
-            
             stackView.addArrangedSubview(rowStack)
         }
         
@@ -543,8 +503,8 @@ class MenuGridTableViewCell: UITableViewCell {
         let container = UIView()
         container.isUserInteractionEnabled = true
         
-        let iconImageView = UIImageView(image: UIImage(named: iconName))
-        iconImageView.contentMode = .scaleAspectFill
+        let iconImageView = UIImageView(image: UIImage(named: iconName) ?? UIImage(systemName: iconName))
+        iconImageView.contentMode = .scaleAspectFit
         container.addSubview(iconImageView)
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -567,7 +527,7 @@ class MenuGridTableViewCell: UITableViewCell {
         let contentStack = UIStackView()
         contentStack.axis = .vertical
         contentStack.alignment = .center
-        contentStack.spacing = 10 // 图标与文字间距10
+        contentStack.spacing = 8
         contentStack.distribution = .fill
         container.addSubview(contentStack)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
@@ -577,8 +537,8 @@ class MenuGridTableViewCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             // 图标37*37
-            iconImageView.widthAnchor.constraint(equalToConstant: 37),
-            iconImageView.heightAnchor.constraint(equalToConstant: 37),
+            iconImageView.widthAnchor.constraint(equalToConstant: 22),
+            iconImageView.heightAnchor.constraint(equalToConstant: 22),
             
             // contentStack居中
             contentStack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
@@ -587,7 +547,7 @@ class MenuGridTableViewCell: UITableViewCell {
             contentStack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -4),
             
             // 文字宽度限制
-            titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 80) // 确保文字不会太宽
+            titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 64)
         ])
         
         return container
@@ -641,10 +601,10 @@ class ImageBannerTableViewCell: UITableViewCell {
         scrollView.addGestureRecognizer(tapGesture)
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            scrollView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
             scrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
             scrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
-            scrollView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+            scrollView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
             scrollView.heightAnchor.constraint(equalToConstant: 110)
         ])
     }
@@ -726,6 +686,284 @@ class ImageBannerTableViewCell: UITableViewCell {
     }
 }
 
+// MARK: - 资金数据（北上/南向/A股主力）
+class FundFlowTableViewCell: UITableViewCell {
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        selectionStyle = .none
+        backgroundColor = .clear
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.spacing = 0
+        let themeRed = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
+        let themeGreen = UIColor(red: 0, green: 0.6, blue: 0.2, alpha: 1.0)
+        let items: [(String, String, UIColor)] = [
+            ("北上资金净流入", "1344.81亿", themeRed),
+            ("南向资金流入", "-1344.81亿", themeGreen),
+            ("A股主力净流入", "-1344.81亿", themeGreen)
+        ]
+        for item in items {
+            let v = makeFundColumn(title: item.0, value: item.1, valueColor: item.2)
+            stack.addArrangedSubview(v)
+        }
+        contentView.addSubview(stack)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+        ])
+    }
+    private func makeFundColumn(title: String, value: String, valueColor: UIColor) -> UIView {
+        let wrap = UIStackView()
+        wrap.axis = .vertical
+        wrap.spacing = 4
+        wrap.alignment = .center
+        let t = UILabel()
+        t.text = title
+        t.font = UIFont.systemFont(ofSize: 14)
+        t.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
+        let v = UILabel()
+        v.text = value
+        v.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        v.textColor = valueColor
+        wrap.addArrangedSubview(t)
+        wrap.addArrangedSubview(v)
+        return wrap
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+}
+
+// MARK: - 直击热点 | 涨平跌分布 / 今日大盘（左右结构，右列上下结构）
+class HotSpotMarketTableViewCell: UITableViewCell {
+    private let containerView = UIView()
+    private let leftCard = UIView()
+    private let rightStack = UIStackView()
+    private let hotspotTitleLabel = UILabel()
+    private let hotspotHeadlineLabel = UILabel()
+    private let hotspotTimeLabel = UILabel()
+    private let zhijiredianImageView = UIImageView()
+    private let riseFlatFallCard = UIView()
+    private let marketCard = UIView()
+    var onHotspotTap: (() -> Void)?
+
+    private let themeRed = UIColor(red: 224/255, green: 92/255, blue: 92/255, alpha: 1.0)   // #E05C5C
+    private let themeBlue = UIColor(red: 58/255, green: 124/255, blue: 224/255, alpha: 1.0) // #3A7CE0
+    private let themeGreen = UIColor(red: 92/255, green: 200/255, blue: 100/255, alpha: 1.0) // #5CC864
+    private let textDark = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0)    // #2B2C31
+    private let textSecondary = UIColor(red: 0.45, green: 0.45, blue: 0.48, alpha: 1.0)
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        selectionStyle = .none
+        backgroundColor = .clear
+
+        contentView.addSubview(containerView)
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+
+        // 左列：直击热点
+        leftCard.backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0) // #F8F9FE
+        leftCard.layer.cornerRadius = 12
+        leftCard.layer.shadowColor = UIColor.black.cgColor
+        leftCard.layer.shadowOffset = CGSize(width: 0, height: 2)
+        leftCard.layer.shadowRadius = 8
+        leftCard.layer.shadowOpacity = 0.08
+        containerView.addSubview(leftCard)
+        leftCard.translatesAutoresizingMaskIntoConstraints = false
+
+        let tagView = UIView()
+        tagView.backgroundColor = themeRed
+        tagView.layer.cornerRadius = 6
+        leftCard.addSubview(tagView)
+        tagView.translatesAutoresizingMaskIntoConstraints = false
+        let broadcastIcon = UIImageView(image: UIImage(systemName: "antenna.radiowaves.left.and.right"))
+        broadcastIcon.tintColor = .white
+        broadcastIcon.contentMode = .scaleAspectFit
+        tagView.addSubview(broadcastIcon)
+        broadcastIcon.translatesAutoresizingMaskIntoConstraints = false
+        hotspotTitleLabel.text = "直击热点"
+        hotspotTitleLabel.font = UIFont.boldSystemFont(ofSize: 14)
+        hotspotTitleLabel.textColor = .white
+        tagView.addSubview(hotspotTitleLabel)
+        hotspotTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            broadcastIcon.leadingAnchor.constraint(equalTo: tagView.leadingAnchor, constant: 8),
+            broadcastIcon.centerYAnchor.constraint(equalTo: tagView.centerYAnchor),
+            broadcastIcon.widthAnchor.constraint(equalToConstant: 14),
+            broadcastIcon.heightAnchor.constraint(equalToConstant: 14),
+            hotspotTitleLabel.leadingAnchor.constraint(equalTo: broadcastIcon.trailingAnchor, constant: 6),
+            hotspotTitleLabel.trailingAnchor.constraint(equalTo: tagView.trailingAnchor, constant: -10),
+            hotspotTitleLabel.centerYAnchor.constraint(equalTo: tagView.centerYAnchor),
+            tagView.heightAnchor.constraint(equalToConstant: 28)
+        ])
+
+        hotspotHeadlineLabel.text = "今夜突发公告!\n多只大牛股紧..."
+        hotspotHeadlineLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        hotspotHeadlineLabel.textColor = textDark
+        hotspotHeadlineLabel.numberOfLines = 2
+        hotspotHeadlineLabel.lineBreakMode = .byTruncatingTail
+        hotspotHeadlineLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        leftCard.addSubview(hotspotHeadlineLabel)
+        hotspotHeadlineLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        hotspotTimeLabel.text = "2026-01-28 21:25:26"
+        hotspotTimeLabel.font = UIFont.systemFont(ofSize: 14)
+        hotspotTimeLabel.textColor = textSecondary
+        leftCard.addSubview(hotspotTimeLabel)
+        hotspotTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        zhijiredianImageView.image = UIImage(named: "zhijiredian")
+        zhijiredianImageView.contentMode = .scaleAspectFill
+        zhijiredianImageView.clipsToBounds = true
+        zhijiredianImageView.layer.cornerRadius = 8
+        leftCard.addSubview(zhijiredianImageView)
+        zhijiredianImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        let leftTap = UITapGestureRecognizer(target: self, action: #selector(hotspotTapped))
+        leftCard.addGestureRecognizer(leftTap)
+        leftCard.isUserInteractionEnabled = true
+
+        rightStack.axis = .vertical
+        rightStack.distribution = .fillEqually
+        rightStack.spacing = 10
+        rightStack.alignment = .fill
+        containerView.addSubview(rightStack)
+        rightStack.translatesAutoresizingMaskIntoConstraints = false
+
+        riseFlatFallCard.backgroundColor = UIColor(red: 241/255, green: 250/255, blue: 255/255, alpha: 1.0) // #F1FAFF
+        riseFlatFallCard.layer.cornerRadius = 12
+        riseFlatFallCard.layer.shadowColor = UIColor.black.cgColor
+        riseFlatFallCard.layer.shadowOffset = CGSize(width: 0, height: 2)
+        riseFlatFallCard.layer.shadowRadius = 8
+        riseFlatFallCard.layer.shadowOpacity = 0.08
+        let riseTitle = UILabel()
+        riseTitle.text = "涨平跌分布"
+        riseTitle.font = UIFont.boldSystemFont(ofSize: 18)
+        riseTitle.textColor = themeBlue
+        let riseNumbers = UILabel()
+        riseNumbers.font = UIFont.boldSystemFont(ofSize: 18)
+        let riseStr = "1636 : 79 : 3485"
+        let riseAttr = NSMutableAttributedString(string: riseStr)
+        riseAttr.addAttribute(.foregroundColor, value: themeRed, range: NSRange(location: 0, length: 4))
+        riseAttr.addAttribute(.foregroundColor, value: textDark, range: NSRange(location: 5, length: 5))
+        riseAttr.addAttribute(.foregroundColor, value: themeGreen, range: NSRange(location: 10, length: 4))
+        riseNumbers.attributedText = riseAttr
+        let riseLabels = UILabel()
+        riseLabels.font = UIFont.systemFont(ofSize: 18)
+        let labStr = "涨 : 平 : 跌"
+        let labAttr = NSMutableAttributedString(string: labStr)
+        labAttr.addAttribute(.foregroundColor, value: themeRed, range: NSRange(location: 0, length: 1))
+        labAttr.addAttribute(.foregroundColor, value: textDark, range: NSRange(location: 4, length: 1))
+        labAttr.addAttribute(.foregroundColor, value: themeGreen, range: NSRange(location: 8, length: 1))
+        riseLabels.attributedText = labAttr
+        let riseStack = UIStackView(arrangedSubviews: [riseTitle, riseNumbers, riseLabels])
+        riseStack.axis = .vertical
+        riseStack.spacing = 10
+        riseStack.alignment = .leading
+        riseFlatFallCard.addSubview(riseStack)
+        riseStack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            riseStack.topAnchor.constraint(equalTo: riseFlatFallCard.topAnchor, constant: 12),
+            riseStack.leadingAnchor.constraint(equalTo: riseFlatFallCard.leadingAnchor, constant: 12),
+            riseStack.trailingAnchor.constraint(equalTo: riseFlatFallCard.trailingAnchor, constant: -12),
+            riseStack.bottomAnchor.constraint(lessThanOrEqualTo: riseFlatFallCard.bottomAnchor, constant: -12)
+        ])
+        rightStack.addArrangedSubview(riseFlatFallCard)
+
+        marketCard.backgroundColor = UIColor(red: 241/255, green: 250/255, blue: 255/255, alpha: 1.0) // #F1FAFF
+        marketCard.layer.cornerRadius = 12
+        marketCard.layer.shadowColor = UIColor.black.cgColor
+        marketCard.layer.shadowOffset = CGSize(width: 0, height: 2)
+        marketCard.layer.shadowRadius = 8
+        marketCard.layer.shadowOpacity = 0.08
+        let marketTitle = UILabel()
+        marketTitle.text = "今日大盘"
+        marketTitle.font = UIFont.boldSystemFont(ofSize: 18)
+        marketTitle.textColor = themeBlue
+        let marketRow = UIStackView()
+        marketRow.axis = .horizontal
+        marketRow.spacing = 10
+        marketRow.alignment = .center
+        let marketPoints = UILabel()
+        marketPoints.text = "-2.49"
+        marketPoints.font = UIFont.boldSystemFont(ofSize: 22)
+        marketPoints.textColor = themeGreen
+        let marketPct = UILabel()
+        marketPct.text = "-0.16%"
+        marketPct.font = UIFont.boldSystemFont(ofSize: 22)
+        marketPct.textColor = themeGreen
+        let marketIndex = UILabel()
+        marketIndex.text = "北证50 1562.45"
+        marketIndex.font = UIFont.systemFont(ofSize: 14)
+        marketIndex.textColor = textDark
+        marketRow.addArrangedSubview(marketPoints)
+        marketRow.addArrangedSubview(marketPct)
+        marketCard.addSubview(marketTitle)
+        marketCard.addSubview(marketRow)
+        marketCard.addSubview(marketIndex)
+        marketTitle.translatesAutoresizingMaskIntoConstraints = false
+        marketRow.translatesAutoresizingMaskIntoConstraints = false
+        marketIndex.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            marketTitle.topAnchor.constraint(equalTo: marketCard.topAnchor, constant: 12),
+            marketTitle.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
+            marketRow.topAnchor.constraint(equalTo: marketTitle.bottomAnchor, constant: 8),
+            marketRow.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
+            marketIndex.topAnchor.constraint(equalTo: marketRow.bottomAnchor, constant: 4),
+            marketIndex.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
+            marketIndex.bottomAnchor.constraint(lessThanOrEqualTo: marketCard.bottomAnchor, constant: -12)
+        ])
+        rightStack.addArrangedSubview(marketCard)
+
+        NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+
+            leftCard.topAnchor.constraint(equalTo: containerView.topAnchor),
+            leftCard.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            leftCard.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            leftCard.widthAnchor.constraint(equalTo: rightStack.widthAnchor),
+
+            rightStack.topAnchor.constraint(equalTo: containerView.topAnchor),
+            rightStack.leadingAnchor.constraint(equalTo: leftCard.trailingAnchor, constant: 14),
+            rightStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            rightStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+
+            tagView.leadingAnchor.constraint(equalTo: leftCard.leadingAnchor, constant: 12),
+            tagView.topAnchor.constraint(equalTo: leftCard.topAnchor, constant: 12),
+
+            hotspotHeadlineLabel.topAnchor.constraint(equalTo: tagView.bottomAnchor, constant: 10),
+            hotspotHeadlineLabel.leadingAnchor.constraint(equalTo: leftCard.leadingAnchor, constant: 12),
+            hotspotHeadlineLabel.trailingAnchor.constraint(equalTo: leftCard.trailingAnchor, constant: -12),
+
+            hotspotTimeLabel.topAnchor.constraint(equalTo: hotspotHeadlineLabel.bottomAnchor, constant: 6),
+            hotspotTimeLabel.leadingAnchor.constraint(equalTo: leftCard.leadingAnchor, constant: 12),
+
+            zhijiredianImageView.topAnchor.constraint(equalTo: hotspotTimeLabel.bottomAnchor, constant: 8),
+            zhijiredianImageView.centerXAnchor.constraint(equalTo: leftCard.centerXAnchor),
+            zhijiredianImageView.widthAnchor.constraint(equalToConstant: 115),
+            zhijiredianImageView.heightAnchor.constraint(equalToConstant: 98),
+            zhijiredianImageView.bottomAnchor.constraint(equalTo: leftCard.bottomAnchor, constant: -12)
+        ])
+    }
+
+    @objc private func hotspotTapped() {
+        onHotspotTap?()
+    }
+}
+
 extension ImageBannerTableViewCell: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let screenWidth = UIScreen.main.bounds.width
@@ -759,31 +997,37 @@ class NewsTableViewCell: UITableViewCell {
     private var newsData: [[(String, String)]] = [] // 不同分类的新闻数据
     var onNewsItemTapped: ((String, String) -> Void)? // 新闻项点击回调 (title, time)
     
-    // 新闻数据源（示例数据，实际应该从网络或数据库获取）
+    // 新闻数据源（与 new UI 一致：动态/7X24/盘面/投顾/要闻/更多）
     private let newsDataSource: [[(String, String)]] = [
-        // 国内经济
         [
-            ("元旦假期全社会跨区域人员流动量预计5.9亿人次元旦假期全社会跨区域人员流动量预计5.9亿人次元旦假期全社会跨区域人员流动量预计5.9亿人次", "2026-01-03 16:21:24"),
-            ("2026购在中国暨新春消费季启动", "2026-01-03 16:21:24"),
-            ("国内经济持续稳定增长，消费市场活跃", "2026-01-03 15:30:00")
+            ("今夜突发公告!多只大牛股紧急提示风险!", "01-28 21:25"),
+            ("2026购在中国暨新春消费季启动", "01-28 20:15"),
+            ("国内经济持续稳定增长，消费市场活跃", "01-28 18:30")
         ],
-        // 国外经济
         [
-            ("全球股市震荡，投资者关注美联储政策", "2026-01-03 16:21:24"),
-            ("欧洲央行维持利率不变，市场反应积极", "2026-01-03 16:21:24"),
-            ("亚洲市场表现强劲，科技股领涨", "2026-01-03 15:30:00")
+            ("全球股市震荡，投资者关注美联储政策", "01-28 21:20"),
+            ("欧洲央行维持利率不变，市场反应积极", "01-28 20:10"),
+            ("亚洲市场表现强劲，科技股领涨", "01-28 18:00")
         ],
-        // 证券要闻
         [
-            ("A股市场迎来开门红，三大指数集体上涨", "2026-01-03 16:21:24"),
-            ("证监会发布新规，规范市场交易行为", "2026-01-03 16:21:24"),
-            ("券商板块表现亮眼，多只个股涨停", "2026-01-03 15:30:00")
+            ("A股市场迎来开门红，三大指数集体上涨", "01-28 21:15"),
+            ("证监会发布新规，规范市场交易行为", "01-28 20:00"),
+            ("券商板块表现亮眼，多只个股涨停", "01-28 17:45")
         ],
-        // 公司资讯
         [
-            ("多家上市公司发布业绩预告", "2026-01-03 16:21:24"),
-            ("科技公司加大研发投入，布局新赛道", "2026-01-03 16:21:24"),
-            ("新能源企业获得重大订单，股价上涨", "2026-01-03 15:30:00")
+            ("多家上市公司发布业绩预告", "01-28 21:10"),
+            ("科技公司加大研发投入，布局新赛道", "01-28 19:50"),
+            ("新能源企业获得重大订单，股价上涨", "01-28 17:30")
+        ],
+        [
+            ("要闻汇总：政策与市场双轮驱动", "01-28 21:05"),
+            ("机构看好春季行情", "01-28 19:40"),
+            ("北向资金持续流入", "01-28 17:15")
+        ],
+        [
+            ("更多资讯敬请关注", "01-28 21:00"),
+            ("行业研报与策略", "01-28 19:30"),
+            ("市场数据与解读", "01-28 17:00")
         ]
     ]
     
@@ -808,7 +1052,7 @@ class NewsTableViewCell: UITableViewCell {
         containerView.addSubview(tabView)
         tabView.translatesAutoresizingMaskIntoConstraints = false
         
-        let tabs = ["国内经济", "国外经济", "证券要闻", "公司资讯"]
+        let tabs = ["动态", "7X24", "盘面", "投顾", "要闻", "更多"]
         let tabStackView = UIStackView()
         tabStackView.axis = .horizontal
         tabStackView.distribution = .fillEqually
@@ -849,10 +1093,10 @@ class NewsTableViewCell: UITableViewCell {
             tabStackView.trailingAnchor.constraint(equalTo: tabView.trailingAnchor),
             tabStackView.bottomAnchor.constraint(equalTo: tabView.bottomAnchor),
             
-            newsStackView.topAnchor.constraint(equalTo: tabView.bottomAnchor, constant: 16),
+            newsStackView.topAnchor.constraint(equalTo: tabView.bottomAnchor, constant: 10),
             newsStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             newsStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            newsStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16)
+            newsStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10)
         ])
         
         // 初始化选中状态和新闻列表
@@ -870,18 +1114,16 @@ class NewsTableViewCell: UITableViewCell {
     }
     
     private func updateTabSelection() {
+        let themeRed = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
         for (index, button) in tabButtons.enumerated() {
             if index == selectedIndex {
-                // 选中状态：蓝色背景，白色文字
-                button.backgroundColor = UIColor(hex: 0x1B47B7)
-                button.layer.cornerRadius = 6
-                button.setTitleColor(.white, for: .normal)
+                button.setTitleColor(themeRed, for: .normal)
+                button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
             } else {
-                // 未选中状态：白色背景，灰色文字
-                button.backgroundColor = UIColor(hex: 0xF8F9FB)
-                button.layer.cornerRadius = 0
-                button.setTitleColor(UIColor(hex:0x1C1C1C), for: .normal)
+                button.setTitleColor(UIColor(hex: 0x1C1C1C), for: .normal)
+                button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
             }
+            button.backgroundColor = .clear
         }
     }
     
@@ -892,9 +1134,9 @@ class NewsTableViewCell: UITableViewCell {
         // 获取当前分类的新闻数据
         let currentNews = newsDataSource[selectedIndex]
         
-        // 添加新的新闻项
+        // 添加新的新闻项（前几项带红色数字角标）
         for (index, news) in currentNews.enumerated() {
-            let newsItemView = createNewsItemView(title: news.0, time: news.1)
+            let newsItemView = createNewsItemView(title: news.0, time: news.1, index: index)
             newsStackView.addArrangedSubview(newsItemView)
             
             // 如果不是最后一项，添加分隔线
@@ -908,25 +1150,38 @@ class NewsTableViewCell: UITableViewCell {
         }
     }
     
-    private func createNewsItemView(title: String, time: String) -> UIView {
+    private func createNewsItemView(title: String, time: String, index: Int = 0) -> UIView {
         let container = UIView()
         container.backgroundColor = .white
         container.isUserInteractionEnabled = true
-        
+
+        let badgeLabel = UILabel()
+        if index < 4 {
+            badgeLabel.text = "\(index + 1)"
+            badgeLabel.font = UIFont.boldSystemFont(ofSize: 12)
+            badgeLabel.textColor = .white
+            badgeLabel.backgroundColor = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
+            badgeLabel.textAlignment = .center
+            badgeLabel.layer.cornerRadius = 4
+            badgeLabel.clipsToBounds = true
+        }
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(badgeLabel)
+
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = UIFont.systemFont(ofSize: 15, weight: .regular)
-        titleLabel.textColor = UIColor(hex: 0x1C1C1C) // 标题黑色
-        titleLabel.numberOfLines = 2 // 不限制行数，根据内容自动换行
-        titleLabel.lineBreakMode = .byWordWrapping
+        titleLabel.font = UIFont.systemFont(ofSize: 18)
+        titleLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0) // #2B2C31
+        titleLabel.numberOfLines = 2
+        titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.isUserInteractionEnabled = false
         container.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+
         let timeLabel = UILabel()
-        timeLabel.text = "发布时间:\(time)" // 注意冒号后面没有空格
+        timeLabel.text = time
         timeLabel.font = UIFont.systemFont(ofSize: 12)
-        timeLabel.textColor = UIColor(hex: 0xADADAD) // 浅灰色
+        timeLabel.textColor = UIColor(hex: 0xADADAD)
         timeLabel.isUserInteractionEnabled = false
         container.addSubview(timeLabel)
         timeLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -939,24 +1194,31 @@ class NewsTableViewCell: UITableViewCell {
         objc_setAssociatedObject(container, &AssociatedKeys.newsTitle, title, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         objc_setAssociatedObject(container, &AssociatedKeys.newsTime, time, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         
-        NSLayoutConstraint.activate([
-            // 标题顶部间距
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+        let hasBadge = index < 4
+        var constraints: [NSLayoutConstraint] = [
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
             titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            
-            // 发布时间在标题下方，间距8
-            timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            timeLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            timeLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             timeLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            
-            // 底部间距
-            timeLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12)
-        ])
-        
+            timeLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+        ]
+        if hasBadge {
+            constraints += [
+                badgeLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                badgeLabel.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+                badgeLabel.widthAnchor.constraint(equalToConstant: 22),
+                badgeLabel.heightAnchor.constraint(equalToConstant: 22),
+                titleLabel.leadingAnchor.constraint(equalTo: badgeLabel.trailingAnchor, constant: 10)
+            ]
+        } else {
+            constraints.append(titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor))
+        }
+        NSLayoutConstraint.activate(constraints)
+
         return container
     }
-    
+
     @objc private func newsItemTapped(_ gesture: UITapGestureRecognizer) {
         guard let view = gesture.view,
               let title = objc_getAssociatedObject(view, &AssociatedKeys.newsTitle) as? String,

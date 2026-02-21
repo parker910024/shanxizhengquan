@@ -16,7 +16,7 @@ class MyWatchlistViewController: ZQViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
+//        setupNavigationBar()
         setupTableView()
         loadData()
     }
