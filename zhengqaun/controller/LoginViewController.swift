@@ -955,7 +955,8 @@ class LoginViewController: UIViewController {
                         print("raw =", res.raw)          // 原始响应
                         print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                         let dict = res.decrypted
-                        if res.statusCode != 1 {
+                        print(dict)
+                        if res.statusCode != 200 {
                         
                             DispatchQueue.main.async {
                                 Toast.showInfo(dict?["msg"] as? String ?? "")
@@ -968,7 +969,9 @@ class LoginViewController: UIViewController {
                         UserAuthManager.shared.login(username: dataDict["nickname"] as? String ?? "", phone:  dataDict["username"] as? String ?? "")
                         UserAuthManager.shared.token = dataDict["token"] as? String ?? ""
                         UserAuthManager.shared.userID = String(format: "%@", dataDict["user_id"] as! CVarArg)
-                        Toast.showSuccess("登录成功")
+                        DispatchQueue.main.async {
+                            Toast.showInfo("登录成功")
+                        }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             self.switchToMainApp()
                         }
@@ -1081,12 +1084,17 @@ class LoginViewController: UIViewController {
         }
     }
     
+    /// 登录/注册成功后切换到主界面 TabBar（通过 SceneDelegate 的 window 切换，保证生效）
     private func switchToMainApp() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else {
+        // 1. 通过当前 view 所在 scene 的 delegate 获取 SceneDelegate，用其 window 切换（最可靠）
+        if let scene = view.window?.windowScene ?? (UIApplication.shared.connectedScenes.first as? UIWindowScene),
+           let sceneDelegate = scene.delegate as? SceneDelegate {
+            sceneDelegate.switchToTabBar()
             return
         }
-        
+        // 2. 兼容：直接用 connectedScenes 的 window 切换
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
         let tabBarController = MainTabBarController()
         UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
             window.rootViewController = tabBarController

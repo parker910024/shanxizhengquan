@@ -63,5 +63,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
     }
 
+    /// 登录/注册成功后切换到主界面 TabBar（由 SceneDelegate 持有 window，保证能切到）
+    func switchToTabBar() {
+        guard let window = window else { return }
+        let tabBarController = MainTabBarController()
+        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            window.rootViewController = tabBarController
+        }, completion: nil)
+    }
 }
 
