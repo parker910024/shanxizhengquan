@@ -1,0 +1,647 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8891F9852D2418ACEEED0E4B /* libPods-zhengqaun.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		84D154662F0D59F3001FC841 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84D154472F0D59F1001FC841 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 84D1544E2F0D59F1001FC841;
+			remoteInfo = zhengqaun;
+		};
+		84D154702F0D59F3001FC841 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84D154472F0D59F1001FC841 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 84D1544E2F0D59F1001FC841;
+			remoteInfo = zhengqaun;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-zhengqaun.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84D1544F2F0D59F1001FC841 /* zhengqaun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zhengqaun.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84D154652F0D59F3001FC841 /* zhengqaunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = zhengqaunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		84D1546F2F0D59F3001FC841 /* zhengqaunUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = zhengqaunUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A808119E5BC8C3F3294D0439 /* Pods-zhengqaun.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zhengqaun.debug.xcconfig"; path = "Target Support Files/Pods-zhengqaun/Pods-zhengqaun.debug.xcconfig"; sourceTree = "<group>"; };
+		AACA38A6624976C6B5D7E45E /* Pods-zhengqaun.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zhengqaun.release.xcconfig"; path = "Target Support Files/Pods-zhengqaun/Pods-zhengqaun.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		84D154772F0D59F3001FC841 /* Exceptions for "zhengqaun" folder in "zhengqaun" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 84D1544E2F0D59F1001FC841 /* zhengqaun */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		84D154512F0D59F1001FC841 /* zhengqaun */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				84D154772F0D59F3001FC841 /* Exceptions for "zhengqaun" folder in "zhengqaun" target */,
+			);
+			path = zhengqaun;
+			sourceTree = "<group>";
+		};
+		84D154682F0D59F3001FC841 /* zhengqaunTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = zhengqaunTests;
+			sourceTree = "<group>";
+		};
+		84D154722F0D59F3001FC841 /* zhengqaunUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = zhengqaunUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		84D1544C2F0D59F1001FC841 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8891F9852D2418ACEEED0E4B /* libPods-zhengqaun.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84D154622F0D59F3001FC841 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84D1546C2F0D59F3001FC841 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3C270F0E75DAA61F2BAD4C9B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		84D154462F0D59F1001FC841 = {
+			isa = PBXGroup;
+			children = (
+				84D154512F0D59F1001FC841 /* zhengqaun */,
+				84D154682F0D59F3001FC841 /* zhengqaunTests */,
+				84D154722F0D59F3001FC841 /* zhengqaunUITests */,
+				84D154502F0D59F1001FC841 /* Products */,
+				D601269245D838A4A27C9DA1 /* Pods */,
+				3C270F0E75DAA61F2BAD4C9B /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		84D154502F0D59F1001FC841 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				84D1544F2F0D59F1001FC841 /* zhengqaun.app */,
+				84D154652F0D59F3001FC841 /* zhengqaunTests.xctest */,
+				84D1546F2F0D59F3001FC841 /* zhengqaunUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D601269245D838A4A27C9DA1 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A808119E5BC8C3F3294D0439 /* Pods-zhengqaun.debug.xcconfig */,
+				AACA38A6624976C6B5D7E45E /* Pods-zhengqaun.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		84D1544E2F0D59F1001FC841 /* zhengqaun */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 84D154782F0D59F3001FC841 /* Build configuration list for PBXNativeTarget "zhengqaun" */;
+			buildPhases = (
+				DF2FBC585E7EFECD8E9BA071 /* [CP] Check Pods Manifest.lock */,
+				84D1544B2F0D59F1001FC841 /* Sources */,
+				84D1544C2F0D59F1001FC841 /* Frameworks */,
+				84D1544D2F0D59F1001FC841 /* Resources */,
+				7AA0EAFB03C5CB62C6745D74 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				84D154512F0D59F1001FC841 /* zhengqaun */,
+			);
+			name = zhengqaun;
+			productName = zhengqaun;
+			productReference = 84D1544F2F0D59F1001FC841 /* zhengqaun.app */;
+			productType = "com.apple.product-type.application";
+		};
+		84D154642F0D59F3001FC841 /* zhengqaunTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 84D1547D2F0D59F3001FC841 /* Build configuration list for PBXNativeTarget "zhengqaunTests" */;
+			buildPhases = (
+				84D154612F0D59F3001FC841 /* Sources */,
+				84D154622F0D59F3001FC841 /* Frameworks */,
+				84D154632F0D59F3001FC841 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				84D154672F0D59F3001FC841 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				84D154682F0D59F3001FC841 /* zhengqaunTests */,
+			);
+			name = zhengqaunTests;
+			productName = zhengqaunTests;
+			productReference = 84D154652F0D59F3001FC841 /* zhengqaunTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		84D1546E2F0D59F3001FC841 /* zhengqaunUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 84D154802F0D59F3001FC841 /* Build configuration list for PBXNativeTarget "zhengqaunUITests" */;
+			buildPhases = (
+				84D1546B2F0D59F3001FC841 /* Sources */,
+				84D1546C2F0D59F3001FC841 /* Frameworks */,
+				84D1546D2F0D59F3001FC841 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				84D154712F0D59F3001FC841 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				84D154722F0D59F3001FC841 /* zhengqaunUITests */,
+			);
+			name = zhengqaunUITests;
+			productName = zhengqaunUITests;
+			productReference = 84D1546F2F0D59F3001FC841 /* zhengqaunUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		84D154472F0D59F1001FC841 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					84D1544E2F0D59F1001FC841 = {
+						CreatedOnToolsVersion = 16.2;
+						LastSwiftMigration = 1620;
+					};
+					84D154642F0D59F3001FC841 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 84D1544E2F0D59F1001FC841;
+					};
+					84D1546E2F0D59F3001FC841 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 84D1544E2F0D59F1001FC841;
+					};
+				};
+			};
+			buildConfigurationList = 84D1544A2F0D59F1001FC841 /* Build configuration list for PBXProject "zhengqaun" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 84D154462F0D59F1001FC841;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 84D154502F0D59F1001FC841 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				84D1544E2F0D59F1001FC841 /* zhengqaun */,
+				84D154642F0D59F3001FC841 /* zhengqaunTests */,
+				84D1546E2F0D59F3001FC841 /* zhengqaunUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		84D1544D2F0D59F1001FC841 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84D154632F0D59F3001FC841 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84D1546D2F0D59F3001FC841 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		7AA0EAFB03C5CB62C6745D74 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DF2FBC585E7EFECD8E9BA071 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-zhengqaun-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		84D1544B2F0D59F1001FC841 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84D154612F0D59F3001FC841 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84D1546B2F0D59F3001FC841 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		84D154672F0D59F3001FC841 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 84D1544E2F0D59F1001FC841 /* zhengqaun */;
+			targetProxy = 84D154662F0D59F3001FC841 /* PBXContainerItemProxy */;
+		};
+		84D154712F0D59F3001FC841 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 84D1544E2F0D59F1001FC841 /* zhengqaun */;
+			targetProxy = 84D154702F0D59F3001FC841 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		84D154792F0D59F3001FC841 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A808119E5BC8C3F3294D0439 /* Pods-zhengqaun.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = zhengqaun/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sx.zhengqaun;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "zhengqaun/zhengqaun-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		84D1547A2F0D59F3001FC841 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AACA38A6624976C6B5D7E45E /* Pods-zhengqaun.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = zhengqaun/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sx.zhengqaun;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "zhengqaun/zhengqaun-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		84D1547B2F0D59F3001FC841 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		84D1547C2F0D59F3001FC841 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		84D1547E2F0D59F3001FC841 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sx.zhengqaunTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/zhengqaun.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/zhengqaun";
+			};
+			name = Debug;
+		};
+		84D1547F2F0D59F3001FC841 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sx.zhengqaunTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/zhengqaun.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/zhengqaun";
+			};
+			name = Release;
+		};
+		84D154812F0D59F3001FC841 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sx.zhengqaunUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = zhengqaun;
+			};
+			name = Debug;
+		};
+		84D154822F0D59F3001FC841 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sx.zhengqaunUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = zhengqaun;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		84D1544A2F0D59F1001FC841 /* Build configuration list for PBXProject "zhengqaun" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D1547B2F0D59F3001FC841 /* Debug */,
+				84D1547C2F0D59F3001FC841 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		84D154782F0D59F3001FC841 /* Build configuration list for PBXNativeTarget "zhengqaun" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D154792F0D59F3001FC841 /* Debug */,
+				84D1547A2F0D59F3001FC841 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		84D1547D2F0D59F3001FC841 /* Build configuration list for PBXNativeTarget "zhengqaunTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D1547E2F0D59F3001FC841 /* Debug */,
+				84D1547F2F0D59F3001FC841 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		84D154802F0D59F3001FC841 /* Build configuration list for PBXNativeTarget "zhengqaunUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D154812F0D59F3001FC841 /* Debug */,
+				84D154822F0D59F3001FC841 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 84D154472F0D59F1001FC841 /* Project object */;
+}
