@@ -249,13 +249,11 @@ class ProfileViewController: ZQViewController {
         let title = titles[v.tag]
         switch title {
         case "银证转入":
-            let vc = BankSecuritiesTransferViewController()
-            vc.initialTabIndex = 0
+            let vc = BankTransferInViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "银证转出":
             let vc = BankSecuritiesTransferViewController()
-            vc.initialTabIndex = 1
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "持仓记录":

@@ -310,7 +310,7 @@ class TradeViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         } else {
-            let vc = BankSecuritiesTransferViewController()
+            let vc = BankTransferInViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         }
