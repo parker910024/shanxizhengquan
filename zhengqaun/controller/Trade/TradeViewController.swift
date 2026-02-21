@@ -209,8 +209,8 @@ class TradeViewController: ZQViewController {
             titleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
             eyeBtn.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 4),
             eyeBtn.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            eyeBtn.widthAnchor.constraint(equalToConstant: 13),
-            eyeBtn.heightAnchor.constraint(equalToConstant: 7),
+            eyeBtn.widthAnchor.constraint(equalToConstant: 20),
+            eyeBtn.heightAnchor.constraint(equalToConstant: 14),
             accountLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
             accountLabel.trailingAnchor.constraint(equalTo: stackBtn.leadingAnchor, constant: -6),
             stackBtn.topAnchor.constraint(equalTo: card.topAnchor, constant: 10),
@@ -600,7 +600,7 @@ extension TradeViewController: UITableViewDelegate {
         case "消息通知":
             vc = MessageCenterViewController()
         case "修改交易密码":
-            vc = ModifyPaymentPasswordViewController()
+            vc = TransactionPasswordViewController()
         case "银行卡管理":
             vc = BankCardViewController()
         case "银证转出":

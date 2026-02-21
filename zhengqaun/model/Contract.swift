@@ -30,23 +30,23 @@ struct Contract {
         return [
             Contract(
                 id: "1",
-                name: "证券投资顾问咨询服务协议",
-                status: .signed,
+                name: "中信证券商业核心信息协议书",
+                status: .unsigned,
                 content: getContractContent(),
-                partyA: "华泰证券股份有限公司",
-                partyAAddress: "江苏省南京市江东中路228号",
+                partyA: "中信证券股份有限公司",
+                partyAAddress: "北京市朝阳区亮马桥路48号",
                 partyB: "测试",
                 partyBAddress: "包宝宝",
                 partyBIdCard: "420521198402154410",
-                signDate: Date()
+                signDate: nil
             ),
             Contract(
                 id: "2",
-                name: "证券投资顾问咨询服务协议",
+                name: "中信证券商业核心信息协议书",
                 status: .unsigned,
                 content: getContractContent(),
-                partyA: "华泰证券股份有限公司",
-                partyAAddress: "江苏省南京市江东中路228号",
+                partyA: "中信证券股份有限公司",
+                partyAAddress: "北京市朝阳区亮马桥路48号",
                 partyB: "测试",
                 partyBAddress: "包宝宝",
                 partyBIdCard: "420521198402154410",

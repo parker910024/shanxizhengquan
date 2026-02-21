@@ -57,12 +57,13 @@ class RealNameAuthResultViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = UIColor(red: 0.1, green: 0.47, blue: 0.82, alpha: 1.0)
+        gk_navBackgroundColor = .white
         gk_navTintColor = .white
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
         gk_navTitleColor = .white
         gk_navTitle = "实名认证"
         gk_navLineHidden = true
+        gk_backStyle = .black
     }
     
     private func setupUI() {

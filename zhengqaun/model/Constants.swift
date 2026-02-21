@@ -37,7 +37,13 @@ struct Constants {
         static var totalNavigationHeight: CGFloat {
             return statusBarHeight + navigationBarHeight
         }
-        
+
+        /// 与 GKNavigationBarViewController 一致：内容应在此高度之下，避免被自定义导航栏遮挡（刘海屏为 safeAreaTop + 44）
+        static var contentTopBelowGKNavBar: CGFloat {
+            if safeAreaTop > 20 { return safeAreaTop + navigationBarHeight }
+            return statusBarHeight + navigationBarHeight
+        }
+
         /// 安全区域顶部高度
         static var safeAreaTop: CGFloat {
             if #available(iOS 11.0, *) {

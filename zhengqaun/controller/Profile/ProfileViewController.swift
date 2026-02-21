@@ -566,7 +566,7 @@ class ProfileViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "交易密码":
-            let vc = ModifyPaymentPasswordViewController()
+            let vc = TransactionPasswordViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "客服中心":
