@@ -36,7 +36,7 @@ class ProfileViewController: ZQViewController {
     }
 
     func requestUserInfo() {
-        SecureNetworkManager.shared.request(api: "/api/stock/info", method: .get, params: [:]) { result in
+        SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
             switch result {
                 case .success(let res):
                     print("status =", res.statusCode)
