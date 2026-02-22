@@ -1340,12 +1340,24 @@ class StockDetailViewController: ZQViewController {
     }
     
     @objc private func buyTapped() {
-        let vc = AccountTradeViewController()
-        vc.stockName = stockName
-        vc.stockCode = stockCode
-        vc.exchange = exchange
-        vc.currentPrice = String(format: "%.2f", currentPrice)
-        vc.tradeType = .buy
+        let vc = StockTradeViewController()
+        vc.stockName    = stockName
+        vc.stockCode    = stockCode
+        vc.exchange     = exchange
+        vc.currentPrice = currentPrice
+        vc.changeAmount  = Double(change >= 0 ? "+\(String(format: "%.2f", change))"
+                                       : String(format: "%.2f", change)) ?? 0
+        vc.changePercent = Double(changePercent >= 0 ? "+\(String(format: "%.2f", changePercent))"
+                                              : String(format: "%.2f", changePercent)) ?? 0
+        // 根据 exchange 推导完整 allcode
+        let pfx: String
+        switch exchange {
+        case "沪": pfx = "sh"
+        case "深": pfx = "sz"
+        case "北", "京": pfx = "bj"
+        default:   pfx = stockCode.count == 6 && (stockCode.hasPrefix("6")) ? "sh" : "sz"
+        }
+        vc.stockAllcode = "\(pfx)\(stockCode)"
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
