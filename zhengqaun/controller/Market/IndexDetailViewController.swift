@@ -1222,8 +1222,8 @@ class IndexDetailViewController: ZQViewController {
         vc.stockCode     = indexCode
         vc.stockAllcode  = indexAllcode
         vc.currentPrice  = Double(indexPrice) ?? 0
-        vc.changeAmount  = indexChange
-        vc.changePercent = indexChangePercent
+        vc.changeAmount  = Double(indexChange) ?? 0
+        vc.changePercent = Double(indexChangePercent) ?? 0
         // 根据 allcode 前缀推断交易所标识
         let prefix = indexAllcode.lowercased()
         if prefix.hasPrefix("sh") || prefix.hasPrefix("zssh") { vc.exchange = "沪" }

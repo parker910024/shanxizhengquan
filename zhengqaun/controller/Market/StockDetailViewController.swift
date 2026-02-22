@@ -1345,10 +1345,10 @@ class StockDetailViewController: ZQViewController {
         vc.stockCode    = stockCode
         vc.exchange     = exchange
         vc.currentPrice = currentPrice
-        vc.changeAmount  = change >= 0 ? "+\(String(format: "%.2f", change))"
-                                       : String(format: "%.2f", change)
-        vc.changePercent = changePercent >= 0 ? "+\(String(format: "%.2f", changePercent))"
-                                              : String(format: "%.2f", changePercent)
+        vc.changeAmount  = Double(change >= 0 ? "+\(String(format: "%.2f", change))"
+                                       : String(format: "%.2f", change)) ?? 0
+        vc.changePercent = Double(changePercent >= 0 ? "+\(String(format: "%.2f", changePercent))"
+                                              : String(format: "%.2f", changePercent)) ?? 0
         // 根据 exchange 推导完整 allcode
         let pfx: String
         switch exchange {

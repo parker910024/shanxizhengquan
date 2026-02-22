@@ -2,9 +2,12 @@
 //  StockTradeViewController.swift
 //  zhengqaun
 //
-//  股票交易详情页：参考设计图实现买入流程
-//  布局：代码行 → 盘中行 → 现价行 → 数量行 → 现金仓位 → 金额 → 有效期 → 五档盘口 → 市值/手续费/可用额度/可购买股数
-//  底部固定：买入金额 + 买入按钮
+//  股票买入页 — 参考 Android BuyActivity 逻辑实现
+//  布局：代码行 → 盘中行 → 分隔 → 现价行 → 数量行（手数 ±1）→ 现金仓位 →
+//        金额标签 → 大金额显示 → 有效期（当日有效）→ 五档盘口（左卖右买）→
+//        市值/手续费/可用额度/可购买股数
+//  底部固定：买入金额 + 买入按钮（点击弹出确认弹窗后提交）
+//  5 秒轮询东方财富行情 + 五档数据
 //
 
 import UIKit
@@ -12,43 +15,54 @@ import UIKit
 class StockTradeViewController: ZQViewController {
 
     // MARK: - 入参（由上级 VC 赋值）
-    var stockName:     String = "源杰科技"
-    var stockCode:     String = "688498"
-    var stockAllcode:  String = "sh688498"   // 完整 allcode，如 sh688498 / sz300170
-    var exchange:      String = "北"          // 北/沪/深/科
-    var currentPrice:  Double = 823.00
-    var changeAmount:  String = "+13.96"
-    var changePercent: String = "+1.72"
+    var stockName:     String = ""
+    var stockCode:     String = ""
+    var stockAllcode:  String = ""       // 完整 allcode，如 sh688498 / sz300170
+    var exchange:      String = ""       // 北/沪/深/科
+    var currentPrice:  Double = 0
+    var changeAmount:  Double = 0
+    var changePercent: Double = 0
 
-    // MARK: - 颜色
-    private let themeRed   = UIColor(red: 230/255, green: 0,       blue: 18/255,  alpha: 1)
-    private let themeGreen = UIColor(red: 0.13,    green: 0.73,    blue: 0.33,    alpha: 1)
-    private let textPri    = UIColor(red: 43/255,  green: 44/255,  blue: 49/255,  alpha: 1)
-    private let textSec    = UIColor(red: 0.55,    green: 0.56,    blue: 0.58,    alpha: 1)
-    private let bgGray     = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
-    private let btnGray    = UIColor(red: 0.94,    green: 0.94,    blue: 0.95,    alpha: 1)
-    private let sepColor   = UIColor(red: 0.93,    green: 0.93,    blue: 0.94,    alpha: 1)
+    // MARK: - 颜色（与 Android activity_buy.xml 对齐）
+    private let themeRed   = UIColor(red: 0xE0/255, green: 0x42/255, blue: 0x30/255, alpha: 1) // #E04230
+    private let themeGreen = UIColor(red: 0x2C/255, green: 0xC7/255, blue: 0x84/255, alpha: 1) // #2CC784
+    private let tagBlue    = UIColor(red: 0x4A/255, green: 0x90/255, blue: 0xD9/255, alpha: 1) // #4A90D9
+    private let textPri    = UIColor(red: 0x23/255, green: 0x23/255, blue: 0x23/255, alpha: 1) // #232323
+    private let textSec    = UIColor(red: 0xA5/255, green: 0xA5/255, blue: 0xA5/255, alpha: 1) // #A5A5A5
+    private let bgGray     = UIColor(red: 0xF5/255, green: 0xF5/255, blue: 0xF5/255, alpha: 1) // #F5F5F5
+    private let btnGray    = UIColor(red: 0xEE/255, green: 0xEE/255, blue: 0xEE/255, alpha: 1) // #EEEEEE
+    private let sepColor   = UIColor(red: 0xEE/255, green: 0xEE/255, blue: 0xEE/255, alpha: 1)
+
+    // MARK: - 常量
+    private static let FEE_RATE: Double = 0.0001   // 0.01 %
+    private static let POLL_INTERVAL: TimeInterval = 5.0
 
     // MARK: - UI
     private let scrollView  = UIScrollView()
     private let contentView = UIView()
 
-    // 数量
+    // 盘中行（需要轮询刷新）
+    private var priceHeaderLabel: UILabel!
+    private var currentPriceLabel: UILabel!
+    private var stockNameLabel: UILabel!
+
+    // 数量（单位：手，1 手 = 100 股）
     private var quantityField: UITextField!
     private var quantity: Int = 0
+    private var ignoreQuantityChange = false
 
     // 仓位按钮
     private var positionButtons: [UIButton] = []
-    private var selectedPositionIdx = -1
 
     // 金额显示
     private var amountLabel: UILabel!
 
-    // 五档盘口
+    // 五档盘口 — 各档 vol / price 标签
     private struct OrderLevel { var vol: String; var price: String }
-    private var sellLevels: [OrderLevel] = Array(repeating: .init(vol: "--", price: "--"), count: 5)
-    private var buyLevels:  [OrderLevel] = Array(repeating: .init(vol: "--", price: "--"), count: 5)
-    private var orderBoardRows: [UIView] = []     // 10 行视图（卖1 → 卖5，买1 → 买5）
+    private var askVolLabels:   [UILabel] = []    // 卖5→卖1 (index 0=卖5, 4=卖1)
+    private var askPriceLabels: [UILabel] = []
+    private var bidVolLabels:   [UILabel] = []    // 买1→买5 (index 0=买1, 4=买5)
+    private var bidPriceLabels: [UILabel] = []
 
     // 底部信息标签
     private var marketValueLabel:   UILabel!
@@ -57,13 +71,14 @@ class StockTradeViewController: ZQViewController {
     private var canBuySharesLabel:  UILabel!
 
     // 底部栏
-    private var buyAmountLabel:     UILabel!
+    private var buyAmountLabel:      UILabel!
     private var accountBalanceLabel: UILabel!
+    private var buyButton:           UIButton!
 
-    // 配置
-    private var feePct: Double = 0.0001       // 默认 0.01%
-    private var accountBalance: Double = 0
-    private var availableMoney: Double = 0
+    // 数据
+    private var userBalance: Double = 0
+    private var polling = false
+    private var pollTimer: Timer?
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -73,6 +88,16 @@ class StockTradeViewController: ZQViewController {
         setupScrollView()
         setupBottomBar()
         loadInitialData()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        startPolling()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        stopPolling()
     }
 
     // MARK: - 导航栏
@@ -85,8 +110,7 @@ class StockTradeViewController: ZQViewController {
         gk_navLineHidden       = false
         gk_statusBarStyle      = .default
 
-        // 右侧：客服 + 搜索
-        let kfBtn  = makeNavIconButton(systemName: "headphones",  action: #selector(kfTapped))
+        let kfBtn  = makeNavIconButton(systemName: "headphones",      action: #selector(kfTapped))
         let schBtn = makeNavIconButton(systemName: "magnifyingglass", action: #selector(searchTapped))
         let stack  = UIStackView(arrangedSubviews: [kfBtn, schBtn])
         stack.spacing = 4
@@ -105,13 +129,16 @@ class StockTradeViewController: ZQViewController {
         return btn
     }
 
-    @objc private func kfTapped()     {}
-    @objc private func searchTapped() {}
+    @objc private func kfTapped()     { Toast.show("客服功能开发中") }
+    @objc private func searchTapped() {
+        let vc = StockSearchViewController()
+        navigationController?.pushViewController(vc, animated: true)
+    }
 
-    // MARK: - ScrollView + 内容
+    // MARK: - ScrollView
     private func setupScrollView() {
         scrollView.showsVerticalScrollIndicator = false
-        scrollView.backgroundColor = .white
+        scrollView.backgroundColor = bgGray
         view.addSubview(scrollView)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -123,8 +150,7 @@ class StockTradeViewController: ZQViewController {
                                             constant: Constants.Navigation.contentTopBelowGKNavBar),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor,
-                                               constant: -bottomBarHeight),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -bottomBarHeight),
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
@@ -136,70 +162,95 @@ class StockTradeViewController: ZQViewController {
     }
 
     private var bottomBarHeight: CGFloat {
-        return 60 + Constants.Navigation.safeAreaBottom
+        return 72 + Constants.Navigation.safeAreaBottom
     }
 
     // MARK: - 内容区构建
     private func buildContent() {
         var last: UIView? = nil
 
+        // 白色卡片容器（代码 → 有效期）
+        let card = UIView()
+        card.backgroundColor = .white
+        contentView.addSubview(card)
+        card.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            card.topAnchor.constraint(equalTo: contentView.topAnchor),
+            card.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        ])
+
+        var cardLast: UIView? = nil
+
         // 1 — 代码行
-        last = addCodeRow(after: last)
-
-        // 2 — 盘中行（市场状态 + 涨跌）
-        last = addMarketStatusRow(after: last)
-
-        // 3 — 分隔
-        last = addSep(after: last)
-
+        cardLast = addCodeRow(in: card, after: cardLast)
+        // 2 — 盘中行
+        cardLast = addMarketStatusRow(in: card, after: cardLast)
+        // 3 — 分隔线
+        cardLast = addSepLineRow(in: card, after: cardLast)
         // 4 — 现价行
-        last = addPriceRow(after: last)
-
+        cardLast = addPriceRow(in: card, after: cardLast)
         // 5 — 数量行
-        last = addQuantityRow(after: last)
+        cardLast = addQuantityRow(in: card, after: cardLast)
+        // 6 — 现金仓位
+        cardLast = addPositionRow(in: card, after: cardLast)
+        // 7 — 金额标签行
+        cardLast = addAmountLabelRow(in: card, after: cardLast)
+        // 8 — 金额大字
+        cardLast = addAmountDisplay(in: card, after: cardLast)
+        // 9 — 有效期
+        cardLast = addValidityRow(in: card, after: cardLast)
 
-        // 6 — 现金仓位行
-        last = addPositionRow(after: last)
+        // 卡片底部约束
+        card.bottomAnchor.constraint(equalTo: cardLast!.bottomAnchor).isActive = true
+        last = card
 
-        // 7 — 金额大字显示
-        last = addAmountDisplay(after: last)
-
-        // 8 — 有效期行
-        last = addValidityRow(after: last)
-
-        // 9 — 分隔
+        // 8dp 间距
         last = addSep(after: last)
 
-        // 10 — 五档盘口
+        // 五档盘口
         last = addOrderBoard(after: last)
 
-        // 11 — 分隔
+        // 8dp 间距
         last = addSep(after: last)
 
-        // 12 — 市值 / 手续费 / 可用额度 / 可购买股数
-        last = addInfoRow(title: "市值", after: last) { lbl in
-            lbl.text = String(format: "¥%.2f", self.currentPrice)
-            self.marketValueLabel = lbl
+        // 底部信息卡片
+        let infoCard = UIView()
+        infoCard.backgroundColor = .white
+        contentView.addSubview(infoCard)
+        infoCard.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            infoCard.topAnchor.constraint(equalTo: last!.bottomAnchor),
+            infoCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            infoCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        ])
+
+        var infoLast: UIView? = nil
+        infoLast = addInfoRow(title: "市值", in: infoCard, after: infoLast) { [weak self] lbl in
+            lbl.text = "--"
+            self?.marketValueLabel = lbl
         }
-        last = addInfoRow(title: "手续费（\(Int(feePct * 10000) == 1 ? "0.01" : String(format: "%.2f", feePct * 100))%）", after: last) { lbl in
-            lbl.text = String(format: "¥%.2f", self.currentPrice * self.feePct)
-            self.serviceFeeLabel = lbl
+        infoLast = addInfoRow(title: "手续费（0.01%）", in: infoCard, after: infoLast) { [weak self] lbl in
+            lbl.text = "--"
+            self?.serviceFeeLabel = lbl
         }
-        last = addInfoRow(title: "可用额度", after: last) { lbl in
-            lbl.text = String(format: "¥%.2f", self.currentPrice)
-            self.availableLabel = lbl
+        infoLast = addInfoRow(title: "可用额度", in: infoCard, after: infoLast) { [weak self] lbl in
+            lbl.text = "--"
+            self?.availableLabel = lbl
         }
-        last = addInfoRow(title: "可购买股数", after: last) { lbl in
-            lbl.text = "--股"
-            self.canBuySharesLabel = lbl
+        infoLast = addInfoRow(title: "可购买股数", in: infoCard, after: infoLast, showSep: false) { [weak self] lbl in
+            lbl.text = "--"
+            self?.canBuySharesLabel = lbl
         }
+
+        infoCard.bottomAnchor.constraint(equalTo: infoLast!.bottomAnchor).isActive = true
 
         // 底部留白
         let pad = UIView()
         contentView.addSubview(pad)
         pad.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            pad.topAnchor.constraint(equalTo: last!.bottomAnchor),
+            pad.topAnchor.constraint(equalTo: infoCard.bottomAnchor),
             pad.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             pad.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             pad.heightAnchor.constraint(equalToConstant: 20),
@@ -209,209 +260,210 @@ class StockTradeViewController: ZQViewController {
 
     // MARK: - 行构建辅助
 
-    /// 代码行：代码 | [北] 源杰科技688498
-    private func addCodeRow(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 44, after: prev)
+    /// 代码行：代码 | [北] 源杰科技 688498
+    private func addCodeRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 40, in: container, after: prev, padH: 16)
 
-        let titleLbl   = makeLabel("代码", font: .systemFont(ofSize: 14), color: textSec)
-        let badgeLbl   = makeBadge(exchange)
-        let stockLabel = makeLabel("\(stockName)\(stockCode)",
-                                   font: .systemFont(ofSize: 15, weight: .medium), color: textPri)
+        let titleLbl = makeLabel("代码", font: .systemFont(ofSize: 13), color: textSec)
+        let badgeLbl = makeBadge(exchange.isEmpty ? stockAllcode.prefix(2).uppercased() : exchange)
+        let nameLbl  = makeLabel("--", font: .systemFont(ofSize: 15, weight: .medium), color: textPri)
+        stockNameLabel = nameLbl
+        if !stockName.isEmpty { nameLbl.text = stockName }
 
-        let rightStack = UIStackView(arrangedSubviews: [badgeLbl, stockLabel])
-        rightStack.spacing = 6
-        rightStack.alignment = .center
+        let rightStack = UIStackView(arrangedSubviews: [badgeLbl, nameLbl])
+        rightStack.spacing = 4; rightStack.alignment = .center
 
         row.addSubview(titleLbl)
         row.addSubview(rightStack)
         titleLbl.translatesAutoresizingMaskIntoConstraints = false
         rightStack.translatesAutoresizingMaskIntoConstraints = false
-
         NSLayoutConstraint.activate([
-            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            rightStack.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
+            rightStack.leadingAnchor.constraint(equalTo: titleLbl.trailingAnchor, constant: 8),
             rightStack.centerYAnchor.constraint(equalTo: row.centerYAnchor)
         ])
         return row
     }
 
-    /// 盘中状态行
-    private func addMarketStatusRow(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 36, after: prev)
+    /// 盘中行
+    private func addMarketStatusRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 30, in: container, after: prev, padH: 16)
 
-        let isRise = !changePercent.hasPrefix("-")
-        let color  = isRise ? themeRed : themeGreen
-
-        let statusLbl  = makeLabel("盘中", font: .systemFont(ofSize: 13), color: textSec)
-        let priceLbl   = makeLabel(String(format: "%.2f", currentPrice),
-                                    font: .boldSystemFont(ofSize: 15), color: color)
-        let changeLbl  = makeLabel("\(isRise ? "+" : "")\(changePercent)%",
-                                    font: .systemFont(ofSize: 13), color: color)
-
-        let valStack = UIStackView(arrangedSubviews: [priceLbl, changeLbl])
-        valStack.spacing = 8
-        valStack.alignment = .center
+        let statusLbl = makeLabel("盘中", font: .systemFont(ofSize: 13), color: textSec)
+        let priceLbl  = makeLabel("--", font: .systemFont(ofSize: 15), color: themeRed)
+        priceHeaderLabel = priceLbl
 
         row.addSubview(statusLbl)
-        row.addSubview(valStack)
+        row.addSubview(priceLbl)
         statusLbl.translatesAutoresizingMaskIntoConstraints = false
-        valStack.translatesAutoresizingMaskIntoConstraints = false
-
+        priceLbl.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            statusLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            statusLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             statusLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            valStack.leadingAnchor.constraint(equalTo: statusLbl.trailingAnchor, constant: 8),
-            valStack.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+            priceLbl.leadingAnchor.constraint(equalTo: statusLbl.trailingAnchor, constant: 12),
+            priceLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
         ])
+        if currentPrice > 0 { renderHeader() }
         return row
     }
 
     /// 现价行
-    private func addPriceRow(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 48, after: prev)
+    private func addPriceRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 48, in: container, after: prev, padH: 16)
         let titleLbl = makeLabel("现价", font: .systemFont(ofSize: 14), color: textSec)
-        let valLbl   = makeLabel(String(format: "%.2f", currentPrice),
+        let valLbl   = makeLabel(currentPrice > 0 ? formatPrice(currentPrice) : "--",
                                   font: .systemFont(ofSize: 15), color: textPri)
+        currentPriceLabel = valLbl
+        titleLbl.setContentHuggingPriority(.required, for: .horizontal)
+
         row.addSubview(titleLbl)
         row.addSubview(valLbl)
         [titleLbl, valLbl].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         NSLayoutConstraint.activate([
-            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            valLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 80),
+            titleLbl.widthAnchor.constraint(equalToConstant: 64),
+            valLbl.leadingAnchor.constraint(equalTo: titleLbl.trailingAnchor),
             valLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
         ])
-        addSepLine(to: row)
+        addSepLine(to: row, inset: 0)
         return row
     }
 
-    /// 数量行：数量 — [field] +
-    private func addQuantityRow(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 52, after: prev)
+    /// 数量行（手数 stepper）
+    private func addQuantityRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 56, in: container, after: prev, padH: 16)
 
         let titleLbl = makeLabel("数量", font: .systemFont(ofSize: 14), color: textSec)
+        titleLbl.setContentHuggingPriority(.required, for: .horizontal)
 
-        // 减号按钮
-        let minusBtn = makeStepButton(title: "－")
+        let minusBtn = makeStepButton(title: "−")
         minusBtn.addTarget(self, action: #selector(minusTapped), for: .touchUpInside)
 
-        // 输入框
         let field = UITextField()
         field.keyboardType   = .numberPad
         field.textAlignment  = .center
-        field.font           = .systemFont(ofSize: 17)
+        field.font           = .boldSystemFont(ofSize: 16)
         field.textColor      = textPri
         field.borderStyle    = .none
-        field.placeholder    = "0"
+        field.text           = "0"
         field.addTarget(self, action: #selector(quantityChanged), for: .editingChanged)
         quantityField = field
 
-        // 加号按钮
-        let plusBtn = makeStepButton(title: "＋")
+        let plusBtn = makeStepButton(title: "+")
         plusBtn.addTarget(self, action: #selector(plusTapped), for: .touchUpInside)
 
-        let inputWrap = UIView()
-        inputWrap.layer.cornerRadius = 6
-        inputWrap.layer.borderWidth  = 1
-        inputWrap.layer.borderColor  = sepColor.cgColor
-        inputWrap.backgroundColor    = .white
+        // stepper 容器
+        let stepWrap = UIView()
+        stepWrap.layer.cornerRadius = 4
+        stepWrap.layer.borderWidth  = 1
+        stepWrap.layer.borderColor  = sepColor.cgColor
         [minusBtn, field, plusBtn].forEach {
-            inputWrap.addSubview($0)
+            stepWrap.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
         NSLayoutConstraint.activate([
-            minusBtn.leadingAnchor.constraint(equalTo: inputWrap.leadingAnchor),
-            minusBtn.topAnchor.constraint(equalTo: inputWrap.topAnchor),
-            minusBtn.bottomAnchor.constraint(equalTo: inputWrap.bottomAnchor),
-            minusBtn.widthAnchor.constraint(equalToConstant: 40),
+            minusBtn.leadingAnchor.constraint(equalTo: stepWrap.leadingAnchor),
+            minusBtn.topAnchor.constraint(equalTo: stepWrap.topAnchor),
+            minusBtn.bottomAnchor.constraint(equalTo: stepWrap.bottomAnchor),
+            minusBtn.widthAnchor.constraint(equalToConstant: 36),
 
-            plusBtn.trailingAnchor.constraint(equalTo: inputWrap.trailingAnchor),
-            plusBtn.topAnchor.constraint(equalTo: inputWrap.topAnchor),
-            plusBtn.bottomAnchor.constraint(equalTo: inputWrap.bottomAnchor),
-            plusBtn.widthAnchor.constraint(equalToConstant: 40),
+            plusBtn.trailingAnchor.constraint(equalTo: stepWrap.trailingAnchor),
+            plusBtn.topAnchor.constraint(equalTo: stepWrap.topAnchor),
+            plusBtn.bottomAnchor.constraint(equalTo: stepWrap.bottomAnchor),
+            plusBtn.widthAnchor.constraint(equalToConstant: 36),
 
-            field.leadingAnchor.constraint(equalTo: minusBtn.trailingAnchor, constant: 4),
-            field.trailingAnchor.constraint(equalTo: plusBtn.leadingAnchor, constant: -4),
-            field.topAnchor.constraint(equalTo: inputWrap.topAnchor),
-            field.bottomAnchor.constraint(equalTo: inputWrap.bottomAnchor)
+            field.leadingAnchor.constraint(equalTo: minusBtn.trailingAnchor),
+            field.trailingAnchor.constraint(equalTo: plusBtn.leadingAnchor),
+            field.topAnchor.constraint(equalTo: stepWrap.topAnchor),
+            field.bottomAnchor.constraint(equalTo: stepWrap.bottomAnchor)
         ])
 
         row.addSubview(titleLbl)
-        row.addSubview(inputWrap)
+        row.addSubview(stepWrap)
         titleLbl.translatesAutoresizingMaskIntoConstraints = false
-        inputWrap.translatesAutoresizingMaskIntoConstraints = false
-
+        stepWrap.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            inputWrap.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
-            inputWrap.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            inputWrap.widthAnchor.constraint(equalToConstant: 160),
-            inputWrap.heightAnchor.constraint(equalToConstant: 36)
+            titleLbl.widthAnchor.constraint(equalToConstant: 64),
+            stepWrap.leadingAnchor.constraint(equalTo: titleLbl.trailingAnchor),
+            stepWrap.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            stepWrap.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            stepWrap.heightAnchor.constraint(equalToConstant: 36)
         ])
-        addSepLine(to: row)
+        addSepLine(to: row, inset: 0)
         return row
     }
 
-    /// 现金仓位行：现金  1/4  1/3  1/2  全仓
-    private func addPositionRow(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 52, after: prev)
+    /// 现金仓位行
+    private func addPositionRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 48, in: container, after: prev, padH: 16)
 
         let titleLbl = makeLabel("现金", font: .systemFont(ofSize: 14), color: textSec)
+        titleLbl.setContentHuggingPriority(.required, for: .horizontal)
         row.addSubview(titleLbl)
         titleLbl.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
-            titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            titleLbl.widthAnchor.constraint(equalToConstant: 64)
         ])
 
         let labels = ["1/4", "1/3", "1/2", "全仓"]
-        var lastBtn: UIButton? = nil
-        positionButtons = []
+        let btnStack = UIStackView()
+        btnStack.axis = .horizontal
+        btnStack.spacing = 6
+        btnStack.distribution = .fillEqually
 
+        positionButtons = []
         for (i, t) in labels.enumerated() {
             let btn = UIButton(type: .custom)
             btn.setTitle(t, for: .normal)
             btn.setTitleColor(textPri, for: .normal)
-            btn.setTitleColor(.white, for: .selected)
-            btn.titleLabel?.font = .systemFont(ofSize: 13)
+            btn.titleLabel?.font = .boldSystemFont(ofSize: 12)
             btn.backgroundColor  = btnGray
-            btn.layer.cornerRadius = 6
+            btn.layer.cornerRadius = 4
             btn.tag = i
             btn.addTarget(self, action: #selector(positionTapped(_:)), for: .touchUpInside)
-            row.addSubview(btn)
             btn.translatesAutoresizingMaskIntoConstraints = false
-
-            if let prev2 = lastBtn {
-                NSLayoutConstraint.activate([
-                    btn.leadingAnchor.constraint(equalTo: prev2.trailingAnchor, constant: 8)
-                ])
-            } else {
-                // 第一个按钮 align 靠近 titleLbl 右边但留 16 让 titleLbl 不遮住
-                NSLayoutConstraint.activate([
-                    btn.leadingAnchor.constraint(equalTo: titleLbl.trailingAnchor, constant: 16)
-                ])
-            }
-            NSLayoutConstraint.activate([
-                btn.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                btn.widthAnchor.constraint(equalToConstant: 52),
-                btn.heightAnchor.constraint(equalToConstant: 32)
-            ])
+            btn.heightAnchor.constraint(equalToConstant: 30).isActive = true
+            btnStack.addArrangedSubview(btn)
             positionButtons.append(btn)
-            lastBtn = btn
         }
-        addSepLine(to: row)
+
+        row.addSubview(btnStack)
+        btnStack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            btnStack.leadingAnchor.constraint(equalTo: titleLbl.trailingAnchor),
+            btnStack.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            btnStack.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+        ])
+        addSepLine(to: row, inset: 0)
         return row
     }
 
-    /// 金额大字行
-    private func addAmountDisplay(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 72, after: prev)
+    /// 金额标签行
+    private func addAmountLabelRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 48, in: container, after: prev, padH: 16)
+        let lbl = makeLabel("金额", font: .systemFont(ofSize: 14), color: textSec)
+        row.addSubview(lbl)
+        lbl.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            lbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            lbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            lbl.widthAnchor.constraint(equalToConstant: 64)
+        ])
+        return row
+    }
 
+    /// 大金额显示
+    private func addAmountDisplay(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 48, in: container, after: prev, padH: 16)
         let lbl = UILabel()
-        lbl.text = "¥ 0.00"
-        lbl.font = .boldSystemFont(ofSize: 32)
+        lbl.text = "￥0.00"
+        lbl.font = .boldSystemFont(ofSize: 28)
         lbl.textColor = textPri
         lbl.textAlignment = .center
         row.addSubview(lbl)
@@ -421,33 +473,37 @@ class StockTradeViewController: ZQViewController {
             lbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
         ])
         amountLabel = lbl
-        addSepLine(to: row)
+        addSepLine(to: row, inset: 0)
         return row
     }
 
-    /// 有效期行
-    private func addValidityRow(after prev: UIView?) -> UIView {
-        let row = makeRow(height: 48, after: prev)
-        let lbl = makeLabel("有效期", font: .systemFont(ofSize: 14), color: textSec)
-        row.addSubview(lbl)
-        lbl.translatesAutoresizingMaskIntoConstraints = false
+    /// 有效期行（当日有效）
+    private func addValidityRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = makeRow(height: 48, in: container, after: prev, padH: 16)
+        let titleLbl = makeLabel("有效期", font: .systemFont(ofSize: 14), color: textSec)
+        let valLbl   = makeLabel("当日有效", font: .systemFont(ofSize: 14), color: textPri)
+        row.addSubview(titleLbl)
+        row.addSubview(valLbl)
+        [titleLbl, valLbl].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         NSLayoutConstraint.activate([
-            lbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
-            lbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            titleLbl.widthAnchor.constraint(equalToConstant: 64),
+            valLbl.leadingAnchor.constraint(equalTo: titleLbl.trailingAnchor),
+            valLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
         ])
         return row
     }
 
-    // MARK: - 五档盘口
+    // MARK: - 五档盘口（Android 横向布局：左卖 | 中轴 | 右买）
     private func addOrderBoard(after prev: UIView?) -> UIView {
-        // 高度：5 卖行 + 5 买行，每行 34pt，中间 bar 区 10pt
-        let rowH: CGFloat   = 34
-        let boardH: CGFloat = rowH * 10 + 10
+        let rowH: CGFloat  = 28
+        let boardH: CGFloat = rowH * 5 + 16   // 5行 + 上下 padding 各 8
+
         let board = UIView()
         board.backgroundColor = .white
         contentView.addSubview(board)
         board.translatesAutoresizingMaskIntoConstraints = false
-
         let prevAnchor = prev?.bottomAnchor ?? contentView.topAnchor
         NSLayoutConstraint.activate([
             board.topAnchor.constraint(equalTo: prevAnchor),
@@ -456,164 +512,141 @@ class StockTradeViewController: ZQViewController {
             board.heightAnchor.constraint(equalToConstant: boardH)
         ])
 
-        // 中间竖线（红蓝渐变）
-        let barW: CGFloat = 2
-        let centerBar = UIView()
-        centerBar.layer.cornerRadius = 1
-        board.addSubview(centerBar)
-        centerBar.translatesAutoresizingMaskIntoConstraints = false
+        // 左半（卖盘）
+        let sellStack = UIStackView()
+        sellStack.axis = .vertical; sellStack.distribution = .fillEqually
+        board.addSubview(sellStack)
+        sellStack.translatesAutoresizingMaskIntoConstraints = false
+
+        // 中轴
+        let centerCol = UIView()
+        board.addSubview(centerCol)
+        centerCol.translatesAutoresizingMaskIntoConstraints = false
+
+        // 右半（买盘）
+        let buyStack = UIStackView()
+        buyStack.axis = .vertical; buyStack.distribution = .fillEqually
+        board.addSubview(buyStack)
+        buyStack.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
-            centerBar.centerXAnchor.constraint(equalTo: board.centerXAnchor),
-            centerBar.topAnchor.constraint(equalTo: board.topAnchor, constant: 4),
-            centerBar.bottomAnchor.constraint(equalTo: board.bottomAnchor, constant: -4),
-            centerBar.widthAnchor.constraint(equalToConstant: barW)
+            sellStack.topAnchor.constraint(equalTo: board.topAnchor, constant: 8),
+            sellStack.bottomAnchor.constraint(equalTo: board.bottomAnchor, constant: -8),
+            sellStack.leadingAnchor.constraint(equalTo: board.leadingAnchor, constant: 12),
+
+            centerCol.topAnchor.constraint(equalTo: board.topAnchor, constant: 8),
+            centerCol.bottomAnchor.constraint(equalTo: board.bottomAnchor, constant: -8),
+            centerCol.centerXAnchor.constraint(equalTo: board.centerXAnchor),
+            centerCol.widthAnchor.constraint(equalToConstant: 28),
+            centerCol.leadingAnchor.constraint(equalTo: sellStack.trailingAnchor),
+
+            buyStack.topAnchor.constraint(equalTo: board.topAnchor, constant: 8),
+            buyStack.bottomAnchor.constraint(equalTo: board.bottomAnchor, constant: -8),
+            buyStack.leadingAnchor.constraint(equalTo: centerCol.trailingAnchor),
+            buyStack.trailingAnchor.constraint(equalTo: board.trailingAnchor, constant: -12)
         ])
 
-        DispatchQueue.main.async {
-            let grad = CAGradientLayer()
-            grad.frame = centerBar.bounds
-            grad.colors = [self.themeRed.cgColor, self.themeGreen.cgColor]
-            grad.startPoint = CGPoint(x: 0.5, y: 0)
-            grad.endPoint   = CGPoint(x: 0.5, y: 1)
-            centerBar.layer.insertSublayer(grad, at: 0)
+        // 中轴内容：买 label + red bar + green bar + 卖 label
+        let buyTagLbl  = makeLabel("买", font: .systemFont(ofSize: 10), color: themeRed)
+        buyTagLbl.textAlignment = .center
+        let sellTagLbl = makeLabel("卖", font: .systemFont(ofSize: 10), color: themeGreen)
+        sellTagLbl.textAlignment = .center
+        let redBar  = UIView(); redBar.backgroundColor = themeRed
+        let grnBar  = UIView(); grnBar.backgroundColor = themeGreen
+
+        let centerStack = UIStackView(arrangedSubviews: [buyTagLbl, redBar, grnBar, sellTagLbl])
+        centerStack.axis = .vertical
+        centerStack.alignment = .center
+        centerCol.addSubview(centerStack)
+        centerStack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            centerStack.topAnchor.constraint(equalTo: centerCol.topAnchor),
+            centerStack.bottomAnchor.constraint(equalTo: centerCol.bottomAnchor),
+            centerStack.centerXAnchor.constraint(equalTo: centerCol.centerXAnchor),
+            centerStack.widthAnchor.constraint(equalTo: centerCol.widthAnchor),
+            buyTagLbl.heightAnchor.constraint(equalTo: centerStack.heightAnchor, multiplier: 0.15),
+            sellTagLbl.heightAnchor.constraint(equalTo: centerStack.heightAnchor, multiplier: 0.15),
+            redBar.widthAnchor.constraint(equalToConstant: 2),
+            grnBar.widthAnchor.constraint(equalToConstant: 2),
+            redBar.heightAnchor.constraint(equalTo: centerStack.heightAnchor, multiplier: 0.35),
+            grnBar.heightAnchor.constraint(equalTo: centerStack.heightAnchor, multiplier: 0.35)
+        ])
+
+        askVolLabels   = []
+        askPriceLabels = []
+        bidVolLabels   = []
+        bidPriceLabels = []
+
+        // 卖盘行（卖5→卖1）
+        let sellTitles = ["卖5", "卖4", "卖3", "卖2", "卖1"]
+        for title in sellTitles {
+            let (rowView, volLbl, priceLbl) = buildOrderBoardRow(levelTitle: title, accentColor: themeRed)
+            sellStack.addArrangedSubview(rowView)
+            askVolLabels.append(volLbl)
+            askPriceLabels.append(priceLbl)
         }
 
-        // 中间"买"/"卖"标签
-        let buyTag = makeLabel("买", font: .systemFont(ofSize: 11), color: .white)
-        let selTag = makeLabel("卖", font: .systemFont(ofSize: 11), color: .white)
-        for (tag, color, yOffset) in [(buyTag, themeRed, 0.3), (selTag, themeGreen, 0.7)] {
-            let bg = UIView()
-            bg.backgroundColor = color
-            bg.layer.cornerRadius = 2
-            board.addSubview(bg)
-            bg.translatesAutoresizingMaskIntoConstraints = false
-            bg.addSubview(tag)
-            tag.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                bg.centerXAnchor.constraint(equalTo: board.centerXAnchor),
-                bg.centerYAnchor.constraint(equalTo: board.topAnchor,
-                                             constant: boardH * yOffset),
-                bg.widthAnchor.constraint(equalToConstant: 18),
-                bg.heightAnchor.constraint(equalToConstant: 18),
-                tag.centerXAnchor.constraint(equalTo: bg.centerXAnchor),
-                tag.centerYAnchor.constraint(equalTo: bg.centerYAnchor)
-            ])
-        }
-
-        orderBoardRows = []
-
-        // 卖行：卖5 ... 卖1（从上到下，卖5 在第 0 行）
-        for i in 0..<5 {
-            let lvIdx  = 4 - i   // 0=卖5,4=卖1
-            let label  = "卖\(5 - i)"
-            let row    = buildOrderRow(isSell: true, levelLabel: label, rowIndex: i,
-                                       boardHeight: boardH, in: board)
-            orderBoardRows.append(row)
-            _ = lvIdx  // 用于后续刷新
-        }
-
-        // 买行：买1 ... 买5
-        for i in 0..<5 {
-            let label = "买\(i + 1)"
-            let row   = buildOrderRow(isSell: false, levelLabel: label, rowIndex: i + 5,
-                                      boardHeight: boardH, in: board)
-            orderBoardRows.append(row)
+        // 买盘行（买1→买5）
+        let buyTitles = ["买1", "买2", "买3", "买4", "买5"]
+        for title in buyTitles {
+            let (rowView, volLbl, priceLbl) = buildOrderBoardRow(levelTitle: title, accentColor: themeRed)
+            buyStack.addArrangedSubview(rowView)
+            bidVolLabels.append(volLbl)
+            bidPriceLabels.append(priceLbl)
         }
 
         return board
     }
 
-    /// 构建盘口单行（固定布局，用 tag 在刷新时快速找到 label）
-    private func buildOrderRow(isSell: Bool, levelLabel: String,
-                                rowIndex: Int, boardHeight: CGFloat, in board: UIView) -> UIView {
-        let rowH: CGFloat = 34
-        let yOffset = CGFloat(rowIndex) * rowH + (rowIndex >= 5 ? 10 : 0)
-
+    private func buildOrderBoardRow(levelTitle: String, accentColor: UIColor) -> (UIView, UILabel, UILabel) {
         let row = UIView()
-        board.addSubview(row)
-        row.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            row.topAnchor.constraint(equalTo: board.topAnchor, constant: yOffset),
-            row.leadingAnchor.constraint(equalTo: board.leadingAnchor),
-            row.trailingAnchor.constraint(equalTo: board.trailingAnchor),
-            row.heightAnchor.constraint(equalToConstant: rowH)
-        ])
-
-        // 颜色：卖行红，买行绿（成交量字体颜色，价格红/绿）
-        let accentColor = isSell ? themeRed : themeGreen
-
-        // 左半：级别 | 量（红/绿）| 价格（右对齐近中线）
-        let levelLbl = makeLabel(levelLabel, font: .systemFont(ofSize: 12), color: textSec)
-        let volLbl   = makeLabel("--", font: .systemFont(ofSize: 13, weight: .medium), color: accentColor)
-        let priceLbl = makeLabel("--", font: .systemFont(ofSize: 13), color: textPri)
-
-        // tag 方案：每行基 offset = rowIndex * 10
-        //   +1 = levelLbl, +2 = volLbl, +3 = priceLbl
-        levelLbl.tag = rowIndex * 10 + 1
-        volLbl.tag   = rowIndex * 10 + 2
-        priceLbl.tag = rowIndex * 10 + 3
+        let levelLbl = makeLabel(levelTitle, font: .systemFont(ofSize: 12), color: textSec)
+        let volLbl   = makeLabel("--", font: .systemFont(ofSize: 12), color: accentColor)
+        volLbl.textAlignment = .center
+        let priceLbl = makeLabel("--", font: .systemFont(ofSize: 12), color: textPri)
+        priceLbl.textAlignment = .right
 
         [levelLbl, volLbl, priceLbl].forEach {
             row.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
-
-        if isSell {
-            // 卖方：级别靠左，量在中间（居左），价靠近竖线
-            NSLayoutConstraint.activate([
-                levelLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 14),
-                levelLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                volLbl.leadingAnchor.constraint(equalTo: levelLbl.trailingAnchor, constant: 12),
-                volLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                priceLbl.trailingAnchor.constraint(equalTo: row.centerXAnchor, constant: -20),
-                priceLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
-            ])
-        } else {
-            // 买方：价靠近竖线，量在中间（居右），级别靠右
-            NSLayoutConstraint.activate([
-                priceLbl.leadingAnchor.constraint(equalTo: row.centerXAnchor, constant: 20),
-                priceLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                volLbl.trailingAnchor.constraint(equalTo: levelLbl.leadingAnchor, constant: -12),
-                volLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-                levelLbl.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -14),
-                levelLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
-            ])
-        }
-
-        return row
+        NSLayoutConstraint.activate([
+            levelLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            levelLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            levelLbl.widthAnchor.constraint(equalToConstant: 28),
+            volLbl.leadingAnchor.constraint(equalTo: levelLbl.trailingAnchor),
+            volLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            priceLbl.leadingAnchor.constraint(equalTo: volLbl.trailingAnchor),
+            priceLbl.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            priceLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            volLbl.widthAnchor.constraint(equalTo: priceLbl.widthAnchor)
+        ])
+        return (row, volLbl, priceLbl)
     }
 
-    /// 刷新五档盘口显示
-    private func refreshOrderBoard() {
-        // 卖行 rowIndex 0-4  → sellLevels[4-0] (卖5 在第0行)
+    /// 刷新五档盘口
+    private func refreshOrderBook(asks: [(price: Double, vol: Int)], bids: [(price: Double, vol: Int)]) {
+        // asks[0]=卖1 ... asks[4]=卖5，UI 卖5(index0) → 卖1(index4)
         for i in 0..<5 {
-            let lvIdx = 4 - i
-            let vol   = sellLevels.count > lvIdx ? sellLevels[lvIdx].vol : "--"
-            let price = sellLevels.count > lvIdx ? sellLevels[lvIdx].price : "--"
-            setOrderRow(rowIndex: i, vol: vol, price: price, isSell: true)
+            let askIdx = 4 - i  // UI row i shows ask level (4-i)
+            let ask = asks.count > askIdx ? asks[askIdx] : nil
+            askVolLabels[i].text   = ask != nil && ask!.vol > 0 ? "\(ask!.vol)" : "--"
+            askPriceLabels[i].text = ask != nil && ask!.price > 0 ? formatPrice(ask!.price) : "--"
         }
-        // 买行 rowIndex 5-9  → buyLevels[0-4]
         for i in 0..<5 {
-            let vol   = buyLevels.count > i ? buyLevels[i].vol : "--"
-            let price = buyLevels.count > i ? buyLevels[i].price : "--"
-            setOrderRow(rowIndex: i + 5, vol: vol, price: price, isSell: false)
+            let bid = bids.count > i ? bids[i] : nil
+            bidVolLabels[i].text   = bid != nil && bid!.vol > 0 ? "\(bid!.vol)" : "--"
+            bidPriceLabels[i].text = bid != nil && bid!.price > 0 ? formatPrice(bid!.price) : "--"
         }
     }
 
-    private func setOrderRow(rowIndex: Int, vol: String, price: String, isSell: Bool) {
-        guard rowIndex < orderBoardRows.count else { return }
-        let row  = orderBoardRows[rowIndex]
-        let accentColor = isSell ? themeRed : themeGreen
-        if let v = row.viewWithTag(rowIndex * 10 + 2) as? UILabel { v.text = vol;   v.textColor = accentColor }
-        if let p = row.viewWithTag(rowIndex * 10 + 3) as? UILabel { p.text = price }
-    }
-
-    // MARK: - 通用信息行（标题左，值右）
+    // MARK: - 通用信息行
     @discardableResult
-    private func addInfoRow(title: String, after prev: UIView?,
-                             configure: ((UILabel) -> Void)? = nil) -> UIView {
-        let row = makeRow(height: 48, after: prev)
-        let titleLbl = makeLabel(title, font: .systemFont(ofSize: 14), color: textSec)
+    private func addInfoRow(title: String, in container: UIView, after prev: UIView?,
+                            showSep: Bool = true,
+                            configure: ((UILabel) -> Void)? = nil) -> UIView {
+        let row = makeRow(height: 44, in: container, after: prev, padH: 16)
+        let titleLbl = makeLabel(title, font: .systemFont(ofSize: 13), color: textSec)
         let valLbl   = makeLabel("--",  font: .systemFont(ofSize: 14), color: textPri)
         valLbl.textAlignment = .right
         configure?(valLbl)
@@ -622,12 +655,13 @@ class StockTradeViewController: ZQViewController {
         row.addSubview(valLbl)
         [titleLbl, valLbl].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         NSLayoutConstraint.activate([
-            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            titleLbl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             titleLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            valLbl.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
-            valLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+            valLbl.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            valLbl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            valLbl.leadingAnchor.constraint(greaterThanOrEqualTo: titleLbl.trailingAnchor, constant: 8)
         ])
-        addSepLine(to: row)
+        if showSep { addSepLine(to: row, inset: 0) }
         return row
     }
 
@@ -648,126 +682,183 @@ class StockTradeViewController: ZQViewController {
             bar.heightAnchor.constraint(equalToConstant: bottomBarHeight)
         ])
 
-        // 左侧：买入金额 + 账户余额
-        let buyAmtTitle = makeLabel("买入金额", font: .systemFont(ofSize: 13), color: textSec)
-        let buyAmtVal   = makeLabel("0.00",   font: .boldSystemFont(ofSize: 15), color: themeRed)
+        // 左侧
+        let buyAmtTitle = makeLabel("买入金额  ", font: .systemFont(ofSize: 14), color: textPri)
+        let buyAmtVal   = makeLabel("0.00", font: .boldSystemFont(ofSize: 15), color: themeRed)
         buyAmountLabel  = buyAmtVal
 
-        let balanceLbl  = makeLabel("（账户余额--元）",
-                                     font: .systemFont(ofSize: 11), color: textSec)
+        let titleRow = UIStackView(arrangedSubviews: [buyAmtTitle, buyAmtVal])
+        titleRow.spacing = 0; titleRow.alignment = .center
+
+        let balanceLbl = makeLabel("(账户余额加载中...)", font: .systemFont(ofSize: 11), color: textSec)
         accountBalanceLabel = balanceLbl
 
-        let leftStack = UIStackView(arrangedSubviews: [
-            UIStackView(arrangedSubviews: [buyAmtTitle, buyAmtVal]).then {
-                $0.spacing = 4; $0.alignment = .center
-            },
-            balanceLbl
-        ])
-        leftStack.axis    = .vertical
-        leftStack.spacing = 2
-        leftStack.alignment = .leading
+        let leftStack = UIStackView(arrangedSubviews: [titleRow, balanceLbl])
+        leftStack.axis = .vertical; leftStack.spacing = 2; leftStack.alignment = .leading
 
         bar.addSubview(leftStack)
         leftStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             leftStack.leadingAnchor.constraint(equalTo: bar.leadingAnchor, constant: 16),
-            leftStack.topAnchor.constraint(equalTo: bar.topAnchor, constant: 10)
+            leftStack.centerYAnchor.constraint(equalTo: bar.topAnchor, constant: 36)
         ])
 
-        // 右侧：买入按钮
+        // 右侧买入按钮
         let buyBtn = UIButton(type: .custom)
-        buyBtn.setTitle("  买入", for: .normal)
-        buyBtn.titleLabel?.font = .boldSystemFont(ofSize: 17)
+        buyBtn.setTitle("↑ 买入", for: .normal)
+        buyBtn.titleLabel?.font = .boldSystemFont(ofSize: 15)
         buyBtn.backgroundColor  = themeRed
         buyBtn.setTitleColor(.white, for: .normal)
         buyBtn.layer.cornerRadius = 8
-        buyBtn.setImage(UIImage(systemName: "arrow.up.right"), for: .normal)
-        buyBtn.tintColor = .white
-        buyBtn.semanticContentAttribute = .forceLeftToRight
         buyBtn.addTarget(self, action: #selector(buyTapped), for: .touchUpInside)
         bar.addSubview(buyBtn)
         buyBtn.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             buyBtn.trailingAnchor.constraint(equalTo: bar.trailingAnchor, constant: -16),
-            buyBtn.topAnchor.constraint(equalTo: bar.topAnchor, constant: 8),
+            buyBtn.centerYAnchor.constraint(equalTo: bar.topAnchor, constant: 36),
             buyBtn.widthAnchor.constraint(equalToConstant: 120),
             buyBtn.heightAnchor.constraint(equalToConstant: 44)
         ])
+        buyButton = buyBtn
     }
 
-    // MARK: - 数量 / 仓位 Actions
+    // MARK: - 数量 / 仓位 Actions（手数单位）
 
     @objc private func minusTapped() {
-        if quantity > 0 { quantity -= 100 }
-        if quantity < 0 { quantity = 0 }
-        quantityField.text = quantity > 0 ? "\(quantity)" : ""
-        updateAmount()
+        if quantity > 0 { quantity -= 1 }
+        syncQuantityField()
+        recalculate()
     }
 
     @objc private func plusTapped() {
-        quantity += 100
-        quantityField.text = "\(quantity)"
-        updateAmount()
+        quantity += 1
+        syncQuantityField()
+        recalculate()
     }
 
     @objc private func quantityChanged() {
+        if ignoreQuantityChange { return }
         let raw = Int(quantityField.text ?? "0") ?? 0
-        // 对齐到 100 的整数倍（A 股最小单位 100 股）
-        quantity = (raw / 100) * 100
-        updateAmount()
+        quantity = max(raw, 0)
+        recalculate()
+    }
+
+    private func syncQuantityField() {
+        ignoreQuantityChange = true
+        quantityField.text = "\(quantity)"
+        ignoreQuantityChange = false
     }
 
     @objc private func positionTapped(_ sender: UIButton) {
-        selectedPositionIdx = sender.tag
-        refreshPositionButtons()
-        applyPositionToQuantity()
+        applyRatio(ratioForIndex(sender.tag))
     }
 
-    private func refreshPositionButtons() {
-        for (i, btn) in positionButtons.enumerated() {
-            let sel = (i == selectedPositionIdx)
-            btn.backgroundColor = sel ? themeRed : btnGray
-            btn.setTitleColor(sel ? .white : textPri, for: .normal)
+    private func ratioForIndex(_ idx: Int) -> Double {
+        switch idx {
+        case 0: return 0.25
+        case 1: return 1.0 / 3.0
+        case 2: return 0.5
+        case 3: return 1.0
+        default: return 0
         }
     }
 
-    private func applyPositionToQuantity() {
-        guard availableMoney > 0 && currentPrice > 0 else { return }
-        let ratios: [Double] = [0.25, 1.0/3, 0.5, 1.0]
-        guard selectedPositionIdx >= 0 && selectedPositionIdx < ratios.count else { return }
-        let money = availableMoney * ratios[selectedPositionIdx]
-        let shares = Int(money / currentPrice / 100) * 100
-        quantity = max(shares, 0)
-        quantityField.text = quantity > 0 ? "\(quantity)" : ""
-        updateAmount()
+    private func applyRatio(_ ratio: Double) {
+        guard currentPrice > 0 && userBalance > 0 else { return }
+        let shares = Int(floor(userBalance * ratio / currentPrice / 100)) * 100
+        quantity = shares / 100   // 转手数
+        syncQuantityField()
+        recalculate()
     }
 
-    private func updateAmount() {
-        let total = Double(quantity) * currentPrice
-        amountLabel.text = String(format: "¥ %.2f", total)
-        buyAmountLabel?.text = String(format: "%.2f", total)
+    // MARK: - 计算（与 Android recalculate 对齐）
+    private func recalculate() {
+        let shares = quantity * 100
+        let price  = currentPrice > 0 ? currentPrice : 0
+        let amount = Double(shares) * price
+        let fee    = amount * Self.FEE_RATE
 
-        // 更新手续费
-        let fee = total * feePct
-        serviceFeeLabel?.text = String(format: "¥%.2f", total == 0 ? currentPrice * feePct : fee)
+        amountLabel?.text      = "￥\(formatMoney(amount))"
+        buyAmountLabel?.text   = formatMoney(amount)
+        serviceFeeLabel?.text  = "￥\(formatMoney(fee))"
+        marketValueLabel?.text = amount > 0 ? "￥\(formatMoney(amount))" : "--"
 
-        // 更新市值
-        marketValueLabel?.text = String(format: "¥%.2f", total == 0 ? currentPrice : total)
+        if userBalance > 0 {
+            availableLabel?.text = "￥\(formatMoney(userBalance))"
+            let maxShares = price > 0 ? Int(floor(userBalance / price / 100)) * 100 : 0
+            canBuySharesLabel?.text = "\(maxShares)股"
+        }
     }
 
-    // MARK: - 买入
+    // MARK: - 渲染
+    private func renderPrice(_ price: Double) {
+        currentPriceLabel?.text = formatPrice(price)
+        recalculate()
+    }
+
+    private func renderHeader() {
+        let priceText = formatPrice(currentPrice)
+        if changePercent != 0 {
+            let sign = changePercent >= 0 ? "+" : ""
+            priceHeaderLabel?.text = "\(priceText) \(sign)\(String(format: "%.2f", changePercent))%"
+        } else {
+            priceHeaderLabel?.text = priceText
+        }
+        let color: UIColor
+        if changeAmount > 0 { color = themeRed }
+        else if changeAmount < 0 { color = themeGreen }
+        else { color = textSec }
+        priceHeaderLabel?.textColor = color
+    }
+
+    // MARK: - 买入（弹出确认弹窗 → 提交）
     @objc private func buyTapped() {
         guard quantity > 0 else {
-            showToast("请输入买入数量")
+            Toast.show("请输入买入数量")
             return
         }
-        let shareCount = quantity / 100  // 换算成手数（canBuy）
-        let priceStr   = String(format: "%.2f", currentPrice)
+        guard currentPrice > 0 else {
+            Toast.show("当前价格异常，请稍后重试")
+            return
+        }
+        guard !stockAllcode.isEmpty else {
+            Toast.show("股票代码不能为空")
+            return
+        }
+        showOrderConfirmDialog()
+    }
+
+    private func showOrderConfirmDialog() {
+        let shares = quantity * 100
+        let amount = Double(shares) * currentPrice
+        let fee    = amount * Self.FEE_RATE
+
+        let alert = UIAlertController(title: "订单明细", message: nil, preferredStyle: .alert)
+
+        let msg = """
+        名称：\(stockName.isEmpty ? "--" : stockName)
+        代码：\(stockAllcode)
+        买入价格：\(formatPrice(currentPrice))
+        买入数量：\(shares)股
+        金额(估算)：¥\(formatMoney(amount))
+        手续费：¥\(formatMoney(fee))
+        """
+        alert.message = msg
+
+        alert.addAction(UIAlertAction(title: "返回", style: .cancel))
+        alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
+            self?.submitBuy()
+        })
+        present(alert, animated: true)
+    }
+
+    private func submitBuy() {
+        buyButton?.isEnabled = false
 
         let params: [String: Any] = [
             "allcode":  stockAllcode,
-            "buyprice": priceStr,
-            "canBuy":   shareCount
+            "buyprice": currentPrice,
+            "canBuy":   quantity          // 手数
         ]
         SecureNetworkManager.shared.request(
             api: "/api/deal/addStrategy",
@@ -775,60 +866,33 @@ class StockTradeViewController: ZQViewController {
             params: params
         ) { [weak self] result in
             DispatchQueue.main.async {
+                self?.buyButton?.isEnabled = true
                 switch result {
                 case .success(let res):
                     if let dict = res.decrypted,
                        let code = dict["code"] as? Int, code == 1 {
-                        self?.showToast("买入委托成功")
+                        Toast.show("买入委托已提交")
                         self?.navigationController?.popViewController(animated: true)
                     } else {
                         let msg = res.decrypted?["msg"] as? String ?? "买入失败"
-                        self?.showToast(msg)
+                        Toast.show(msg)
                     }
                 case .failure(let err):
-                    self?.showToast(err.localizedDescription)
+                    Toast.show(err.localizedDescription)
                 }
             }
         }
-    }
-
-    private func showToast(_ msg: String) {
-        Toast.show(msg)
     }
 
     // MARK: - 数据加载
     private func loadInitialData() {
-        loadConfig()
-        loadUserAsset()
-        loadOrderBook()
+        loadBalance()
+        if currentPrice > 0 { renderPrice(currentPrice); renderHeader() }
+        refreshMarket()
     }
 
-    /// 拉取系统配置（手续费）
-    private func loadConfig() {
-        SecureNetworkManager.shared.request(
-            api: "/api/stock/getconfig",
-            method: .get,
-            params: [:]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            if case .success(let res) = result,
-               let dict = res.decrypted,
-               let data = dict["data"] as? [String: Any] {
-                let feeStr = data["mai_fee"] as? String ?? "0.0001"
-                self.feePct = Double(feeStr) ?? 0.0001
-                DispatchQueue.main.async {
-                    self.serviceFeeLabel?.text = String(format: "¥%.2f", self.currentPrice * self.feePct)
-                    // 重建手续费标题
-                    let pctDisplay = String(format: "%.2f", self.feePct * 100)
-                    // 直接更新金额即可
-                    self.updateAmount()
-                }
-            }
-        }
-    }
-
-    /// 拉取账户资产（余额 / 可用额度）
-    private func loadUserAsset() {
+    /// 拉取账户余额
+    private func loadBalance() {
         SecureNetworkManager.shared.request(
             api: "/api/user/getUserPrice_all1",
             method: .get,
@@ -840,30 +904,44 @@ class StockTradeViewController: ZQViewController {
                let data = dict["data"] as? [String: Any],
                let list = data["list"] as? [String: Any] {
                 let balance = list["balance"] as? Double ?? 0
-                self.accountBalance   = balance
-                self.availableMoney   = balance
+                self.userBalance = balance
                 DispatchQueue.main.async {
-                    self.accountBalanceLabel?.text = String(format: "（账户余额%.2f元）", balance)
-                    self.availableLabel?.text      = String(format: "¥%.2f", balance)
-                    // 可购买股数
-                    if self.currentPrice > 0 {
-                        let shares = Int(balance / self.currentPrice / 100) * 100
-                        self.canBuySharesLabel?.text = "\(shares)股"
-                    }
+                    self.accountBalanceLabel?.text = "(账户余额\(self.formatMoney(balance))元)"
+                    self.recalculate()
                 }
             }
         }
     }
 
-    /// 拉取五档盘口（EastMoney 行情推送接口）
-    private func loadOrderBook() {
-        // 构造 secid：sh→1  sz/bj/kc→0
-        let prefix = stockAllcode.prefix(2).lowercased()
-        let market  = (prefix == "sh") ? "1" : "0"
-        let secid   = "\(market).\(stockCode)"
+    // MARK: - 行情轮询（5 秒间隔，与 Android 一致）
+    private func startPolling() {
+        guard !polling else { return }
+        polling = true
+        pollTimer = Timer.scheduledTimer(withTimeInterval: Self.POLL_INTERVAL, repeats: true) { [weak self] _ in
+            self?.refreshMarket()
+        }
+    }
 
-        // 字段：f31-f40 为五档卖价/卖量，f19-f28 为五档买价/买量
-        let fields = "f31,f32,f33,f34,f35,f36,f37,f38,f39,f40,f19,f20,f21,f22,f23,f24,f25,f26,f27,f28"
+    private func stopPolling() {
+        polling = false
+        pollTimer?.invalidate()
+        pollTimer = nil
+    }
+
+    /// 拉取东方财富快照 + 五档盘口
+    private func refreshMarket() {
+        guard !stockAllcode.isEmpty else { return }
+
+        let code   = extractCode(stockAllcode)
+        let prefix = stockAllcode.prefix(2).lowercased()
+        let market = (prefix == "sh") ? "1" : "0"
+        let secid  = "\(market).\(code)"
+
+        // 快照字段：f43(现价) f58(名称) f169(涨跌额) f170(涨跌幅)
+        // 五档字段（与 Android EastMoneyDetailRepository 完全一致）：
+        //   买: f19(买1价) f20(买1量) f17(买2价) f18(买2量) f15(买3价) f16(买3量) f13(买4价) f14(买4量) f11(买5价) f12(买5量)
+        //   卖: f39(卖1价) f40(卖1量) f37(卖2价) f38(卖2量) f35(卖3价) f36(卖3量) f33(卖4价) f34(卖4量) f31(卖5价) f32(卖5量)
+        let fields = "f43,f58,f169,f170,f39,f40,f37,f38,f35,f36,f33,f34,f31,f32,f19,f20,f17,f18,f15,f16,f13,f14,f11,f12"
         let urlStr = "https://push2.eastmoney.com/api/qt/stock/get?fltt=2&invt=2&secid=\(secid)&fields=\(fields)"
 
         guard let url = URL(string: urlStr) else { return }
@@ -874,68 +952,76 @@ class StockTradeViewController: ZQViewController {
         URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
             guard let self = self,
                   let data = data,
-                  let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let dData = dict["data"] as? [String: Any] else { return }
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let d = root["data"] as? [String: Any] else { return }
 
-            func v(_ key: String) -> Double { return (dData[key] as? Double) ?? 0 }
+            func dbl(_ k: String) -> Double { return (d[k] as? Double) ?? 0 }
+            func str(_ k: String) -> String { return (d[k] as? String) ?? "" }
 
-            // EastMoney 返回价格已除以 100（fltt=2 模式为实际价格×100，需÷100）
-            // f31/f32...f35 = 卖1量/卖1价 ~ 卖5量/卖5价
-            // f36 = 卖5量，f37 = 卖5价（需按文档顺序验证，此处按通用约定）
-            // 实际字段顺序（fltt=2）:
-            //   卖五量=f31 卖五价=f32  卖四量=f33 卖四价=f34
-            //   卖三量=f35 卖三价=f36  卖二量=f37 卖二价=f38
-            //   卖一量=f39 卖一价=f40
-            //   买一量=f19 买一价=f20  买二量=f21 买二价=f22
-            //   买三量=f23 买三价=f24  买四量=f25 买四价=f26
-            //   买五量=f27 买五价=f28
+            // 快照
+            let price     = dbl("f43")
+            let name      = str("f58")
+            let change    = dbl("f169")
+            let changePct = dbl("f170")
 
-            let sells: [(String, String)] = [
-                (self.fmtVol(v("f31")), self.fmtPrice(v("f32"))),   // 卖5
-                (self.fmtVol(v("f33")), self.fmtPrice(v("f34"))),   // 卖4
-                (self.fmtVol(v("f35")), self.fmtPrice(v("f36"))),   // 卖3
-                (self.fmtVol(v("f37")), self.fmtPrice(v("f38"))),   // 卖2
-                (self.fmtVol(v("f39")), self.fmtPrice(v("f40")))    // 卖1
+            // 五档（asks[0]=卖1, bids[0]=买1）— 与 Android 完全一致
+            let asks: [(price: Double, vol: Int)] = [
+                (dbl("f39"), Int(dbl("f40"))),   // 卖1
+                (dbl("f37"), Int(dbl("f38"))),   // 卖2
+                (dbl("f35"), Int(dbl("f36"))),   // 卖3
+                (dbl("f33"), Int(dbl("f34"))),   // 卖4
+                (dbl("f31"), Int(dbl("f32")))    // 卖5
             ]
-            let buys: [(String, String)] = [
-                (self.fmtVol(v("f19")), self.fmtPrice(v("f20"))),   // 买1
-                (self.fmtVol(v("f21")), self.fmtPrice(v("f22"))),   // 买2
-                (self.fmtVol(v("f23")), self.fmtPrice(v("f24"))),   // 买3
-                (self.fmtVol(v("f25")), self.fmtPrice(v("f26"))),   // 买4
-                (self.fmtVol(v("f27")), self.fmtPrice(v("f28")))    // 买5
+            let bids: [(price: Double, vol: Int)] = [
+                (dbl("f19"), Int(dbl("f20"))),   // 买1
+                (dbl("f17"), Int(dbl("f18"))),   // 买2
+                (dbl("f15"), Int(dbl("f16"))),   // 买3
+                (dbl("f13"), Int(dbl("f14"))),   // 买4
+                (dbl("f11"), Int(dbl("f12")))    // 买5
             ]
 
             DispatchQueue.main.async {
-                self.sellLevels = sells.map { OrderLevel(vol: $0.0, price: $0.1) }
-                self.buyLevels  = buys.map  { OrderLevel(vol: $0.0, price: $0.1) }
-                self.refreshOrderBoard()
+                if price > 0 {
+                    self.currentPrice  = price
+                    self.changeAmount  = change
+                    self.changePercent = changePct
+                    self.renderPrice(price)
+                    self.renderHeader()
+                }
+                if !name.isEmpty && self.stockName.isEmpty {
+                    self.stockName = name
+                    self.stockNameLabel?.text = name
+                }
+                self.refreshOrderBook(asks: asks, bids: bids)
             }
         }.resume()
     }
 
-    private func fmtVol(_ v: Double) -> String {
-        if v <= 0 { return "--" }
-        let n = Int(v)
-        return n >= 10000 ? "\(n / 10000)万" : "\(n)"
+    private func extractCode(_ allcode: String) -> String {
+        var s = allcode.lowercased()
+        for prefix in ["sh", "sz", "bj"] {
+            if s.hasPrefix(prefix) { s.removeFirst(prefix.count); break }
+        }
+        return s
     }
 
-    private func fmtPrice(_ v: Double) -> String {
-        if v <= 0 { return "--" }
-        return String(format: "%.2f", v)
-    }
+    // MARK: - 格式化
+    private func formatPrice(_ v: Double) -> String { String(format: "%.2f", v) }
+    private func formatMoney(_ v: Double) -> String { String(format: "%.2f", v) }
 
     // MARK: - 工厂方法
 
-    private func makeRow(height: CGFloat, after prev: UIView?) -> UIView {
+    /// 在指定容器内创建一行
+    private func makeRow(height: CGFloat, in container: UIView, after prev: UIView?, padH: CGFloat = 0) -> UIView {
         let row = UIView()
-        row.backgroundColor = .white
-        contentView.addSubview(row)
+        row.backgroundColor = .clear
+        container.addSubview(row)
         row.translatesAutoresizingMaskIntoConstraints = false
-        let prevAnchor = prev?.bottomAnchor ?? contentView.topAnchor
+        let prevAnchor = prev?.bottomAnchor ?? container.topAnchor
         NSLayoutConstraint.activate([
             row.topAnchor.constraint(equalTo: prevAnchor),
-            row.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            row.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            row.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: padH),
+            row.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -padH),
             row.heightAnchor.constraint(equalToConstant: height)
         ])
         return row
@@ -956,16 +1042,41 @@ class StockTradeViewController: ZQViewController {
         return sep
     }
 
-    private func addSepLine(to view: UIView) {
+    private func addSepLineRow(in container: UIView, after prev: UIView?) -> UIView {
+        let row = UIView()
+        row.backgroundColor = .clear
+        container.addSubview(row)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        let prevAnchor = prev?.bottomAnchor ?? container.topAnchor
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: prevAnchor),
+            row.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            row.heightAnchor.constraint(equalToConstant: 11)
+        ])
+        let line = UIView()
+        line.backgroundColor = sepColor
+        row.addSubview(line)
+        line.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            line.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            line.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            line.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+            line.heightAnchor.constraint(equalToConstant: 1)
+        ])
+        return row
+    }
+
+    private func addSepLine(to view: UIView, inset: CGFloat = 16) {
         let line = UIView()
         line.backgroundColor = sepColor
         view.addSubview(line)
         line.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            line.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            line.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: inset),
             line.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             line.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            line.heightAnchor.constraint(equalToConstant: 0.5)
+            line.heightAnchor.constraint(equalToConstant: 1)
         ])
     }
 
@@ -981,14 +1092,15 @@ class StockTradeViewController: ZQViewController {
         let lbl = makeLabel(text, font: .boldSystemFont(ofSize: 11), color: .white)
         lbl.textAlignment = .center
         let bg = UIView()
-        bg.backgroundColor    = themeRed
-        bg.layer.cornerRadius = 3
+        bg.backgroundColor    = tagBlue
+        bg.layer.cornerRadius = 2
         bg.addSubview(lbl)
         lbl.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            bg.widthAnchor.constraint(equalToConstant: 18),
+            bg.widthAnchor.constraint(greaterThanOrEqualToConstant: 18),
             bg.heightAnchor.constraint(equalToConstant: 18),
-            lbl.centerXAnchor.constraint(equalTo: bg.centerXAnchor),
+            lbl.leadingAnchor.constraint(equalTo: bg.leadingAnchor, constant: 4),
+            lbl.trailingAnchor.constraint(equalTo: bg.trailingAnchor, constant: -4),
             lbl.centerYAnchor.constraint(equalTo: bg.centerYAnchor)
         ])
         return bg
@@ -1001,14 +1113,5 @@ class StockTradeViewController: ZQViewController {
         btn.titleLabel?.font = .systemFont(ofSize: 20)
         btn.backgroundColor  = .clear
         return btn
-    }
-}
-
-// MARK: - UIView then() helper
-private extension UIStackView {
-    @discardableResult
-    func then(_ configure: (UIStackView) -> Void) -> UIStackView {
-        configure(self)
-        return self
     }
 }
