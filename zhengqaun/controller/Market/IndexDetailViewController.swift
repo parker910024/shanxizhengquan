@@ -71,7 +71,10 @@ class IndexDetailViewController: ZQViewController {
     // 图表
     private var chartContainer: UIView!
     private var lineChartView: LineChartView!
+    private var candleChartView: CombinedChartView!
     private var volumeBarView: UIView!
+    /// 图表数据缓存（key 与 Android 一致："time" / "k_5" / "k_101" / "k_102"）
+    private var chartDataCache: [String: Any] = [:]
 
     // 新闻 tableView
     private let newsTableView = UITableView(frame: .zero, style: .plain)
@@ -415,6 +418,28 @@ class IndexDetailViewController: ZQViewController {
         chartContainer.addSubview(lineChartView)
         lineChartView.translatesAutoresizingMaskIntoConstraints = false
 
+        // K 线合并图（烛台 + MA）与 lineChartView 同位置，互斥显示）
+        candleChartView = CombinedChartView()
+        candleChartView.isHidden = true
+        candleChartView.legend.enabled = false
+        candleChartView.xAxis.labelPosition = .bottom
+        candleChartView.xAxis.drawGridLinesEnabled = true
+        candleChartView.xAxis.gridColor = UIColor(white: 0.9, alpha: 1)
+        candleChartView.xAxis.labelTextColor = textSec
+        candleChartView.xAxis.labelFont = .systemFont(ofSize: 9)
+        candleChartView.leftAxis.drawGridLinesEnabled = true
+        candleChartView.leftAxis.gridColor = UIColor(white: 0.9, alpha: 1)
+        candleChartView.leftAxis.labelTextColor = textSec
+        candleChartView.leftAxis.labelFont = .systemFont(ofSize: 9)
+        candleChartView.rightAxis.enabled = false
+        candleChartView.drawGridBackgroundEnabled = false
+        candleChartView.drawBordersEnabled = true
+        candleChartView.borderColor = UIColor(white: 0.9, alpha: 1)
+        candleChartView.minOffset = 6
+        candleChartView.setScaleEnabled(false)
+        chartContainer.addSubview(candleChartView)
+        candleChartView.translatesAutoresizingMaskIntoConstraints = false
+
         // 成交量柱状图区域
         volumeBarView = UIView()
         volumeBarView.backgroundColor = UIColor(red: 0.97, green: 0.97, blue: 0.98, alpha: 1)
@@ -435,6 +460,11 @@ class IndexDetailViewController: ZQViewController {
             lineChartView.leadingAnchor.constraint(equalTo: chartContainer.leadingAnchor, constant: 4),
             lineChartView.trailingAnchor.constraint(equalTo: chartContainer.trailingAnchor, constant: -4),
             lineChartView.heightAnchor.constraint(equalToConstant: 220),
+
+            candleChartView.topAnchor.constraint(equalTo: lineChartView.topAnchor),
+            candleChartView.leadingAnchor.constraint(equalTo: lineChartView.leadingAnchor),
+            candleChartView.trailingAnchor.constraint(equalTo: lineChartView.trailingAnchor),
+            candleChartView.heightAnchor.constraint(equalTo: lineChartView.heightAnchor),
 
             volumeBarView.topAnchor.constraint(equalTo: lineChartView.bottomAnchor),
             volumeBarView.leadingAnchor.constraint(equalTo: chartContainer.leadingAnchor, constant: 4),
@@ -461,112 +491,308 @@ class IndexDetailViewController: ZQViewController {
         populateChart()
     }
 
-    /// 填充折线图（模拟数据，基于 indexPrice）
+    // ===================================================================
+    // MARK: - 图表数据结构
+    // ===================================================================
+    private struct TimeSharePoint {
+        let price: Double
+        let avgPrice: Double
+        let volume: Double
+        let isUp: Bool  // 相对昨收是否上涨
+    }
+
+    private struct KLinePoint {
+        let open: Double
+        let close: Double
+        let high: Double
+        let low: Double
+        let volume: Double
+    }
+
+    // ===================================================================
+    // MARK: - 图表入口（与 Android StockDetailViewModel.loadChart 一致）
+    // ===================================================================
+
+    /// 切换 Tab 或刷新时调用。检查缓存，命中则直接渲染，否则拉取 EastMoney 数据。
     private func populateChart() {
-        let base = Double(indexPrice) ?? 1536
+        let cacheKey: String
+        switch selectedChartTab {
+        case 0: cacheKey = "time"
+        case 1: cacheKey = "k_5"
+        case 2: cacheKey = "k_101"
+        default: cacheKey = "k_102"
+        }
+
+        if let cached = chartDataCache[cacheKey] {
+            if let pts = cached as? [TimeSharePoint] {
+                renderTimeShare(pts)
+            } else if let pts = cached as? [KLinePoint] {
+                renderKLine(pts)
+            }
+            return
+        }
+
+        if selectedChartTab == 0 {
+            fetchTimeShare { [weak self] points in
+                guard let self else { return }
+                self.chartDataCache[cacheKey] = points
+                DispatchQueue.main.async { self.renderTimeShare(points) }
+            }
+        } else {
+            let klt: Int
+            switch selectedChartTab {
+            case 1: klt = 5
+            case 2: klt = 101
+            default: klt = 102
+            }
+            fetchKLine(klt: klt) { [weak self] points in
+                guard let self else { return }
+                self.chartDataCache[cacheKey] = points
+                DispatchQueue.main.async { self.renderKLine(points) }
+            }
+        }
+    }
+
+    // ===================================================================
+    // MARK: - EastMoney 数据拉取（与 Android EastMoneyDetailRepository 一致）
+    // ===================================================================
+
+    /// 分时图数据 —— Android fetchTimeShare
+    /// URL: push2his.eastmoney.com/api/qt/stock/trends2/get
+    private func fetchTimeShare(completion: @escaping ([TimeSharePoint]) -> Void) {
+        let secId = resolveSecId()
+        let urlStr = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
+            + "?secid=\(secId)"
+            + "&fields1=f1,f2,f3,f4,f5,f6,f7,f8"
+            + "&fields2=f51,f52,f53,f54,f55,f56,f57,f58"
+            + "&ndays=1&iscr=0"
+        guard let url = URL(string: urlStr) else { completion([]); return }
+
+        var req = URLRequest(url: url)
+        req.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+        req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+                     forHTTPHeaderField: "User-Agent")
+
+        URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
+            guard let self,
+                  let data,
+                  let json  = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let root  = json["data"] as? [String: Any],
+                  let trends = root["trends"] as? [String] else { completion([]); return }
+
+            // 昨收取自 preClose 字段，或退而使用已知 yesterdayClose
+            let preCloseRef = Double(self.yesterdayClose) ?? 0
+
+            let points: [TimeSharePoint] = trends.compactMap { entry in
+                let v = entry.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+                guard v.count >= 6,
+                      let price = Double(v[1]),
+                      let avg   = Double(v[2]) else { return nil }
+                let vol  = Double(v[5]) ?? 0
+                return TimeSharePoint(
+                    price: price,
+                    avgPrice: avg,
+                    volume: vol,
+                    isUp: price >= preCloseRef
+                )
+            }
+            completion(points)
+        }.resume()
+    }
+
+    /// K 线数据 —— Android fetchKLine
+    /// URL: push2his.eastmoney.com/api/qt/stock/kline/get
+    private func fetchKLine(klt: Int, completion: @escaping ([KLinePoint]) -> Void) {
+        let secId = resolveSecId()
+        let ut = "fa5fd1943c7b386f172d6893dbfba10b"
+        let ts = Int(Date().timeIntervalSince1970 * 1000)
+        let urlStr = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+            + "?secid=\(secId)&ut=\(ut)"
+            + "&fields1=f1,f2,f3,f4,f5,f6"
+            + "&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+            + "&klt=\(klt)&fqt=1&beg=0&end=20500101&lmt=120&_=\(ts)"
+        guard let url = URL(string: urlStr) else { completion([]); return }
+
+        var req = URLRequest(url: url)
+        req.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+        req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+                     forHTTPHeaderField: "User-Agent")
+
+        URLSession.shared.dataTask(with: req) { data, _, _ in
+            guard let data,
+                  let json   = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let root   = json["data"] as? [String: Any],
+                  let klines = root["klines"] as? [String] else { completion([]); return }
+
+            let points: [KLinePoint] = klines.compactMap { entry in
+                let v = entry.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+                // values: date,open,close,high,low,volume,amount,...
+                guard v.count >= 6,
+                      let open  = Double(v[1]),
+                      let close = Double(v[2]),
+                      let high  = Double(v[3]),
+                      let low   = Double(v[4]) else { return nil }
+                let vol = Double(v[5]) ?? 0
+                return KLinePoint(open: open, close: close, high: high, low: low, volume: vol)
+            }
+            completion(points)
+        }.resume()
+    }
+
+    // ===================================================================
+    // MARK: - 渲染
+    // ===================================================================
+
+    /// 分时图：LineChartView 显示（价格线 + 均价线 + 昨收基线）
+    private func renderTimeShare(_ points: [TimeSharePoint]) {
+        lineChartView.isHidden   = false
+        candleChartView.isHidden = true
+        guard !points.isEmpty else {
+            lineChartView.data = nil
+            drawVolumeBarChart(volumes: [], isUpArray: [])
+            return
+        }
+
         let changeVal = Double(indexChange) ?? 0
-        let isRise = changeVal >= 0
+        let isRise    = changeVal >= 0
         let mainColor = isRise ? themeRed : stockGreen
-        let avgColor = UIColor.orange
 
-        let count = selectedChartTab == 0 ? 240 : (selectedChartTab == 1 ? 48 : 60)
-        var priceEntries: [ChartDataEntry] = []
-        var ma5Entries: [ChartDataEntry] = []
-        var ma10Entries: [ChartDataEntry] = []
+        var priceEntries:  [ChartDataEntry] = []
+        var avgEntries:    [ChartDataEntry] = []
+        var ycEntries:     [ChartDataEntry] = []
+        let ycPrice = Double(yesterdayClose) ?? 0
 
-        var p = base - changeVal
-        var prices: [Double] = []
-        for i in 0..<count {
-            let noise = Double.random(in: -0.003...0.003) * base
-            let trend = changeVal * (Double(i) / Double(count - 1))
-            p = base - changeVal + trend + noise
-            prices.append(p)
-            priceEntries.append(ChartDataEntry(x: Double(i), y: p))
-        }
-        // 最后一个点对齐实际价格
-        priceEntries[count - 1] = ChartDataEntry(x: Double(count - 1), y: base)
-        prices[count - 1] = base
-
-        // MA5
-        for i in 0..<count {
-            let start = max(0, i - 4)
-            let slice = prices[start...i]
-            let avg = slice.reduce(0, +) / Double(slice.count)
-            ma5Entries.append(ChartDataEntry(x: Double(i), y: avg))
-        }
-        // MA10
-        for i in 0..<count {
-            let start = max(0, i - 9)
-            let slice = prices[start...i]
-            let avg = slice.reduce(0, +) / Double(slice.count)
-            ma10Entries.append(ChartDataEntry(x: Double(i), y: avg))
+        for (i, pt) in points.enumerated() {
+            let x = Double(i)
+            priceEntries.append(ChartDataEntry(x: x, y: pt.price))
+            avgEntries.append(ChartDataEntry(x: x, y: pt.avgPrice))
+            ycEntries.append(ChartDataEntry(x: x, y: ycPrice))
         }
 
         let priceDS = LineChartDataSet(entries: priceEntries, label: "")
         priceDS.colors = [mainColor]
         priceDS.lineWidth = 1.5
         priceDS.drawCirclesEnabled = false
-        priceDS.drawValuesEnabled = false
-        priceDS.drawFilledEnabled = true
-        priceDS.fillColor = mainColor
-        priceDS.fillAlpha = 0.08
-        priceDS.mode = .cubicBezier
+        priceDS.drawValuesEnabled  = false
+        priceDS.drawFilledEnabled  = true
+        priceDS.fillColor  = mainColor
+        priceDS.fillAlpha  = 0.08
+        priceDS.mode = .linear
 
-        let ma5DS = LineChartDataSet(entries: ma5Entries, label: "")
-        ma5DS.colors = [avgColor]
-        ma5DS.lineWidth = 1
-        ma5DS.drawCirclesEnabled = false
-        ma5DS.drawValuesEnabled = false
-        ma5DS.drawFilledEnabled = false
-        ma5DS.mode = .cubicBezier
+        let avgDS = LineChartDataSet(entries: avgEntries, label: "")
+        avgDS.colors = [UIColor.orange]
+        avgDS.lineWidth = 1
+        avgDS.drawCirclesEnabled = false
+        avgDS.drawValuesEnabled  = false
+        avgDS.mode = .linear
 
-        let ma10DS = LineChartDataSet(entries: ma10Entries, label: "")
-        ma10DS.colors = [UIColor.systemBlue]
-        ma10DS.lineWidth = 1
-        ma10DS.drawCirclesEnabled = false
-        ma10DS.drawValuesEnabled = false
-        ma10DS.drawFilledEnabled = false
-        ma10DS.mode = .cubicBezier
-
-        // 昨收虚线
-        let ycPrice = Double(yesterdayClose) ?? (base + changeVal)
-        var ycEntries: [ChartDataEntry] = []
-        for i in 0..<count {
-            ycEntries.append(ChartDataEntry(x: Double(i), y: ycPrice))
-        }
         let ycDS = LineChartDataSet(entries: ycEntries, label: "")
         ycDS.colors = [UIColor.gray]
         ycDS.lineWidth = 1
         ycDS.drawCirclesEnabled = false
-        ycDS.drawValuesEnabled = false
+        ycDS.drawValuesEnabled  = false
         ycDS.lineDashLengths = [6, 3]
 
-        lineChartView.data = LineChartData(dataSets: [priceDS, ma5DS, ma10DS, ycDS])
+        lineChartView.data = LineChartData(dataSets: [priceDS, avgDS, ycDS])
 
-        drawVolumeBarChart(count: count)
+        let vols   = points.map { $0.volume }
+        let isUps  = points.map { $0.isUp }
+        drawVolumeBarChart(volumes: vols, isUpArray: isUps)
     }
 
-    /// 在 volumeBarView 上绘制成交量柱状图（模拟）
-    private func drawVolumeBarChart(count: Int) {
+    /// K 线图：CandleChartView 显示，并计算 MA5/MA10 覆盖在 candleChartView 上
+    private func renderKLine(_ points: [KLinePoint]) {
+        lineChartView.isHidden   = true
+        candleChartView.isHidden = false
+        guard !points.isEmpty else {
+            candleChartView.data = nil
+            drawVolumeBarChart(volumes: [], isUpArray: [])
+            return
+        }
+
+        var candleEntries: [CandleChartDataEntry] = []
+        var closes: [Double] = []
+
+        for (i, pt) in points.enumerated() {
+            let entry = CandleChartDataEntry(
+                x: Double(i),
+                shadowH: pt.high,
+                shadowL: pt.low,
+                open:    pt.open,
+                close:   pt.close
+            )
+            candleEntries.append(entry)
+            closes.append(pt.close)
+        }
+
+        let candleDS = CandleChartDataSet(entries: candleEntries, label: "")
+        candleDS.increasingColor      = themeRed
+        candleDS.decreasingColor      = stockGreen
+        candleDS.increasingFilled     = true
+        candleDS.decreasingFilled     = true
+        candleDS.neutralColor         = textSec
+        candleDS.shadowColor          = .darkGray
+        candleDS.shadowWidth          = 0.7
+        candleDS.drawValuesEnabled    = false
+        candleDS.highlightColor       = UIColor(white: 0.5, alpha: 0.5)
+
+        // MA5 / MA10 覆盖线
+        func maEntries(period: Int) -> [ChartDataEntry] {
+            (0..<closes.count).compactMap { i in
+                let start = max(0, i - period + 1)
+                let slice = closes[start...i]
+                let avg = slice.reduce(0, +) / Double(slice.count)
+                return ChartDataEntry(x: Double(i), y: avg)
+            }
+        }
+        let ma5DS  = LineChartDataSet(entries: maEntries(period: 5),  label: "")
+        ma5DS.colors = [UIColor.orange]
+        ma5DS.lineWidth = 1
+        ma5DS.drawCirclesEnabled = false
+        ma5DS.drawValuesEnabled  = false
+
+        let ma10DS = LineChartDataSet(entries: maEntries(period: 10), label: "")
+        ma10DS.colors = [UIColor.systemBlue]
+        ma10DS.lineWidth = 1
+        ma10DS.drawCirclesEnabled = false
+        ma10DS.drawValuesEnabled  = false
+
+        let combined = CombinedChartData()
+        combined.candleData = CandleChartData(dataSet: candleDS)
+        combined.lineData   = LineChartData(dataSets: [ma5DS, ma10DS])
+        candleChartView.data = combined
+
+        let vols  = points.map { $0.volume }
+        let isUps = points.map { $0.close >= $0.open }
+        drawVolumeBarChart(volumes: vols, isUpArray: isUps)
+    }
+
+    /// 在 volumeBarView 上绘制真实成交量柱状图（与 Android 色彩规则一致：涨红跌绿）
+    private func drawVolumeBarChart(volumes: [Double], isUpArray: [Bool]) {
         volumeBarView.subviews.forEach { $0.removeFromSuperview() }
         volumeBarView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        guard !volumes.isEmpty else { return }
 
         DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             let w = self.volumeBarView.bounds.width
             let h = self.volumeBarView.bounds.height
             guard w > 0, h > 0 else { return }
 
-            let barW = max(1, (w - 2) / CGFloat(count))
-            for i in 0..<count {
-                let ratio = CGFloat.random(in: 0.1...1.0)
-                let barH = ratio * (h - 4)
-                let x = CGFloat(i) * barW
-                let isUp = Bool.random()
+            let maxVol = volumes.max() ?? 1
+            let count  = volumes.count
+            let barW   = max(1, (w - 2) / CGFloat(count))
+
+            for (i, vol) in volumes.enumerated() {
+                let ratio = maxVol > 0 ? CGFloat(vol / maxVol) : 0
+                let barH  = max(1, ratio * (h - 4))
+                let x     = CGFloat(i) * barW
+                let isUp  = i < isUpArray.count ? isUpArray[i] : (vol >= 0)
                 let color = isUp ? self.themeRed.cgColor : self.stockGreen.cgColor
 
                 let bar = CALayer()
-                bar.frame = CGRect(x: x, y: h - barH - 2, width: max(barW - 0.5, 0.5), height: barH)
+                bar.frame = CGRect(x: x, y: h - barH - 2,
+                                   width: max(barW - 0.5, 0.5), height: barH)
                 bar.backgroundColor = color
                 self.volumeBarView.layer.addSublayer(bar)
             }
