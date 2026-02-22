@@ -26,17 +26,225 @@ class HomeViewController: ZQViewController {
         ("银证转出", "icon11"),
         ("新股申购", "icon_home_6"),
         ("场外撮合交易", "icon_home_9"),
-        ("战略配售", "icon12"),
+        ("智能选股", "icon12"),
         ("AI智投", "icon_home_13"),
         ("龙虎榜", "icon4")
     ]
+
+    /// 新股申购提醒弹框容器（每次进入首页显示）
+    private var newStockReminderOverlay: UIView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupTableView()
     }
-    
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        showNewStockReminderPopupIfNeeded()
+    }
+
+    /// 每次进入首页显示「今日新股申购提醒」弹框
+    private func showNewStockReminderPopupIfNeeded() {
+        guard newStockReminderOverlay == nil else { return }
+        let overlay = UIView()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        newStockReminderOverlay = overlay
+
+        let card = UIView()
+        card.translatesAutoresizingMaskIntoConstraints = false
+        card.isUserInteractionEnabled = true
+        overlay.addSubview(card)
+        let cardBgImageView = UIImageView(image: UIImage(named: "tankuangbg"))
+        cardBgImageView.contentMode = .scaleToFill
+        cardBgImageView.clipsToBounds = true
+        cardBgImageView.translatesAutoresizingMaskIntoConstraints = false
+        card.insertSubview(cardBgImageView, at: 0)
+        NSLayoutConstraint.activate([
+            cardBgImageView.topAnchor.constraint(equalTo: card.topAnchor),
+            cardBgImageView.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            cardBgImageView.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            cardBgImageView.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+
+        let titleLabel = UILabel()
+        titleLabel.text = "今日新股申购提醒"
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        titleLabel.textColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(titleLabel)
+
+        let bellImageView = UIImageView(image: UIImage(named: "lingdang"))
+        bellImageView.contentMode = .scaleAspectFit
+        bellImageView.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(bellImageView)
+
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 12
+        stack.alignment = .leading
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+
+        let items: [(String, String, String)] = [
+            ("沪", "000060", "N至信"),
+            ("沪", "000060", "N至信"),
+            ("沪", "000060", "N至信")
+        ]
+        for item in items {
+            let row = makeNewStockReminderRow(exchange: item.0, code: item.1, name: item.2, price: "8.75/股")
+            stack.addArrangedSubview(row)
+            NSLayoutConstraint.activate([
+                row.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+                row.trailingAnchor.constraint(equalTo: stack.trailingAnchor)
+            ])
+        }
+
+        let subscribeBtn = UIButton(type: .system)
+        subscribeBtn.setTitle("去申购", for: .normal)
+        subscribeBtn.setTitleColor(.white, for: .normal)
+        subscribeBtn.titleLabel?.font = UIFont.boldSystemFont(ofSize: 17)
+        subscribeBtn.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.15, alpha: 1)
+        subscribeBtn.layer.cornerRadius = 22
+        subscribeBtn.addTarget(self, action: #selector(newStockReminderGoSubscribe), for: .touchUpInside)
+        subscribeBtn.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(subscribeBtn)
+
+        let closeBtn = UIButton(type: .system)
+        closeBtn.setImage(UIImage(systemName: "xmark"), for: .normal)
+        closeBtn.tintColor = .white
+        closeBtn.backgroundColor = UIColor(red: 0.55, green: 0.55, blue: 0.56, alpha: 1)
+        closeBtn.layer.cornerRadius = 20
+        closeBtn.addTarget(self, action: #selector(dismissNewStockReminderPopup), for: .touchUpInside)
+        closeBtn.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addSubview(closeBtn)
+
+        let cardW: CGFloat = 315
+        let cardH: CGFloat = 335
+        let bellW: CGFloat = 136
+        let bellH: CGFloat = 109
+        let cardPadding: CGFloat = 20
+        let titleTop: CGFloat = 24
+        let titleToStack: CGFloat = 20
+        let stackToBtn: CGFloat = 24
+        let btnBottom: CGFloat = 24
+        let closeBtnSize: CGFloat = 40
+        let cardToClose: CGFloat = 16
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: overlay.centerYAnchor, constant: -20),
+            card.widthAnchor.constraint(equalToConstant: cardW),
+            card.heightAnchor.constraint(equalToConstant: cardH),
+
+            titleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: cardPadding),
+            titleLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: titleTop),
+
+            bellImageView.topAnchor.constraint(equalTo: card.topAnchor, constant: -20),
+            bellImageView.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: 20),
+            bellImageView.widthAnchor.constraint(equalToConstant: bellW),
+            bellImageView.heightAnchor.constraint(equalToConstant: bellH),
+
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: cardPadding),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -15),
+            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: titleToStack),
+
+            subscribeBtn.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: cardPadding),
+            subscribeBtn.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -cardPadding),
+            subscribeBtn.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: stackToBtn),
+            subscribeBtn.heightAnchor.constraint(equalToConstant: 44),
+            subscribeBtn.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -btnBottom),
+
+            closeBtn.topAnchor.constraint(equalTo: card.bottomAnchor, constant: cardToClose),
+            closeBtn.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+            closeBtn.widthAnchor.constraint(equalToConstant: closeBtnSize),
+            closeBtn.heightAnchor.constraint(equalToConstant: closeBtnSize)
+        ])
+    }
+
+    /// 列表每项：左侧两行（第一行 沪+代码，第二行 N至信），右侧价格相对两行上下居中
+    private func makeNewStockReminderRow(exchange: String, code: String, name: String, price: String) -> UIView {
+        let row = UIView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        let line1 = UIView()
+        let badge = UILabel()
+        badge.text = exchange
+        badge.font = UIFont.systemFont(ofSize: 11)
+        badge.textColor = .white
+        badge.backgroundColor = Constants.Color.stockRise
+        badge.layer.cornerRadius = 2
+        badge.clipsToBounds = true
+        badge.textAlignment = .center
+        let codeLabel = UILabel()
+        codeLabel.text = code
+        codeLabel.font = UIFont.systemFont(ofSize: 14)
+        codeLabel.textColor = Constants.Color.textSecondary
+        let nameLabel = UILabel()
+        nameLabel.text = name
+        nameLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        nameLabel.textColor = Constants.Color.textPrimary
+        let priceLabel = UILabel()
+        priceLabel.text = price
+        priceLabel.font = UIFont.systemFont(ofSize: 14)
+        priceLabel.textColor = Constants.Color.textSecondary
+        priceLabel.textAlignment = .right
+        priceLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        nameLabel.lineBreakMode = .byTruncatingTail
+        line1.translatesAutoresizingMaskIntoConstraints = false
+        badge.translatesAutoresizingMaskIntoConstraints = false
+        codeLabel.translatesAutoresizingMaskIntoConstraints = false
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        priceLabel.translatesAutoresizingMaskIntoConstraints = false
+        line1.addSubview(badge)
+        line1.addSubview(codeLabel)
+        row.addSubview(priceLabel)
+        row.addSubview(line1)
+        row.addSubview(nameLabel)
+        let lineGap: CGFloat = 6
+        NSLayoutConstraint.activate([
+            priceLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            priceLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            priceLabel.leadingAnchor.constraint(greaterThanOrEqualTo: row.leadingAnchor),
+            line1.topAnchor.constraint(equalTo: row.topAnchor),
+            line1.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            line1.trailingAnchor.constraint(lessThanOrEqualTo: priceLabel.leadingAnchor, constant: -12),
+            line1.heightAnchor.constraint(equalToConstant: 20),
+            badge.leadingAnchor.constraint(equalTo: line1.leadingAnchor),
+            badge.centerYAnchor.constraint(equalTo: line1.centerYAnchor),
+            badge.widthAnchor.constraint(equalToConstant: 18),
+            badge.heightAnchor.constraint(equalToConstant: 16),
+            codeLabel.leadingAnchor.constraint(equalTo: badge.trailingAnchor, constant: 6),
+            codeLabel.centerYAnchor.constraint(equalTo: line1.centerYAnchor),
+            codeLabel.trailingAnchor.constraint(lessThanOrEqualTo: line1.trailingAnchor),
+            nameLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            nameLabel.topAnchor.constraint(equalTo: line1.bottomAnchor, constant: lineGap),
+            nameLabel.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: priceLabel.leadingAnchor, constant: -12)
+        ])
+        return row
+    }
+
+    @objc private func dismissNewStockReminderPopup() {
+        newStockReminderOverlay?.removeFromSuperview()
+        newStockReminderOverlay = nil
+    }
+
+    @objc private func newStockReminderGoSubscribe() {
+        dismissNewStockReminderPopup()
+        let vc = NewStockSubscriptionViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
     private func setupUI() {
         // 隐藏导航栏
         view.backgroundColor = .white
@@ -188,7 +396,14 @@ extension HomeViewController: UITableViewDataSource {
             // 菜单网格
             let cell = tableView.dequeueReusableCell(withIdentifier: "MenuGridCell", for: indexPath) as! MenuGridTableViewCell
             cell.configure(with: menuItems)
-            cell.onItemTap = { [weak self] _, title in
+            cell.onItemTap = { [weak self] index, title in
+                // 龙虎榜是第 10 项（index 9），用索引兜底避免标题字符不一致导致无反应
+                if index == 9 || title == "龙虎榜" {
+                    let vc = LongHuBangViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                    return
+                }
                 switch title {
                 case "极速开户":
                     break
@@ -215,8 +430,12 @@ extension HomeViewController: UITableViewDataSource {
                     let vc = NewStockSubscriptionViewController()
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
-                case "场外撮合交易", "战略配售", "AI智投", "龙虎榜":
+                case "场外撮合交易":
                     break
+                case "智能选股", "AI智投":
+                    let vc = SmartStockSelectionViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
                 default:
                     break
                 }

@@ -20,6 +20,7 @@ class ProfileViewController: ZQViewController {
     private let contentView = UIView()
     private var headerView: UIView!
     private var functionsCard: UIView!
+    private var channelKeyOverlay: UIView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,6 +35,29 @@ class ProfileViewController: ZQViewController {
         setupFunctionsCard()
     }
 
+    func requestUserInfo() {
+        SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
+            switch result {
+                case .success(let res):
+                    print("status =", res.statusCode)
+                    print("raw =", res.raw)          // 原始响应
+                    print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                    let dict = res.decrypted
+                    print(dict)
+                    if res.statusCode != 200 {
+                    
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict?["msg"] as? String ?? "")
+                        }
+                        return
+                    }
+            case .failure(let error):
+                print("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         gk_navigationBar.isHidden = true
@@ -41,11 +65,14 @@ class ProfileViewController: ZQViewController {
         gk_navigationBar.layer.zPosition = -1
         scrollView.layer.zPosition = 1
         view.bringSubviewToFront(scrollView)
+        
+        requestUserInfo()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         view.bringSubviewToFront(scrollView)
+        showChannelKeyPopupIfNeeded()
     }
 
     private func setupScroll() {
@@ -434,7 +461,7 @@ class ProfileViewController: ZQViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     @objc private func tradeRecordTapped() {
-        let vc = AccountTradeViewController()
+        let vc = TradeRecordViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
@@ -552,7 +579,7 @@ class ProfileViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "个人资料":
-            let vc = SettingsViewController()
+            let vc = PersonalProfileViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "银行卡":
@@ -590,6 +617,133 @@ class ProfileViewController: ZQViewController {
         guard let url = URL(string: "https://www.htsc.com.cn") else { return }
         let vc = SFSafariViewController(url: url)
         present(vc, animated: true)
+    }
+
+    // MARK: - 通道密钥弹窗（类似首页弹窗：遮罩 + 白卡片 + 标题 + 输入 + 返回/确认）
+    private func showChannelKeyPopupIfNeeded() {
+        guard channelKeyOverlay == nil else { return }
+        let overlay = UIView()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.layer.zPosition = 100
+        view.addSubview(overlay)
+        view.bringSubviewToFront(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        channelKeyOverlay = overlay
+
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 12
+        card.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addSubview(card)
+
+        let titleLabel = UILabel()
+        titleLabel.text = "通道密钥"
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        titleLabel.textColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(titleLabel)
+
+        let inputWrap = UIView()
+        inputWrap.backgroundColor = .white
+        inputWrap.layer.cornerRadius = 8
+        inputWrap.layer.borderWidth = 1
+        inputWrap.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1).cgColor
+        inputWrap.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(inputWrap)
+
+        let leftLabel = UILabel()
+        leftLabel.text = "通道密钥"
+        leftLabel.font = UIFont.systemFont(ofSize: 15)
+        leftLabel.textColor = textPrimary
+        leftLabel.translatesAutoresizingMaskIntoConstraints = false
+        inputWrap.addSubview(leftLabel)
+
+        let textField = UITextField()
+        textField.placeholder = "请输入通道密钥"
+        textField.font = UIFont.systemFont(ofSize: 15)
+        textField.textColor = textPrimary
+        textField.borderStyle = .none
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        inputWrap.addSubview(textField)
+
+        let backBtn = UIButton(type: .system)
+        backBtn.setTitle("返回", for: .normal)
+        backBtn.setTitleColor(textPrimary, for: .normal)
+        backBtn.titleLabel?.font = UIFont.systemFont(ofSize: 16)
+        backBtn.backgroundColor = UIColor(red: 0.92, green: 0.92, blue: 0.92, alpha: 1)
+        backBtn.layer.cornerRadius = 22
+        backBtn.addTarget(self, action: #selector(dismissChannelKeyPopup), for: .touchUpInside)
+        backBtn.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(backBtn)
+
+        let confirmBtn = UIButton(type: .system)
+        confirmBtn.setTitle("确认", for: .normal)
+        confirmBtn.setTitleColor(.white, for: .normal)
+        confirmBtn.titleLabel?.font = UIFont.boldSystemFont(ofSize: 17)
+        confirmBtn.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.15, alpha: 1)
+        confirmBtn.layer.cornerRadius = 22
+        confirmBtn.addTarget(self, action: #selector(channelKeyConfirmTapped), for: .touchUpInside)
+        confirmBtn.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(confirmBtn)
+
+        let cardW: CGFloat = 315
+        let cardH: CGFloat = 240
+        let cardPadding: CGFloat = 20
+        let titleTop: CGFloat = 24
+        let titleToInput: CGFloat = 20
+        let inputH: CGFloat = 44
+        let inputToBtns: CGFloat = 24
+        let btnBottom: CGFloat = 24
+        let btnH: CGFloat = 44
+        let btnSpacing: CGFloat = 12
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: overlay.centerYAnchor, constant: -20),
+            card.widthAnchor.constraint(equalToConstant: cardW),
+            card.heightAnchor.constraint(equalToConstant: cardH),
+
+            titleLabel.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            titleLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: titleTop),
+
+            inputWrap.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: cardPadding),
+            inputWrap.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -cardPadding),
+            inputWrap.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: titleToInput),
+            inputWrap.heightAnchor.constraint(equalToConstant: inputH),
+
+            leftLabel.leadingAnchor.constraint(equalTo: inputWrap.leadingAnchor, constant: 12),
+            leftLabel.centerYAnchor.constraint(equalTo: inputWrap.centerYAnchor),
+            textField.leadingAnchor.constraint(equalTo: leftLabel.trailingAnchor, constant: 10),
+            textField.trailingAnchor.constraint(equalTo: inputWrap.trailingAnchor, constant: -12),
+            textField.centerYAnchor.constraint(equalTo: inputWrap.centerYAnchor),
+
+            backBtn.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: cardPadding),
+            backBtn.trailingAnchor.constraint(equalTo: card.centerXAnchor, constant: -btnSpacing/2),
+            backBtn.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -btnBottom),
+            backBtn.heightAnchor.constraint(equalToConstant: btnH),
+
+            confirmBtn.leadingAnchor.constraint(equalTo: card.centerXAnchor, constant: btnSpacing/2),
+            confirmBtn.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -cardPadding),
+            confirmBtn.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -btnBottom),
+            confirmBtn.heightAnchor.constraint(equalToConstant: btnH)
+        ])
+    }
+
+    @objc private func dismissChannelKeyPopup() {
+        view.endEditing(true)
+        channelKeyOverlay?.removeFromSuperview()
+        channelKeyOverlay = nil
+    }
+
+    @objc private func channelKeyConfirmTapped() {
+        view.endEditing(true)
+        channelKeyOverlay?.removeFromSuperview()
+        channelKeyOverlay = nil
     }
 
     private func makeCard() -> UIView {

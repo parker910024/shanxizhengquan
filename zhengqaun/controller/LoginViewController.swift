@@ -395,7 +395,7 @@ class LoginViewController: UIViewController {
                 }
                 
                 SecureNetworkManager.shared.request(
-                    api: "/api/user/login",
+                    api: Api.login_api,
                     method: .post,
                     params: [
                         "account": account,

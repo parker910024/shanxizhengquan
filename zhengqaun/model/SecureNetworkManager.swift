@@ -1,12 +1,12 @@
 import Foundation
 import CryptoKit
 
-/// 加密网络请求管理类
+/// 加密网络请求管理类（与 Android SX-b 一致）
 /// - 功能：
-///   - Path 生成（pathFn）+ confusePath
+///   - Path 生成（pathFn）+ confusePath，与 Android PathCalculator/PathObfuscator 一致
 ///   - AES‑256‑GCM 加解密（SHA256(key+unixString) 派生密钥，IV 12 字节）
 ///   - 解密时兼容 unixString 的 current/prev/next 三档（±1 分钟）
-///   - 请求：POST raw text/plain，body 为密文 base64(IV||ciphertext+tag)
+///   - 与 Android RequestEncryptInterceptor 一致：所有请求统一发 HTTP POST，URL 无 query，body 为密文；逻辑方法 GET/POST 仅写在明文 JSON 的 method 字段内
 ///   - 响应：尝试整体 body 或 JSON 中 cipher/ciphertext/data/result/payload 字段解密
 final class SecureNetworkManager {
 
@@ -24,11 +24,9 @@ final class SecureNetworkManager {
         case post = "POST"
     }
 
-    // MARK: - 对外请求接口（你只需要传 api / method / params）
+    // MARK: - 对外请求接口（api / method / params；token 从 UserAuthManager 读取，有值则带上传）
 
-    /// 统一请求入口：
-    /// - 你只需要传：api（如 "/api/dev"）、method（.get / .post）、params（字典）
-    /// - BaseURL / 加密 key / 加解密细节都在类内部处理
+    /// 统一请求入口：api、method、params。token 从数据模型 UserAuthManager.shared.token 读取，有值则写入明文 JSON 并带在 Header "token" 上。
     func request(
         api: String,
         method: HTTPMethod,
@@ -36,20 +34,14 @@ final class SecureNetworkManager {
         session: URLSession = .shared,
         completion: @escaping (Result<(decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?), Error>) -> Void
     ) {
-        // 构造与前端 HTML 相同结构的明文 JSON：
-        // {
-        //   "url": api,
-        //   "method": "GET" / "POST",
-        //   "param": { ... },
-        //   "token": ""   // 如需要可改成实际 token
-        // }
+        let token = UserAuthManager.shared.token
+
         var payload: [String: Any] = [
             "url": api,
             "method": method.rawValue,
-            "param": params
+            "param": params,
+            "token": token
         ]
-        // 使用用户登录 token
-        payload["token"] = UserAuthManager.shared.token
 
         guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
               let plainJSON = String(data: jsonData, encoding: .utf8) else {
@@ -60,11 +52,11 @@ final class SecureNetworkManager {
             return
         }
 
-        // 调用内部加密发送逻辑
         sendEncryptedRequest(
             httpMethod: method.rawValue,
             api: api,
             plainJSON: plainJSON,
+            token: token,
             session: session,
             completion: completion
         )
@@ -72,11 +64,12 @@ final class SecureNetworkManager {
 
     // MARK: - 内部加密发送实现
 
-    /// 内部：真正发起加密请求
+    /// 内部：真正发起加密请求（Header 必须带 "token"，与 HTML/服务端约定一致）
     private func sendEncryptedRequest(
         httpMethod: String,
         api: String,
         plainJSON: String,
+        token: String = "",
         unixString: String? = nil,
         session: URLSession = .shared,
         completion: @escaping (Result<(decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?), Error>) -> Void
@@ -90,10 +83,16 @@ final class SecureNetworkManager {
             }
         }()
 
-        // 2. 生成 path + confusePath
+        // 2. 生成 path + confusePath，URL 与 HTML 一致：base（去尾斜杠）+ confusePath
         let realPath = PathHelper.pathFn(key: cryptoKey, unixString: baseUnixString)
         let confusePath = PathHelper.confusePath(realPath)
-        let finalURL = baseURL.appendingPathComponent(confusePath)
+        var baseStr = baseURL.absoluteString
+        if baseStr.hasSuffix("/") { baseStr.removeLast() }
+        guard let finalURL = URL(string: baseStr + confusePath) else {
+            let err = NSError(domain: "SecureNetworkManager", code: -3, userInfo: [NSLocalizedDescriptionKey: "URL 拼接失败"])
+            DispatchQueue.main.async { completion(.failure(err)) }
+            return
+        }
 
         // 3. 校验 JSON 合法性（防御）
         guard (try? JSONSerialization.jsonObject(with: Data(plainJSON.utf8), options: [])) != nil else {
@@ -113,52 +112,58 @@ final class SecureNetworkManager {
             return
         }
 
+        // 与 Android 一致：统一发 POST，URL 无 query，body 为密文；逻辑 GET/POST 已在 plainJSON 的 method 中
         var request = URLRequest(url: finalURL)
-        request.httpMethod = httpMethod
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
+        request.httpMethod = "POST"
+        request.setValue(token, forHTTPHeaderField: "token")
+        request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
         if httpMethod != "GET" {
             request.httpBody = cipherB64.data(using: .utf8)
         }
 
-        // 5. 发送请求
+        // 5. 发送请求（URLSession 回调在后台线程，统一回主线程再调 completion，避免在后台改 UI 崩溃）
         let task = session.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            var statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            let bodyData = data ?? Data()
-            let rawBody = String(data: bodyData, encoding: .utf8) ?? ""
-
-            // 6. 尝试解密响应
-            let result = ResponseDecryptor.tryDecryptResponseBody(
-                rawData: bodyData,
-                key: self.cryptoKey,
-                baseUnixString: baseUnixString
-            )
-            if result.ok {
-                // 解密成功时，尝试把明文 JSON 转成字典返回
-                var dict: [String: Any]? = nil
-                if let data = result.plain.data(using: .utf8),
-                   let obj = try? JSONSerialization.jsonObject(with: data, options: []),
-                   let d = obj as? [String: Any] {
-                    dict = d
+            let deliver: () -> Void = {
+                if let error = error {
+                    completion(.failure(error))
+                    return
                 }
-                completion(.success((
-                    decrypted: dict,
-                    raw: rawBody,
-                    statusCode: statusCode,
-                    unixUsed: result.unixUsed
-                )))
+
+                var statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                let bodyData = data ?? Data()
+                let rawBody = String(data: bodyData, encoding: .utf8) ?? ""
+
+                let result = ResponseDecryptor.tryDecryptResponseBody(
+                    rawData: bodyData,
+                    key: self.cryptoKey,
+                    baseUnixString: baseUnixString
+                )
+                if result.ok {
+                    var dict: [String: Any]? = nil
+                    if let data = result.plain.data(using: .utf8),
+                       let obj = try? JSONSerialization.jsonObject(with: data, options: []),
+                       let d = obj as? [String: Any] {
+                        dict = d
+                    }
+                    completion(.success((
+                        decrypted: dict,
+                        raw: rawBody,
+                        statusCode: statusCode,
+                        unixUsed: result.unixUsed
+                    )))
+                } else {
+                    completion(.success((
+                        decrypted: nil,
+                        raw: rawBody,
+                        statusCode: statusCode,
+                        unixUsed: nil
+                    )))
+                }
+            }
+            if Thread.isMainThread {
+                deliver()
             } else {
-                // 解不出来也返回原文，方便调试
-                completion(.success((
-                    decrypted: nil,
-                    raw: rawBody,
-                    statusCode: statusCode,
-                    unixUsed: nil
-                )))
+                DispatchQueue.main.async(execute: deliver)
             }
         }
         task.resume()
@@ -312,13 +317,22 @@ private enum CryptoHelper {
         return SymmetricKey(data: Data(bytes))
     }
 
-    /// 规范化 base64（支持 URL-safe，补齐 padding）
+    /// 规范化 base64（支持 URL-safe，补齐 padding）— 与 HTML 中 normalizeB64ForAtob 一致
     private static func normalizeBase64(_ s: String) -> String {
         var t = s.replacingOccurrences(of: "\\s+", with: "", options: .regularExpression)
         t = t.replacingOccurrences(of: "-", with: "+")
             .replacingOccurrences(of: "_", with: "/")
         let pad = t.count % 4
         if pad != 0 { t.append(String(repeating: "=", count: 4 - pad)) }
+        return t
+    }
+
+    /// 转为 URL-safe base64（GET query 用）：+→-、/→_、去掉 =，与 HTML 解密端兼容
+    static func toURLSafeBase64(_ standardBase64: String) -> String {
+        var t = standardBase64
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+        t = t.replacingOccurrences(of: "=", with: "")
         return t
     }
 

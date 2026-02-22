@@ -596,7 +596,7 @@ extension TradeViewController: UITableViewDelegate {
             vc = AccountTradeViewController()
             (vc as? AccountTradeViewController)?.tradeType = .buy
         case "龙虎榜":
-            vc = NewsDetailViewController()
+            vc = LongHuBangViewController()
         case "消息通知":
             vc = MessageCenterViewController()
         case "修改交易密码":
