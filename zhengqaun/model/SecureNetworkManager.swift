@@ -116,7 +116,9 @@ final class SecureNetworkManager {
         var request = URLRequest(url: finalURL)
         request.httpMethod = httpMethod
         request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
-        request.httpBody = cipherB64.data(using: .utf8)
+        if httpMethod != "GET" {
+            request.httpBody = cipherB64.data(using: .utf8)
+        }
 
         // 5. 发送请求
         let task = session.dataTask(with: request) { data, response, error in

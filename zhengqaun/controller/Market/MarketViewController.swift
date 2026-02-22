@@ -198,6 +198,7 @@ class MarketViewController: ZQViewController {
             hangqingContent.topAnchor.constraint(equalTo: hangqingScrollView.topAnchor),
             hangqingContent.leadingAnchor.constraint(equalTo: hangqingScrollView.leadingAnchor),
             hangqingContent.trailingAnchor.constraint(equalTo: hangqingScrollView.trailingAnchor),
+            hangqingContent.bottomAnchor.constraint(equalTo: hangqingScrollView.bottomAnchor),
             hangqingContent.widthAnchor.constraint(equalTo: hangqingScrollView.widthAnchor),
         ])
 
