@@ -1,4 +1,4 @@
-
+platform :ios, '18.2'
 target 'zhengqaun' do
   
   pod 'SVProgressHUD'

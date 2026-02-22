@@ -39,11 +39,11 @@ class ProfileViewController: ZQViewController {
         SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
             switch result {
                 case .success(let res):
-                    print("status =", res.statusCode)
-                    print("raw =", res.raw)          // 原始响应
-                    print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                    debugPrint("status =", res.statusCode)
+                    debugPrint("raw =", res.raw)          // 原始响应
+                    debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                     let dict = res.decrypted
-                    print(dict)
+                    debugPrint(dict ?? "nil")
                 if dict?["code"] as? NSNumber != 1 {
 
                         DispatchQueue.main.async {
@@ -72,7 +72,8 @@ class ProfileViewController: ZQViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         view.bringSubviewToFront(scrollView)
-        showChannelKeyPopupIfNeeded()
+        //通道密钥不知道作何用，暂时屏蔽
+//        showChannelKeyPopupIfNeeded()
     }
 
     private func setupScroll() {
