@@ -1334,14 +1334,13 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
         if tableView == rankingTableView, indexPath.row < rankingStocks.count {
             let s = rankingStocks[indexPath.row]
-            let vc = StockDetailViewController()
-            vc.stockCode = s.code
-            vc.stockName = s.name
-            // 根据 symbol 判断交易所
-            if s.symbol.hasPrefix("sh") { vc.exchange = "沪" }
-            else if s.symbol.hasPrefix("sz") { vc.exchange = "深" }
-            else if s.symbol.hasPrefix("bj") { vc.exchange = "北" }
-            else { vc.exchange = "" }
+            let vc = IndexDetailViewController()
+            vc.indexName          = s.name
+            vc.indexCode          = s.code
+            vc.indexAllcode       = s.symbol        // e.g. "sh600519" — resolveSecId() uses this
+            vc.indexPrice         = s.price
+            vc.indexChange        = s.change
+            vc.indexChangePercent = s.changePercent
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         }
