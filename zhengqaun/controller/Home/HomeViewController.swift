@@ -37,7 +37,6 @@ class HomeViewController: ZQViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupTableView()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -371,7 +370,8 @@ class HomeViewController: ZQViewController {
     /// 根据标题获取新闻内容（示例方法，实际应该从服务器获取）
     private func getNewsContent(for title: String) -> String {
         // 返回提供的HTML内容
-        return "<div class=\"txtinfos\" id=\"ContentBody\" style=\"margin-top:0;\">\n                            \n                                <!--文章主体-->\n<p>　　沪指本周累计涨0.13%，深证成指跌0.58%，创业板指跌1.25%。A股后市怎么走？看看机构怎么说：</p ><p>　　<strong>①<span id=\"stock_1.600030\"><a target=\"_blank\" href= \"http://quote.eastmoney.com/unify/r/1.600030\" class=\"keytip\" data-code=\"1,600030\">中信证券</a ></span><span id=\"quote_1.600030\"></span>：开年后市场震荡向上的概率更高</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.600030\" class=\"em_stock_key_common\" data-code=\"1,600030\">中信证券</span>表示，考虑到去年末的资金热度并不算高，人心思涨的环境下开年后市场震荡向上的概率更高。前期共识性品种调整后再上车大概率是机构资金主要的考虑方向，例如有色、海外算力、<span id=\"bk_90.BK1036\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1036\" class=\"keytip\" data-code=\"90,BK1036\">半导体</a ></span><span id=\"bkquote_90.BK1036\"></span>自主可控等，有些偏游资风格的品种也属于这一类别，比如<span id=\"bk_90.BK0963\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0963\" class=\"keytip\" data-code=\"90,BK0963\">商业航天</a ></span><span id=\"bkquote_90.BK0963\"></span>、<span id=\"stock_0.300024\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.300024\" class=\"keytip\" data-code=\"0,300024\">机器人</a ></span><span id=\"quote_0.300024\"></span>等。免税、航空等出行服务相关行业应是增量布局重点，优质的地产开发商也是考虑对象。中期维度下，更青睐一些热度和持仓集中度相对较低，但关注度开始提升、催化开始增多且长期ROE有提升空间的板块，如化工、<span id=\"bk_90.BK0739\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0739\" class=\"keytip\" data-code=\"90,BK0739\">工程机械</a ></span><span id=\"bkquote_90.BK0739\"></span>、电力设备及<span id=\"bk_90.BK0493\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0493\" class=\"keytip\" data-code=\"90,BK0493\">新能源</a ></span><span id=\"bkquote_90.BK0493\"></span>等，对高景气、高热度但是股价滞涨的板块则相对谨慎。同时，一些新的产业题材（如<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0963\" class=\"em_stock_key_common\" data-code=\"90,BK0963\">商业航天</span>）可能还会反复演绎，值得持续关注。</p ><p>　　<strong>②<span id=\"stock_1.601059\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601059\" class=\"keytip\" data-code=\"1,601059\">信达证券</a ></span><span id=\"quote_1.601059\"></span>：春季行情可能缓步启动</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601059\" class=\"em_stock_key_common\" data-code=\"1,601059\">信达证券</span>表示，春节前流动性环境大概率较好，市场可能继续偏强，但1月可能会有一些波动。这一次春节前市场位置不低，此前经验来看，交易量下降到低位后恢复初期通常是缓涨。本次春季行情可能是缓步启动，后续指数突破需要验证经济数据等能否继续加速。资金层面，当前<span id=\"bk_90.BK0474\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0474\" class=\"keytip\" data-code=\"90,BK0474\">保险</a ></span><span id=\"bkquote_90.BK0474\"></span>、私募等机构资金仍有较强的补仓动力，短期在演绎产业趋势强或者催化较多的主题，但主题行情的持续性需要验证实际的订单或业绩。</p ><p>　　<strong>③<span id=\"stock_1.601788\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601788\" class=\"keytip\" data-code=\"1,601788\">光大证券</a ></span><span id=\"quote_1.601788\"></span>：消费与成长有望成为春季行情的两条主线</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601788\" class=\"em_stock_key_common\" data-code=\"1,601788\">光大证券</span>表示，当前来看，2025年12月下旬的上涨或许是本轮春季行情起点。对于1月份指数的行情，投资者或许应该保持耐心。消费与成长有望成为今年春季行情的两条主线。1月行业配置方面，关注电子、电力设备、<span id=\"bk_90.BK0478\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0478\" class=\"keytip\" data-code=\"90,BK0478\">有色金属</a ></span><span id=\"bkquote_90.BK0478\"></span>、汽车等。若市场风格为成长，五维行业比较框架打分靠前的行业分别为电子、电力设备、通信、<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0478\" class=\"em_stock_key_common\" data-code=\"90,BK0478\">有色金属</span>、汽车、国防<span id=\"bk_90.BK0490\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0490\" class=\"keytip\" data-code=\"90,BK0490\">军工</a ></span><span id=\"bkquote_90.BK0490\"></span>；若1月份市场风格为防御，五维行业比较框架打分靠前的行业分别为非银金融、电子、<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0478\" class=\"em_stock_key_common\" data-code=\"90,BK0478\">有色金属</span>、电力设备、汽车、交通运输等。</p ><p>　　<strong>④<span id=\"stock_0.002670\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.002670\" class=\"keytip\" data-code=\"0,002670\">国盛证券</a ></span><span id=\"quote_0.002670\"></span>：配置趋势共识，博弈产业催化</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.002670\" class=\"em_stock_key_common\" data-code=\"0,002670\">国盛证券</span>表示，大势层面，中期趋势依旧向上，短期保持交易思维。配置维度，当前科技与周期的双主线思维共识较强，宜重点围绕市场共识配置处于趋势中的资产，科技领域优先重点关注AI算力、<span id=\"bk_90.BK0989\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0989\" class=\"keytip\" data-code=\"90,BK0989\">储能</a ></span><span id=\"bkquote_90.BK0989\"></span>、<span id=\"bk_90.BK1137\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1137\" class=\"keytip\" data-code=\"90,BK1137\">存储芯片</a ></span><span id=\"bkquote_90.BK1137\"></span>等，周期领域优先关注反内卷与涨价验证的交集方向，如有色、化工、钢铁等。交易维度，短期重点围绕产业催化参与，国内优先关注<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0963\" class=\"em_stock_key_common\" data-code=\"90,BK0963\">商业航天</span>、软件<span id=\"bk_90.BK1104\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1104\" class=\"keytip\" data-code=\"90,BK1104\">信创</a ></span><span id=\"bkquote_90.BK1104\"></span>等；海外映射类优先关注<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.300024\" class=\"em_stock_key_common\" data-code=\"0,300024\">机器人</span>、<span id=\"bk_90.BK1037\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1037\" class=\"keytip\" data-code=\"90,BK1037\">消费电子</a ></span><span id=\"bkquote_90.BK1037\"></span>、互联网传媒等AI应用端的催化反馈。</p ><p>　　<strong>⑤<span id=\"stock_1.601881\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601881\" class=\"keytip\" data-code=\"1,601881\">中国银河</a ></span><span id=\"quote_1.601881\"></span><span id=\"bk_90.BK0473\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0473\" class=\"keytip\" data-code=\"90,BK0473\">证券</a ></span><span id=\"bkquote_90.BK0473\"></span>：硬科技与消费共振，港股后市可期</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601881\" class=\"em_stock_key_common\" data-code=\"1,601881\">中国银河</span><span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0473\" class=\"em_stock_key_common\" data-code=\"90,BK0473\">证券</span>表示，展望未来，在多重积极因素共振下，港股市场交投活跃度有望持续上升，预计港股整体震荡上行。配置方面，建议关注以下板块：（1）科技板块仍是中长期投资主线，在产业链涨价、并购重组等多重利好共振下，有望震荡上行。（2）消费板块有望持续受益于政策支持，且当前估值处于相对低位，中长期上涨空间较大，后续需关注政策落地力度及消费数据改善情况。</p ><p class=\"em_media\">（文章来源：第一财经）</p >                        </div>"
+//        return "<div class=\"txtinfos\" id=\"ContentBody\" style=\"margin-top:0;\">\n                            \n                                <!--文章主体-->\n<p>　　沪指本周累计涨0.13%，深证成指跌0.58%，创业板指跌1.25%。A股后市怎么走？看看机构怎么说：</p ><p>　　<strong>①<span id=\"stock_1.600030\"><a target=\"_blank\" href= \"http://quote.eastmoney.com/unify/r/1.600030\" class=\"keytip\" data-code=\"1,600030\">中信证券</a ></span><span id=\"quote_1.600030\"></span>：开年后市场震荡向上的概率更高</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.600030\" class=\"em_stock_key_common\" data-code=\"1,600030\">中信证券</span>表示，考虑到去年末的资金热度并不算高，人心思涨的环境下开年后市场震荡向上的概率更高。前期共识性品种调整后再上车大概率是机构资金主要的考虑方向，例如有色、海外算力、<span id=\"bk_90.BK1036\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1036\" class=\"keytip\" data-code=\"90,BK1036\">半导体</a ></span><span id=\"bkquote_90.BK1036\"></span>自主可控等，有些偏游资风格的品种也属于这一类别，比如<span id=\"bk_90.BK0963\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0963\" class=\"keytip\" data-code=\"90,BK0963\">商业航天</a ></span><span id=\"bkquote_90.BK0963\"></span>、<span id=\"stock_0.300024\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.300024\" class=\"keytip\" data-code=\"0,300024\">机器人</a ></span><span id=\"quote_0.300024\"></span>等。免税、航空等出行服务相关行业应是增量布局重点，优质的地产开发商也是考虑对象。中期维度下，更青睐一些热度和持仓集中度相对较低，但关注度开始提升、催化开始增多且长期ROE有提升空间的板块，如化工、<span id=\"bk_90.BK0739\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0739\" class=\"keytip\" data-code=\"90,BK0739\">工程机械</a ></span><span id=\"bkquote_90.BK0739\"></span>、电力设备及<span id=\"bk_90.BK0493\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0493\" class=\"keytip\" data-code=\"90,BK0493\">新能源</a ></span><span id=\"bkquote_90.BK0493\"></span>等，对高景气、高热度但是股价滞涨的板块则相对谨慎。同时，一些新的产业题材（如<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0963\" class=\"em_stock_key_common\" data-code=\"90,BK0963\">商业航天</span>）可能还会反复演绎，值得持续关注。</p ><p>　　<strong>②<span id=\"stock_1.601059\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601059\" class=\"keytip\" data-code=\"1,601059\">信达证券</a ></span><span id=\"quote_1.601059\"></span>：春季行情可能缓步启动</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601059\" class=\"em_stock_key_common\" data-code=\"1,601059\">信达证券</span>表示，春节前流动性环境大概率较好，市场可能继续偏强，但1月可能会有一些波动。这一次春节前市场位置不低，此前经验来看，交易量下降到低位后恢复初期通常是缓涨。本次春季行情可能是缓步启动，后续指数突破需要验证经济数据等能否继续加速。资金层面，当前<span id=\"bk_90.BK0474\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0474\" class=\"keytip\" data-code=\"90,BK0474\">保险</a ></span><span id=\"bkquote_90.BK0474\"></span>、私募等机构资金仍有较强的补仓动力，短期在演绎产业趋势强或者催化较多的主题，但主题行情的持续性需要验证实际的订单或业绩。</p ><p>　　<strong>③<span id=\"stock_1.601788\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601788\" class=\"keytip\" data-code=\"1,601788\">光大证券</a ></span><span id=\"quote_1.601788\"></span>：消费与成长有望成为春季行情的两条主线</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601788\" class=\"em_stock_key_common\" data-code=\"1,601788\">光大证券</span>表示，当前来看，2025年12月下旬的上涨或许是本轮春季行情起点。对于1月份指数的行情，投资者或许应该保持耐心。消费与成长有望成为今年春季行情的两条主线。1月行业配置方面，关注电子、电力设备、<span id=\"bk_90.BK0478\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0478\" class=\"keytip\" data-code=\"90,BK0478\">有色金属</a ></span><span id=\"bkquote_90.BK0478\"></span>、汽车等。若市场风格为成长，五维行业比较框架打分靠前的行业分别为电子、电力设备、通信、<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0478\" class=\"em_stock_key_common\" data-code=\"90,BK0478\">有色金属</span>、汽车、国防<span id=\"bk_90.BK0490\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0490\" class=\"keytip\" data-code=\"90,BK0490\">军工</a ></span><span id=\"bkquote_90.BK0490\"></span>；若1月份市场风格为防御，五维行业比较框架打分靠前的行业分别为非银金融、电子、<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0478\" class=\"em_stock_key_common\" data-code=\"90,BK0478\">有色金属</span>、电力设备、汽车、交通运输等。</p ><p>　　<strong>④<span id=\"stock_0.002670\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.002670\" class=\"keytip\" data-code=\"0,002670\">国盛证券</a ></span><span id=\"quote_0.002670\"></span>：配置趋势共识，博弈产业催化</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.002670\" class=\"em_stock_key_common\" data-code=\"0,002670\">国盛证券</span>表示，大势层面，中期趋势依旧向上，短期保持交易思维。配置维度，当前科技与周期的双主线思维共识较强，宜重点围绕市场共识配置处于趋势中的资产，科技领域优先重点关注AI算力、<span id=\"bk_90.BK0989\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0989\" class=\"keytip\" data-code=\"90,BK0989\">储能</a ></span><span id=\"bkquote_90.BK0989\"></span>、<span id=\"bk_90.BK1137\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1137\" class=\"keytip\" data-code=\"90,BK1137\">存储芯片</a ></span><span id=\"bkquote_90.BK1137\"></span>等，周期领域优先关注反内卷与涨价验证的交集方向，如有色、化工、钢铁等。交易维度，短期重点围绕产业催化参与，国内优先关注<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0963\" class=\"em_stock_key_common\" data-code=\"90,BK0963\">商业航天</span>、软件<span id=\"bk_90.BK1104\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1104\" class=\"keytip\" data-code=\"90,BK1104\">信创</a ></span><span id=\"bkquote_90.BK1104\"></span>等；海外映射类优先关注<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/0.300024\" class=\"em_stock_key_common\" data-code=\"0,300024\">机器人</span>、<span id=\"bk_90.BK1037\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK1037\" class=\"keytip\" data-code=\"90,BK1037\">消费电子</a ></span><span id=\"bkquote_90.BK1037\"></span>、互联网传媒等AI应用端的催化反馈。</p ><p>　　<strong>⑤<span id=\"stock_1.601881\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601881\" class=\"keytip\" data-code=\"1,601881\">中国银河</a ></span><span id=\"quote_1.601881\"></span><span id=\"bk_90.BK0473\"><a target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0473\" class=\"keytip\" data-code=\"90,BK0473\">证券</a ></span><span id=\"bkquote_90.BK0473\"></span>：硬科技与消费共振，港股后市可期</strong></p ><p>　　<span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/1.601881\" class=\"em_stock_key_common\" data-code=\"1,601881\">中国银河</span><span web=\"1\" target=\"_blank\" href=\"http://quote.eastmoney.com/unify/r/90.BK0473\" class=\"em_stock_key_common\" data-code=\"90,BK0473\">证券</span>表示，展望未来，在多重积极因素共振下，港股市场交投活跃度有望持续上升，预计港股整体震荡上行。配置方面，建议关注以下板块：（1）科技板块仍是中长期投资主线，在产业链涨价、并购重组等多重利好共振下，有望震荡上行。（2）消费板块有望持续受益于政策支持，且当前估值处于相对低位，中长期上涨空间较大，后续需关注政策落地力度及消费数据改善情况。</p ><p class=\"em_media\">（文章来源：第一财经）</p >                        </div>"
+        return ""
     }
 }
 
@@ -450,6 +450,7 @@ extension HomeViewController: UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "FundFlowCell", for: indexPath) as! FundFlowTableViewCell
             return cell
         case 4:
+            
             let cell = tableView.dequeueReusableCell(withIdentifier: "HotSpotMarketCell", for: indexPath) as! HotSpotMarketTableViewCell
             cell.onHotspotTap = { [weak self] in
                 let detailVC = NewsDetailViewController()
@@ -460,13 +461,18 @@ extension HomeViewController: UITableViewDataSource {
             return cell
         case 5:
             let cell = tableView.dequeueReusableCell(withIdentifier: "NewsCell", for: indexPath) as! NewsTableViewCell
-            cell.onNewsItemTapped = { [weak self] title, time in
+            cell.onNewsItemTapped = { [weak self] title, time, content in
                 // 跳转到新闻详情页
                 let detailVC = NewsDetailViewController()
                 // 设置HTML内容（示例内容，实际应该根据title从服务器获取）
-                detailVC.htmlContent = self?.getNewsContent(for: title)
+                // detailVC.htmlContent = self?.getNewsContent(for: title)
+                detailVC.htmlContent = content
                 detailVC.hidesBottomBarWhenPushed = true
                 self?.navigationController?.pushViewController(detailVC, animated: true)
+            }
+            cell.onNewsDataLoaded = { [weak self] in
+                guard let self = self else { return }
+                self.tableView.reloadRows(at: [IndexPath(row: 5, section: 0)], with: .none)
             }
             return cell
         default:
@@ -482,7 +488,7 @@ extension HomeViewController: UITableViewDelegate {
         case 0:
             return 152
         case 1:
-            return 168
+            return 188
         case 2:
             return 110 + 20
         case 3:
@@ -499,7 +505,7 @@ extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.row {
         case 5:
-            return 200
+            return 320
         default:
             return 100
         }
@@ -732,6 +738,7 @@ class MenuGridTableViewCell: UITableViewCell {
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 2 // 最多2行
         titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         container.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -1030,6 +1037,7 @@ class HotSpotMarketTableViewCell: UITableViewCell {
         hotspotHeadlineLabel.numberOfLines = 2
         hotspotHeadlineLabel.lineBreakMode = .byTruncatingTail
         hotspotHeadlineLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        hotspotHeadlineLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         leftCard.addSubview(hotspotHeadlineLabel)
         hotspotHeadlineLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -1211,50 +1219,101 @@ class NewsTableViewCell: UITableViewCell {
     private let newsStackView = UIStackView()
     private var tabButtons: [UIButton] = []
     private var selectedIndex: Int = 0
-    private var newsData: [[(String, String)]] = [] // 不同分类的新闻数据
-    var onNewsItemTapped: ((String, String) -> Void)? // 新闻项点击回调 (title, time)
+    private var newsData: [[(String, String, String)]] = [] // 不同分类的新闻数据
+    var onNewsItemTapped: ((String, String, String) -> Void)? // 新闻项点击回调 (title, time, content)
+    var onNewsDataLoaded: (() -> Void)? // 新闻数据加载完成后回调，用于让 tableView 重新计算行高
     
     // 新闻数据源（与 new UI 一致：动态/7X24/盘面/投顾/要闻/更多）
-    private let newsDataSource: [[(String, String)]] = [
-        [
-            ("今夜突发公告!多只大牛股紧急提示风险!", "01-28 21:25"),
-            ("2026购在中国暨新春消费季启动", "01-28 20:15"),
-            ("国内经济持续稳定增长，消费市场活跃", "01-28 18:30")
-        ],
-        [
-            ("全球股市震荡，投资者关注美联储政策", "01-28 21:20"),
-            ("欧洲央行维持利率不变，市场反应积极", "01-28 20:10"),
-            ("亚洲市场表现强劲，科技股领涨", "01-28 18:00")
-        ],
-        [
-            ("A股市场迎来开门红，三大指数集体上涨", "01-28 21:15"),
-            ("证监会发布新规，规范市场交易行为", "01-28 20:00"),
-            ("券商板块表现亮眼，多只个股涨停", "01-28 17:45")
-        ],
-        [
-            ("多家上市公司发布业绩预告", "01-28 21:10"),
-            ("科技公司加大研发投入，布局新赛道", "01-28 19:50"),
-            ("新能源企业获得重大订单，股价上涨", "01-28 17:30")
-        ],
-        [
-            ("要闻汇总：政策与市场双轮驱动", "01-28 21:05"),
-            ("机构看好春季行情", "01-28 19:40"),
-            ("北向资金持续流入", "01-28 17:15")
-        ],
-        [
-            ("更多资讯敬请关注", "01-28 21:00"),
-            ("行业研报与策略", "01-28 19:30"),
-            ("市场数据与解读", "01-28 17:00")
-        ]
-    ]
+//    private var newsDataSource: [[(String, String)]] = []
+//    private let newsData: [[(String, String)]] = [
+//        [
+//            ("今夜突发公告!多只大牛股紧急提示风险!", "01-28 21:25"),
+//            ("2026购在中国暨新春消费季启动", "01-28 20:15"),
+//            ("国内经济持续稳定增长，消费市场活跃", "01-28 18:30")
+//        ],
+//        [
+//            ("全球股市震荡，投资者关注美联储政策", "01-28 21:20"),
+//            ("欧洲央行维持利率不变，市场反应积极", "01-28 20:10"),
+//            ("亚洲市场表现强劲，科技股领涨", "01-28 18:00")
+//        ],
+//        [
+//            ("A股市场迎来开门红，三大指数集体上涨", "01-28 21:15"),
+//            ("证监会发布新规，规范市场交易行为", "01-28 20:00"),
+//            ("券商板块表现亮眼，多只个股涨停", "01-28 17:45")
+//        ],
+//        [
+//            ("多家上市公司发布业绩预告", "01-28 21:10"),
+//            ("科技公司加大研发投入，布局新赛道", "01-28 19:50"),
+//            ("新能源企业获得重大订单，股价上涨", "01-28 17:30")
+//        ],
+//        [
+//            ("要闻汇总：政策与市场双轮驱动", "01-28 21:05"),
+//            ("机构看好春季行情", "01-28 19:40"),
+//            ("北向资金持续流入", "01-28 17:15")
+//        ],
+//        [
+//            ("更多资讯敬请关注", "01-28 21:00"),
+//            ("行业研报与策略", "01-28 19:30"),
+//            ("市场数据与解读", "01-28 17:00")
+//        ]
+//    ]
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
+        loadData()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    private let newsTypeModels = [
+        ["type": "1", "name": "国内经济"],
+        ["type": "2", "name": "国际经济"],
+        ["type": "3", "name": "证券要闻"],
+        ["type": "4", "name": "公司咨询"],
+    ]
+
+    private func loadData() {
+        
+        let group = DispatchGroup()
+        var news = [(String, String, String, String)]()
+        newsTypeModels.forEach {
+            group.enter()
+            let type: String = $0["type"] ?? ""
+            SecureNetworkManager.shared.request(api: "/api/Indexnew/getGuoneinews", method: .get, params: ["page": "1", "size":"3", "type": type]) { res in
+                switch res {
+                case .success(let success):
+                    guard let root = success.decrypted?["data"] as? [String: Any] else { return }
+                    guard let list = root["list"] as? [[String: Any]] else { return }
+                    for item in list {
+                        let news_time = item["news_time"] as? String
+                        let news_title = item["news_title"] as? String
+                        let news_content = item["news_content"] as? String
+                        news.append((type, news_title ?? "", news_time ?? "", news_content ?? ""))
+                    }
+                    group.leave()
+                case .failure(let failure):
+                    group.leave()
+                    DispatchQueue.main.async {
+                        Toast.showInfo(failure.localizedDescription)
+                    }
+                }
+            }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            /// 新闻按分类处理
+            newsTypeModels.forEach({ [weak self] newType in
+                guard let self = self else { return }
+                newsData.append(news.filter({ $0.0 == newType["type"]}).map({($0.1, $0.2, $0.3)}))
+            })
+            updateTabSelection()
+            updateNewsList()
+            onNewsDataLoaded?()
+        }
     }
     
     private func setupUI() {
@@ -1268,8 +1327,7 @@ class NewsTableViewCell: UITableViewCell {
         // 新闻标签
         containerView.addSubview(tabView)
         tabView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let tabs = ["动态", "7X24", "盘面", "投顾", "要闻", "更多"]
+        let tabs = newsTypeModels.map({ $0["name"] })
         let tabStackView = UIStackView()
         tabStackView.axis = .horizontal
         tabStackView.distribution = .fillEqually
@@ -1345,15 +1403,24 @@ class NewsTableViewCell: UITableViewCell {
     }
     
     private func updateNewsList() {
-        // 清除旧的新闻项
+        // 清除旧的新闻项（含占位）
         newsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        
+        if newsData.isEmpty {
+            let placeholder = UIView()
+            placeholder.translatesAutoresizingMaskIntoConstraints = false
+            newsStackView.addArrangedSubview(placeholder)
+            NSLayoutConstraint.activate([
+                placeholder.heightAnchor.constraint(greaterThanOrEqualToConstant: 120)
+            ])
+            return
+        }
         // 获取当前分类的新闻数据
-        let currentNews = newsDataSource[selectedIndex]
+        if selectedIndex >= newsData.count { return }
+        let currentNews = newsData[selectedIndex]
         
         // 添加新的新闻项（前几项带红色数字角标）
         for (index, news) in currentNews.enumerated() {
-            let newsItemView = createNewsItemView(title: news.0, time: news.1, index: index)
+            let newsItemView = createNewsItemView(title: news.0, time: news.1, content: news.2, index: index)
             newsStackView.addArrangedSubview(newsItemView)
             
             // 如果不是最后一项，添加分隔线
@@ -1362,12 +1429,14 @@ class NewsTableViewCell: UITableViewCell {
                 separator.backgroundColor = UIColor(hex: 0xF6F6F6) // 浅灰色分隔线
                 newsStackView.addArrangedSubview(separator)
                 separator.translatesAutoresizingMaskIntoConstraints = false
-                separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
+                let sepH = separator.heightAnchor.constraint(equalToConstant: 1)
+                sepH.priority = UILayoutPriority(999)
+                sepH.isActive = true
             }
         }
     }
     
-    private func createNewsItemView(title: String, time: String, index: Int = 0) -> UIView {
+    private func createNewsItemView(title: String, time: String, content: String, index: Int = 0) -> UIView {
         let container = UIView()
         container.backgroundColor = .white
         container.isUserInteractionEnabled = true
@@ -1392,6 +1461,7 @@ class NewsTableViewCell: UITableViewCell {
         titleLabel.numberOfLines = 2
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.isUserInteractionEnabled = false
+        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         container.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -1410,16 +1480,19 @@ class NewsTableViewCell: UITableViewCell {
         // 使用关联对象存储标题和时间
         objc_setAssociatedObject(container, &AssociatedKeys.newsTitle, title, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         objc_setAssociatedObject(container, &AssociatedKeys.newsTime, time, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+        objc_setAssociatedObject(container, &AssociatedKeys.newsContent, content, .OBJC_ASSOCIATION_COPY_NONATOMIC)
         
         let hasBadge = index < 4
         var constraints: [NSLayoutConstraint] = [
             titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
             titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
             timeLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             timeLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             timeLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
         ]
+        let titleToTime = timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6)
+        titleToTime.priority = UILayoutPriority(999)
+        constraints.append(titleToTime)
         if hasBadge {
             constraints += [
                 badgeLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
@@ -1439,10 +1512,11 @@ class NewsTableViewCell: UITableViewCell {
     @objc private func newsItemTapped(_ gesture: UITapGestureRecognizer) {
         guard let view = gesture.view,
               let title = objc_getAssociatedObject(view, &AssociatedKeys.newsTitle) as? String,
-              let time = objc_getAssociatedObject(view, &AssociatedKeys.newsTime) as? String else {
+              let time = objc_getAssociatedObject(view, &AssociatedKeys.newsTime) as? String,
+              let content = objc_getAssociatedObject(view, &AssociatedKeys.newsContent) as? String else {
             return
         }
-        onNewsItemTapped?(title, time)
+        onNewsItemTapped?(title, time, content)
     }
 }
 
@@ -1450,4 +1524,5 @@ class NewsTableViewCell: UITableViewCell {
 private struct AssociatedKeys {
     static var newsTitle = "newsTitle"
     static var newsTime = "newsTime"
+    static var newsContent = "newsContent"
 }
