@@ -328,6 +328,7 @@ class MarketViewController: ZQViewController {
         vc.indexPrice = item.price
         vc.indexChange = item.change
         vc.indexChangePercent = item.changePercent
+        vc.isIndex = true   // 指数卡片 → 不可交易
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

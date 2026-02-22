@@ -17,6 +17,8 @@ class IndexDetailViewController: ZQViewController {
     var indexPrice: String = ""      // 1536.00
     var indexChange: String = ""     // -26.45
     var indexChangePercent: String = "" // -1.69
+    /// 是否为指数（指数置灰交易按钮，不可交易）。由调用方赋值：指数卡片传 true，股票排行榜传 false（默认）
+    var isIndex: Bool = false
 
     // MARK: - 颜色
     private let bgColor     = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
@@ -87,6 +89,7 @@ class IndexDetailViewController: ZQViewController {
         view.backgroundColor = .white
         setupNavBar()
         setupBottomBar()
+        applyTradeButtonState()
         setupScrollContent()
         applyInitialData()
         loadIndexDetail()
@@ -1213,10 +1216,40 @@ class IndexDetailViewController: ZQViewController {
     }
 
     @objc private func tradeTapped() {
-        // 跳转到交易页面（切换 TabBar 到交易 Tab）
-        if let tabBarVC = self.tabBarController {
-            navigationController?.popToRootViewController(animated: false)
-            tabBarVC.selectedIndex = 2 // 交易 tab
+        guard !isIndex else { return }   // 指数不可交易，按钮已置灰，双重保险
+        let vc = StockTradeViewController()
+        vc.stockName     = indexName
+        vc.stockCode     = indexCode
+        vc.stockAllcode  = indexAllcode
+        vc.currentPrice  = Double(indexPrice) ?? 0
+        vc.changeAmount  = indexChange
+        vc.changePercent = indexChangePercent
+        // 根据 allcode 前缀推断交易所标识
+        let prefix = indexAllcode.lowercased()
+        if prefix.hasPrefix("sh") || prefix.hasPrefix("zssh") { vc.exchange = "沪" }
+        else if prefix.hasPrefix("sz") || prefix.hasPrefix("zssz") { vc.exchange = "深" }
+        else if prefix.hasPrefix("bj") { vc.exchange = "北" }
+        else { vc.exchange = "" }
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+    /// 根据 isIndex 配置交易按钮的样式（对应 Android renderTradeState）
+    private func applyTradeButtonState() {
+        if isIndex {
+            tradeBtn.setTitle("  指数不可交易", for: .normal)
+            tradeBtn.setImage(nil, for: .normal)
+            tradeBtn.backgroundColor = UIColor(white: 0.88, alpha: 1)
+            tradeBtn.setTitleColor(textSec, for: .normal)
+            tradeBtn.tintColor = textSec
+            tradeBtn.isEnabled = false
+        } else {
+            tradeBtn.setTitle("  交易", for: .normal)
+            tradeBtn.setImage(UIImage(systemName: "arrow.up.forward.square"), for: .normal)
+            tradeBtn.backgroundColor = themeRed
+            tradeBtn.setTitleColor(.white, for: .normal)
+            tradeBtn.tintColor = .white
+            tradeBtn.isEnabled = true
         }
     }
 }
