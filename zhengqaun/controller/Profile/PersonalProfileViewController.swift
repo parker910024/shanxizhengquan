@@ -25,6 +25,8 @@ class PersonalProfileViewController: ZQViewController {
         setupNavigationBar()
         setupUI()
     }
+    
+    
 
     private func setupNavigationBar() {
         gk_navBackgroundColor = .white

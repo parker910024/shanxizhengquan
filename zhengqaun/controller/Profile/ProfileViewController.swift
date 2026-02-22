@@ -35,6 +35,29 @@ class ProfileViewController: ZQViewController {
         setupFunctionsCard()
     }
 
+    func requestUserInfo() {
+        SecureNetworkManager.shared.request(api: "/api/stock/info", method: .get, params: [:]) { result in
+            switch result {
+                case .success(let res):
+                    print("status =", res.statusCode)
+                    print("raw =", res.raw)          // 原始响应
+                    print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                    let dict = res.decrypted
+                    print(dict)
+                    if res.statusCode != 200 {
+                    
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict?["msg"] as? String ?? "")
+                        }
+                        return
+                    }
+            case .failure(let error):
+                print("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         gk_navigationBar.isHidden = true
@@ -42,6 +65,8 @@ class ProfileViewController: ZQViewController {
         gk_navigationBar.layer.zPosition = -1
         scrollView.layer.zPosition = 1
         view.bringSubviewToFront(scrollView)
+        
+        requestUserInfo()
     }
 
     override func viewDidAppear(_ animated: Bool) {
