@@ -21,6 +21,8 @@ class ProfileViewController: ZQViewController {
     private var headerView: UIView!
     private var functionsCard: UIView!
     private var channelKeyOverlay: UIView?
+    
+    private var assets: AssetsModel?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,31 +33,8 @@ class ProfileViewController: ZQViewController {
         setupScroll()
         setupHeader()
         setupQuickActionsCard()
-        setupAssetsCard()
-        setupFunctionsCard()
-    }
-
-    func requestUserInfo() {
-        SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
-            switch result {
-                case .success(let res):
-                    debugPrint("status =", res.statusCode)
-                    debugPrint("raw =", res.raw)          // 原始响应
-                    debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
-                    let dict = res.decrypted
-                    debugPrint(dict ?? "nil")
-                if dict?["code"] as? NSNumber != 1 {
-
-                        DispatchQueue.main.async {
-                            Toast.showInfo(dict?["msg"] as? String ?? "")
-                        }
-                        return
-                    }
-            case .failure(let error):
-                print("error =", error.localizedDescription)
-                Toast.showError(error.localizedDescription)
-            }
-        }
+//        setupAssetsCard()
+//        setupFunctionsCard()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -67,6 +46,7 @@ class ProfileViewController: ZQViewController {
         view.bringSubviewToFront(scrollView)
         
         requestUserInfo()
+        requestAssets()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -188,7 +168,11 @@ class ProfileViewController: ZQViewController {
         return "\(start)****\(end)"
     }
 
-    @objc private func messageTapped() { }
+    @objc private func messageTapped() {
+        let vc = MessageCenterViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
     @objc private func settingsTapped() {
         let vc = SettingsViewController()
         vc.hidesBottomBarWhenPushed = true
@@ -296,6 +280,10 @@ class ProfileViewController: ZQViewController {
     }
 
     // MARK: - 我的资产
+    //总资产 显示顶部大的
+    //余额: 可用
+    //可取: -冻结
+    //股质余额: 市值
     private var quickActionsCard: UIView!
     private var assetsCard: UIView!
     private var balanceLabel: UILabel!
@@ -323,7 +311,7 @@ class ProfileViewController: ZQViewController {
         eyeBtn.translatesAutoresizingMaskIntoConstraints = false
 
         balanceLabel = UILabel()
-        balanceLabel.text = "0.00"
+        balanceLabel.text = "\(self.assets?.propertyMoneyTotal ?? 0.00)"
         balanceLabel.font = UIFont.boldSystemFont(ofSize: 28)
         balanceLabel.textColor = textPrimary
         balanceLabel.textAlignment = .left
@@ -344,10 +332,22 @@ class ProfileViewController: ZQViewController {
         row2Stack.alignment = .fill
         row2Stack.spacing = 0
         for (i, l) in row1Labels.enumerated() {
-            row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "0.00", alignment: alignments[i]))
+            if i == 0 {
+                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.balance ?? 0.00)", alignment: alignments[i]))
+            } else if i == 1 {
+                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(((assets?.balance ?? 0.0) - (assets?.freezeProfit ?? 0.0)))", alignment: alignments[i]))
+            } else {
+                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.cityValue ?? 0.0)", alignment: alignments[i]))
+            }
         }
         for (i, l) in row2Labels.enumerated() {
-            row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "0.00", alignment: alignments[i]))
+            if i == 0 {
+                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(((assets?.balance ?? 0.0) + (assets?.freezeProfit ?? 0.0)))", alignment: alignments[i]))
+            } else if i == 1 {
+                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.totalyk ?? 0.00)", alignment: alignments[i]))
+            } else {
+                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.fdyk ?? 0.00)", alignment: alignments[i]))
+            }
         }
         card.addSubview(row1Stack)
         card.addSubview(row2Stack)
@@ -453,7 +453,7 @@ class ProfileViewController: ZQViewController {
     @objc private func toggleBalanceVisibility(_ sender: UIButton) {
         balanceHidden.toggle()
         sender.isSelected = balanceHidden
-        balanceLabel.text = balanceHidden ? "****" : "0.00"
+        balanceLabel.text = balanceHidden ? "****" : "\(self.assets?.balance ?? 0.00)"
     }
 
     @objc private func fundRecordTapped() {
@@ -756,5 +756,77 @@ class ProfileViewController: ZQViewController {
         v.layer.shadowRadius = 8
         v.layer.shadowOpacity = 0.08
         return v
+    }
+}
+
+extension ProfileViewController {
+    func requestAssets() {
+        SecureNetworkManager.shared.request(
+            api: Api.getUserPrice_all_api,
+            method: .get,
+            params: [:]) { [unowned self] result in
+                switch result {
+                case .success(let res):
+                    debugPrint("raw =", res.raw)          // 原始响应
+                    debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                    
+//                    debugPrint(dict ?? "nil")
+                    do {
+                        if let dict = res.decrypted, let list = dict["data"] as? [String: Any], let json = list["list"] {
+                            let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
+                            let assetsModel = try JSONDecoder().decode(AssetsModel.self, from: jsonData)
+                            self.assets = assetsModel
+                            self.setupAssetsCard()
+                            self.setupFunctionsCard()
+                        }
+                    } catch {
+                        Toast.showError(error.localizedDescription)
+                    }
+                case .failure(let error):
+                    debugPrint("error =", error.localizedDescription, #function)
+                    Toast.showError(error.localizedDescription)
+                }
+            }
+    }
+    
+    func requestUserInfo() {
+        SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
+            switch result {
+                case .success(let res):
+                    debugPrint("status =", res.statusCode)
+                    debugPrint("raw =", res.raw)          // 原始响应
+                    debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                    let dict = res.decrypted
+                    debugPrint(dict ?? "nil")
+                if dict?["code"] as? NSNumber != 1 {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict?["msg"] as? String ?? "")
+                        }
+                        return
+                    }
+            case .failure(let error):
+                debugPrint("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
+}
+
+
+// MARK: - AssetsModel
+struct AssetsModel: Codable {
+    var balance: Double?
+    var cityValue, fdyk, freezeProfit: Double?
+    var propertyMoneyTotal: Double?
+    var totalyk, xinguTotal: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case balance
+        case cityValue = "city_value"
+        case fdyk
+        case freezeProfit = "freeze_profit"
+        case propertyMoneyTotal = "property_money_total"
+        case totalyk
+        case xinguTotal = "xingu_total"
     }
 }

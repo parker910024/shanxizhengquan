@@ -17,6 +17,8 @@ class TransactionPasswordViewController: ZQViewController {
     private let underline = UIView()
     private let confirmButton = UIButton(type: .system)
 
+    private var password: String = ""
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
@@ -66,6 +68,7 @@ class TransactionPasswordViewController: ZQViewController {
         passwordField.clearButtonMode = .whileEditing
         passwordRow.addSubview(passwordField)
         passwordField.translatesAutoresizingMaskIntoConstraints = false
+        passwordField.delegate = self
 
         underline.backgroundColor = Constants.Color.separator
         passwordRow.addSubview(underline)
@@ -128,7 +131,55 @@ class TransactionPasswordViewController: ZQViewController {
             return
         }
         // TODO: 调用设置/修改交易密码接口
-        Toast.showInfo("交易密码设置成功")
-        navigationController?.popViewController(animated: true)
+        self.checkOldpay()
+    }
+    
+    private func checkOldpay() {
+        SecureNetworkManager.shared.request(api: Api.checkOldpay_api, method: .post, params: ["paypass": self.password]) { [unowned self] result in
+            switch result {
+            case .success(let res):
+                let dict = res.decrypted
+                debugPrint(dict ?? "nil")
+                if dict?["code"] as? NSNumber != 1 {
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                    }
+                    return
+                } else {
+                    self.editPass()
+                }
+            case .failure(let error):
+                debugPrint("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
+    
+    private func editPass() {
+        SecureNetworkManager.shared.request(api: Api.editPass_api, method: .post, params: ["password": self.password]) { [unowned self] result in
+            switch result {
+            case .success(let res):
+                let dict = res.decrypted
+                debugPrint(dict ?? "nil")
+                if dict?["code"] as? NSNumber != 1 {
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                    }
+                    return
+                } else {
+                    Toast.showInfo("交易密码设置成功")
+                    self.navigationController?.popViewController(animated: true)
+                }
+            case .failure(let error):
+                debugPrint("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
+}
+
+extension TransactionPasswordViewController: UITextFieldDelegate {
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        self.password = textField.text ?? ""
     }
 }

@@ -31,7 +31,7 @@ class BankTransferInViewController: ZQViewController {
     }
     
     private func setupUI() {
-        let pad: CGFloat = 20
+        let pad: CGFloat = 64
         
         // 标题：银证转入金额
         amountTitleLabel.text = "银证转入金额"

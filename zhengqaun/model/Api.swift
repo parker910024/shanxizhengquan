@@ -18,4 +18,12 @@ class Api: NSObject {
     //立即开户
     static let create_account_api = "/api/user/register"
     
+    //资产(个人中心)
+    static let getUserPrice_all_api = "/api/user/getUserPrice_all"
+    
+    //验证支付密码
+    static let checkOldpay_api = "/api/user/checkOldpay"
+    
+    //修改支付密码
+    static let editPass_api = "/api/user/editPass"
 }

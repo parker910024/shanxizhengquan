@@ -433,7 +433,7 @@ class LoginViewController: UIViewController {
                         print("raw =", res.raw)          // 原始响应
                         print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                         let dict = res.decrypted
-                        print(dict)
+                        print(dict ?? "nil")
                         if dict?["code"] as? NSNumber != 1 {
 
                             DispatchQueue.main.async {
