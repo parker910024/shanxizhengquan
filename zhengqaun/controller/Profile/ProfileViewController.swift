@@ -44,8 +44,8 @@ class ProfileViewController: ZQViewController {
                     print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                     let dict = res.decrypted
                     print(dict)
-                    if res.statusCode != 200 {
-                    
+                if dict?["code"] as? NSNumber != 1 {
+
                         DispatchQueue.main.async {
                             Toast.showInfo(dict?["msg"] as? String ?? "")
                         }

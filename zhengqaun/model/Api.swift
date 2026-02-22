@@ -14,4 +14,8 @@ class Api: NSObject {
 
     //获取用户信息
     static let user_info_api = "/api/stock/info"
+    
+    //立即开户
+    static let create_account_api = "/api/user/register"
+    
 }

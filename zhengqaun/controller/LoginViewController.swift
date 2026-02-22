@@ -23,6 +23,11 @@ class LoginViewController: UIViewController {
     private let headerView = UIView()
     private let logoImageView = UIImageView()
     
+    /// true = 手机号登录，false = 用户名登录；由外部在 present 前设置，与注册页 isPhoneRegistration 一致
+    var isPhoneLogin: Bool = false {
+        didSet { updateAccountRowForMode() }
+    }
+    
     // 登录表单
     private let loginAccountLabel = UILabel()
     private let loginAccountTextField = UITextField()
@@ -119,19 +124,15 @@ class LoginViewController: UIViewController {
         contentView.addSubview(loginFormContainer)
         loginFormContainer.translatesAutoresizingMaskIntoConstraints = false
         
-        // 手机号码（参考图固定为「手机号码」）
-        loginAccountLabel.text = "手机号码"
         loginAccountLabel.font = UIFont.systemFont(ofSize: 15)
         loginAccountLabel.textColor = Constants.Color.textPrimary
         loginFormContainer.addSubview(loginAccountLabel)
         loginAccountLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        loginAccountTextField.placeholder = "请输入手机号码"
         loginAccountTextField.font = UIFont.systemFont(ofSize: 15)
         loginAccountTextField.textColor = Constants.Color.textPrimary
         loginAccountTextField.borderStyle = .none
         loginAccountTextField.clearButtonMode = .whileEditing
-        loginAccountTextField.keyboardType = .phonePad
         loginFormContainer.addSubview(loginAccountTextField)
         loginAccountTextField.translatesAutoresizingMaskIntoConstraints = false
         
@@ -205,6 +206,19 @@ class LoginViewController: UIViewController {
             passwordLine.heightAnchor.constraint(equalToConstant: 1),
             passwordLine.bottomAnchor.constraint(equalTo: loginFormContainer.bottomAnchor, constant: -16)
         ])
+        updateAccountRowForMode()
+    }
+    
+    private func updateAccountRowForMode() {
+        if isPhoneLogin {
+            loginAccountLabel.text = "手机号码"
+            loginAccountTextField.placeholder = "请输入手机号码"
+            loginAccountTextField.keyboardType = .phonePad
+        } else {
+            loginAccountLabel.text = "用户名"
+            loginAccountTextField.placeholder = "请输入用户名"
+            loginAccountTextField.keyboardType = .default
+        }
     }
     
     @objc private func togglePasswordVisibility() {
@@ -386,12 +400,23 @@ class LoginViewController: UIViewController {
             return
         }
                 // 用户名登录
-                let account = loginAccountTextField.text ?? ""
+                let account = (loginAccountTextField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let password = loginPasswordTextField.text ?? ""
                 
                 guard !account.isEmpty, !password.isEmpty else {
                     Toast.show("请输入账号和密码")
                     return
+                }
+                if isPhoneLogin {
+                    if !isValidPhone(account) {
+                        Toast.show("请输入正确的手机号")
+                        return
+                    }
+                } else {
+                    if !isValidUsername(account) {
+                        Toast.show("用户名须为9位，且包含字母和数字（字母可大写）")
+                        return
+                    }
                 }
                 
                 SecureNetworkManager.shared.request(
@@ -409,8 +434,8 @@ class LoginViewController: UIViewController {
                         print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                         let dict = res.decrypted
                         print(dict)
-                        if res.statusCode != 200 {
-                        
+                        if dict?["code"] as? NSNumber != 1 {
+
                             DispatchQueue.main.async {
                                 Toast.showInfo(dict?["msg"] as? String ?? "")
                             }
@@ -434,6 +459,21 @@ class LoginViewController: UIViewController {
                         Toast.showError(error.localizedDescription)
                     }
             }
+    }
+    
+    /// 手机号格式：1 开头，第二位 3–9，共 11 位数字
+    private func isValidPhone(_ s: String) -> Bool {
+        let pattern = "^1[3-9]\\d{9}$"
+        return s.range(of: pattern, options: .regularExpression) != nil
+    }
+    
+    /// 用户名：9 位，强制包含字母（含大写）+ 数字
+    private func isValidUsername(_ s: String) -> Bool {
+        guard s.count == 9 else { return false }
+        let letter = s.range(of: "[A-Za-z]", options: .regularExpression) != nil
+        let digit = s.range(of: "\\d", options: .regularExpression) != nil
+        let onlyAlnum = s.range(of: "^[A-Za-z0-9]+$", options: .regularExpression) != nil
+        return letter && digit && onlyAlnum
     }
     
     /// 登录/注册成功后切换到主界面 TabBar（通过 SceneDelegate 的 window 切换，保证生效）

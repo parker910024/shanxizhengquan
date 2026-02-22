@@ -23,21 +23,26 @@ class RegisterViewController: UIViewController {
     
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
     
+    /// true = 手机号注册，false = 用户名注册；由外部在 present 前设置，界面不展示切换按钮
+    var isPhoneRegistration: Bool = false {
+        didSet { updateAccountRowForMode() }
+    }
+    
     // 白色卡片
     private let cardView = UIView()
     private let sloganImageView = UIImageView()
     
-    private let phoneField = UITextField()
-    private let phoneLine = UIView()
+    private let accountIconView = UIImageView()
+    private let accountField = UITextField()
+    private let accountLine = UIView()
     private let passwordField = UITextField()
     private let passwordLine = UIView()
     private let passwordEyeButton = UIButton(type: .custom)
-    private let confirmPasswordField = UITextField()
-    private let confirmPasswordLine = UIView()
-    private let confirmPasswordEyeButton = UIButton(type: .custom)
-    private let codeField = UITextField()
-    private let codeLine = UIView()
-    private let getCodeButton = UIButton(type: .system)
+    private let payPasswordField = UITextField()
+    private let payPasswordLine = UIView()
+    private let payPasswordEyeButton = UIButton(type: .custom)
+    private let orgCodeField = UITextField()
+    private let orgCodeLine = UIView()
     
     private let submitButton = UIButton(type: .system)
     private let agreementCheckbox = UIButton(type: .custom)
@@ -140,26 +145,37 @@ class RegisterViewController: UIViewController {
         cardView.addSubview(sloganImageView)
         sloganImageView.translatesAutoresizingMaskIntoConstraints = false
         
-        // 输入行（手机号、密码、确认密码、验证码）
-        addInputRow(container: cardView, field: phoneField, line: phoneLine, icon: "phone", placeholder: "请输入手机号", isSecure: false, rightButton: nil)
+        // 第一行：账号（手机号或用户名），icon/placeholder 由 isPhoneRegistration + updateAccountRowForMode 设置
+        accountIconView.tintColor = Constants.Color.textTertiary
+        accountIconView.contentMode = .scaleAspectFit
+        cardView.addSubview(accountIconView)
+        accountIconView.translatesAutoresizingMaskIntoConstraints = false
+        accountField.font = UIFont.systemFont(ofSize: 15)
+        accountField.textColor = Constants.Color.textPrimary
+        accountField.borderStyle = .none
+        accountField.isSecureTextEntry = false
+        accountField.clearButtonMode = .whileEditing
+        cardView.addSubview(accountField)
+        accountField.translatesAutoresizingMaskIntoConstraints = false
+        accountLine.backgroundColor = Constants.Color.separator
+        cardView.addSubview(accountLine)
+        accountLine.translatesAutoresizingMaskIntoConstraints = false
+        updateAccountRowForMode()
+        
+        // 请输入密码、支付密码、机构码
         addInputRow(container: cardView, field: passwordField, line: passwordLine, icon: "lock", placeholder: "请输入密码", isSecure: true, rightButton: passwordEyeButton)
-        addInputRow(container: cardView, field: confirmPasswordField, line: confirmPasswordLine, icon: "checkmark.shield", placeholder: "请再次输入密码", isSecure: true, rightButton: confirmPasswordEyeButton)
-        addInputRow(container: cardView, field: codeField, line: codeLine, icon: "envelope", placeholder: "请输入验证码", isSecure: false, rightButton: getCodeButton)
+        addInputRow(container: cardView, field: payPasswordField, line: payPasswordLine, icon: "creditcard", placeholder: "支付密码", isSecure: true, rightButton: payPasswordEyeButton)
+        addInputRow(container: cardView, field: orgCodeField, line: orgCodeLine, icon: "building.2", placeholder: "机构码", isSecure: false, rightButton: nil)
         
         passwordEyeButton.setImage(UIImage(systemName: "eye.slash"), for: .normal)
         passwordEyeButton.setImage(UIImage(systemName: "eye"), for: .selected)
         passwordEyeButton.tintColor = Constants.Color.textTertiary
         passwordEyeButton.addTarget(self, action: #selector(togglePassword1), for: .touchUpInside)
         
-        confirmPasswordEyeButton.setImage(UIImage(systemName: "eye.slash"), for: .normal)
-        confirmPasswordEyeButton.setImage(UIImage(systemName: "eye"), for: .selected)
-        confirmPasswordEyeButton.tintColor = Constants.Color.textTertiary
-        confirmPasswordEyeButton.addTarget(self, action: #selector(togglePassword2), for: .touchUpInside)
-        
-        getCodeButton.setTitle("获取验证码", for: .normal)
-        getCodeButton.setTitleColor(themeRed, for: .normal)
-        getCodeButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
-        getCodeButton.addTarget(self, action: #selector(getCodeTapped), for: .touchUpInside)
+        payPasswordEyeButton.setImage(UIImage(systemName: "eye.slash"), for: .normal)
+        payPasswordEyeButton.setImage(UIImage(systemName: "eye"), for: .selected)
+        payPasswordEyeButton.tintColor = Constants.Color.textTertiary
+        payPasswordEyeButton.addTarget(self, action: #selector(togglePayPassword), for: .touchUpInside)
         
         // 极速开卡按钮
         submitButton.setTitle("极速开卡", for: .normal)
@@ -192,6 +208,18 @@ class RegisterViewController: UIViewController {
         layoutCardContent()
     }
     
+    private func updateAccountRowForMode() {
+        if isPhoneRegistration {
+            accountIconView.image = UIImage(systemName: "phone")
+            accountField.placeholder = "请输入手机号"
+            accountField.keyboardType = .phonePad
+        } else {
+            accountIconView.image = UIImage(systemName: "person.crop.circle")
+            accountField.placeholder = "请输入用户名"
+            accountField.keyboardType = .default
+        }
+    }
+    
     private func addInputRow(container: UIView, field: UITextField, line: UIView, icon: String, placeholder: String, isSecure: Bool, rightButton: UIButton?) {
         let iconView = UIImageView(image: UIImage(systemName: icon))
         iconView.tintColor = Constants.Color.textTertiary
@@ -205,8 +233,6 @@ class RegisterViewController: UIViewController {
         field.borderStyle = .none
         field.isSecureTextEntry = isSecure
         field.clearButtonMode = .whileEditing
-        if icon == "phone" { field.keyboardType = .phonePad }
-        if icon == "envelope" { field.keyboardType = .numberPad }
         container.addSubview(field)
         field.translatesAutoresizingMaskIntoConstraints = false
         
@@ -228,13 +254,15 @@ class RegisterViewController: UIViewController {
         guard !cardLayoutDone else { return }
         cardLayoutDone = true
         let allIcons = cardView.subviews.compactMap { $0 as? UIImageView }
-        let icons = Array(allIcons.dropFirst()) // 第一个是 slogan 图，后 4 个是输入行图标
+        let icons = Array(allIcons.dropFirst()) // 第一个是 slogan，后 4 个为 accountIcon + 三行 icon
         guard icons.count >= 4 else { return }
         
         let cardMargins: CGFloat = 20
-        var lastAnchor: NSLayoutYAxisAnchor = sloganImageView.bottomAnchor
         let rowHeight: CGFloat = 44
         let lineH: CGFloat = 1
+        let rowSpacing: CGFloat = 20
+        let fields = [accountField, passwordField, payPasswordField, orgCodeField]
+        let lines = [accountLine, passwordLine, payPasswordLine, orgCodeLine]
         
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
@@ -246,11 +274,12 @@ class RegisterViewController: UIViewController {
             sloganImageView.widthAnchor.constraint(equalToConstant: 230),
             sloganImageView.heightAnchor.constraint(equalToConstant: 62)
         ])
-        let rowSpacing: CGFloat = 20
+        var lastAnchor: NSLayoutYAxisAnchor = sloganImageView.bottomAnchor
+        
         for i in 0..<4 {
             let iconView = icons[i]
-            let field = [phoneField, passwordField, confirmPasswordField, codeField][i]
-            let line = [phoneLine, passwordLine, confirmPasswordLine, codeLine][i]
+            let field = fields[i]
+            let line = lines[i]
             var constraints: [NSLayoutConstraint] = [
                 iconView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: cardMargins),
                 iconView.centerYAnchor.constraint(equalTo: field.centerYAnchor),
@@ -265,20 +294,19 @@ class RegisterViewController: UIViewController {
                 line.heightAnchor.constraint(equalToConstant: lineH)
             ]
             if i == 1 {
-                constraints.append(passwordEyeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -cardMargins))
-                constraints.append(passwordEyeButton.centerYAnchor.constraint(equalTo: passwordField.centerYAnchor))
-                constraints.append(passwordEyeButton.widthAnchor.constraint(equalToConstant: 44))
-                constraints.append(field.trailingAnchor.constraint(equalTo: passwordEyeButton.leadingAnchor, constant: -8))
+                constraints.append(contentsOf: [
+                    passwordEyeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -cardMargins),
+                    passwordEyeButton.centerYAnchor.constraint(equalTo: passwordField.centerYAnchor),
+                    passwordEyeButton.widthAnchor.constraint(equalToConstant: 44),
+                    field.trailingAnchor.constraint(equalTo: passwordEyeButton.leadingAnchor, constant: -8)
+                ])
             } else if i == 2 {
-                constraints.append(confirmPasswordEyeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -cardMargins))
-                constraints.append(confirmPasswordEyeButton.centerYAnchor.constraint(equalTo: confirmPasswordField.centerYAnchor))
-                constraints.append(confirmPasswordEyeButton.widthAnchor.constraint(equalToConstant: 44))
-                constraints.append(field.trailingAnchor.constraint(equalTo: confirmPasswordEyeButton.leadingAnchor, constant: -8))
-            } else if i == 3 {
-                constraints.append(getCodeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -cardMargins))
-                constraints.append(getCodeButton.centerYAnchor.constraint(equalTo: codeField.centerYAnchor))
-                constraints.append(getCodeButton.widthAnchor.constraint(equalToConstant: 90))
-                constraints.append(field.trailingAnchor.constraint(equalTo: getCodeButton.leadingAnchor, constant: -8))
+                constraints.append(contentsOf: [
+                    payPasswordEyeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -cardMargins),
+                    payPasswordEyeButton.centerYAnchor.constraint(equalTo: payPasswordField.centerYAnchor),
+                    payPasswordEyeButton.widthAnchor.constraint(equalToConstant: 44),
+                    field.trailingAnchor.constraint(equalTo: payPasswordEyeButton.leadingAnchor, constant: -8)
+                ])
             } else {
                 constraints.append(field.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -cardMargins))
             }
@@ -308,30 +336,9 @@ class RegisterViewController: UIViewController {
         passwordField.isSecureTextEntry = !passwordEyeButton.isSelected
     }
     
-    @objc private func togglePassword2() {
-        confirmPasswordEyeButton.isSelected.toggle()
-        confirmPasswordField.isSecureTextEntry = !confirmPasswordEyeButton.isSelected
-    }
-    
-    @objc private func getCodeTapped() {
-        let phone = phoneField.text ?? ""
-        guard !phone.isEmpty else {
-            Toast.show("请输入手机号")
-            return
-        }
-        Toast.showSuccess("验证码已发送")
-        var count = 60
-        getCodeButton.isEnabled = false
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] t in
-            count -= 1
-            if count > 0 {
-                self?.getCodeButton.setTitle("\(count)秒", for: .normal)
-            } else {
-                t.invalidate()
-                self?.getCodeButton.isEnabled = true
-                self?.getCodeButton.setTitle("获取验证码", for: .normal)
-            }
-        }
+    @objc private func togglePayPassword() {
+        payPasswordEyeButton.isSelected.toggle()
+        payPasswordField.isSecureTextEntry = !payPasswordEyeButton.isSelected
     }
     
     @objc private func checkboxTapped() {
@@ -354,21 +361,98 @@ class RegisterViewController: UIViewController {
             Toast.show("请先同意用户协议和隐私政策")
             return
         }
-        let phone = phoneField.text ?? ""
+        let account = (accountField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let pwd = passwordField.text ?? ""
-        let confirm = confirmPasswordField.text ?? ""
-        let code = codeField.text ?? ""
-        guard !phone.isEmpty, !pwd.isEmpty, !confirm.isEmpty, !code.isEmpty else {
+        let payPwd = payPasswordField.text ?? ""
+        let orgCode = orgCodeField.text ?? ""
+        guard !account.isEmpty, !pwd.isEmpty, !payPwd.isEmpty, !orgCode.isEmpty else {
             Toast.show("请填写完整信息")
             return
         }
-        guard pwd == confirm else {
-            Toast.showError("两次密码不一致")
+        if isPhoneRegistration {
+            if !isValidPhone(account) {
+                Toast.show("请输入正确的手机号")
+                return
+            }
+        } else {
+            if !isValidUsername(account) {
+                Toast.show("用户名须为9位，且包含字母和数字（字母可大写）")
+                return
+            }
+        }
+        SecureNetworkManager.shared.request(
+            api: Api.create_account_api,
+            method: .post,
+            params: [
+                "mobile": account,
+                "password": pwd,
+                "payment_code":payPwd,
+                "institution_number":orgCode
+            ]
+        ) { result in
+            switch result {
+            case .success(let res):
+                print("status =", res.statusCode)
+                print("raw =", res.raw)          // 原始响应
+                print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                let dict = res.decrypted as? NSDictionary
+                print(dict)
+                if dict?["code"] as? NSNumber != 1 {
+                
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                    }
+                    return
+                }
+                let dataDict = (dict?["data"] as? [String: Any] ?? [:]) ["userinfo"] as? [String: Any] ?? [:]
+                
+                // 登录成功
+                UserAuthManager.shared.login(username: dataDict["nickname"] as? String ?? "", phone:  dataDict["username"] as? String ?? "")
+                UserAuthManager.shared.token = dataDict["token"] as? String ?? ""
+                UserAuthManager.shared.userID = String(format: "%@", dataDict["user_id"] as! CVarArg)
+                DispatchQueue.main.async {
+                    Toast.showInfo("注册成功")
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.switchToMainApp()
+                }
+
+            case .failure(let error):
+                print("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
+    
+    private func switchToMainApp() {
+        // 1. 通过当前 view 所在 scene 的 delegate 获取 SceneDelegate，用其 window 切换（最可靠）
+        if let scene = view.window?.windowScene ?? (UIApplication.shared.connectedScenes.first as? UIWindowScene),
+           let sceneDelegate = scene.delegate as? SceneDelegate {
+            sceneDelegate.switchToTabBar()
             return
         }
-        // 可在此调用注册接口
-        Toast.showSuccess("提交成功")
-        dismiss(animated: true)
+        // 2. 兼容：直接用 connectedScenes 的 window 切换
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
+        let tabBarController = MainTabBarController()
+        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            window.rootViewController = tabBarController
+        }, completion: nil)
+    }
+    
+    /// 手机号格式：1 开头，第二位 3–9，共 11 位数字
+    private func isValidPhone(_ s: String) -> Bool {
+        let pattern = "^1[3-9]\\d{9}$"
+        return s.range(of: pattern, options: .regularExpression) != nil
+    }
+    
+    /// 用户名：9 位，强制包含字母（含大写）+ 数字
+    private func isValidUsername(_ s: String) -> Bool {
+        guard s.count == 9 else { return false }
+        let letter = s.range(of: "[A-Za-z]", options: .regularExpression) != nil
+        let digit = s.range(of: "\\d", options: .regularExpression) != nil
+        let onlyAlnum = s.range(of: "^[A-Za-z0-9]+$", options: .regularExpression) != nil
+        return letter && digit && onlyAlnum
     }
     
     private func setupBottomImage() {
