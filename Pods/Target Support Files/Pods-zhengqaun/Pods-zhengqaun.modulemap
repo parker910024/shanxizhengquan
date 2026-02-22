@@ -1,0 +1,6 @@
+module Pods_zhengqaun {
+  umbrella header "Pods-zhengqaun-umbrella.h"
+
+  export *
+  module * { export * }
+}
