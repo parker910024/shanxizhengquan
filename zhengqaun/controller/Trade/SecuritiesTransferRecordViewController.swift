@@ -17,21 +17,12 @@ struct FundDetailRecord {
 
 /// 银证转账记录数据模型
 struct TransferRecord {
-    let type: TransferType
-    let status: TransferStatus
-    let amount: Double
-    let timestamp: Date
-
-    enum TransferType: String {
-        case transferIn = "银证转入"
-        case transferOut = "银证转出"
-    }
-
-    enum TransferStatus: String {
-        case success = "处理成功"
-        case failed = "处理失败"
-        case processing = "处理中"
-    }
+    let typeName: String
+    let statusText: String
+    let amount: String
+    let timestamp: String
+    let isFailed: Bool
+    let isSuccess: Bool
 }
 
 enum FundRecordTab: Int {
@@ -173,7 +164,8 @@ class SecuritiesTransferRecordViewController: ZQViewController {
         indicatorCenterXConstraint.isActive = true
         updateTabAppearance()
         UIView.animate(withDuration: 0.25) { self.view.layoutIfNeeded() }
-        tableView.reloadData()
+        
+        loadData()
     }
 
     private func updateTabAppearance() {
@@ -202,24 +194,109 @@ class SecuritiesTransferRecordViewController: ZQViewController {
 
     // MARK: - Data
     private func loadData() {
-        let detailDesc = "卖出股票,603352/C至信,占用本金:9039600.00,总手续费:903.96,递延费:0.00,印花税:4519.80,盈亏:7464600.00,总盈亏:7459176.24"
-        fundDetails = [
-            FundDetailRecord(type: "平仓收益", capitalChange: "9,039,600.00", dateTime: "2026-01-07 20:37:37", detailText: detailDesc),
-            FundDetailRecord(type: "普通下单", capitalChange: "9,039,600.00", dateTime: "2026-01-07 20:37:37", detailText: detailDesc),
-            FundDetailRecord(type: "平仓收益", capitalChange: "9,039,600.00", dateTime: "2026-01-07 20:37:37", detailText: detailDesc),
-            FundDetailRecord(type: "普通下单", capitalChange: "9,039,600.00", dateTime: "2026-01-07 20:37:37", detailText: detailDesc)
-        ]
-
+        var params: [String: Any] = [:]
+        switch selectedTab {
+        case .detail:
+            params = [:]
+        case .transferIn:
+            params = ["type": "0"]
+        case .transferOut:
+            params = ["type": "1"]
+        }
+        
+        SecureNetworkManager.shared.request(
+            api: "/api/user/capitalLog",
+            method: .get,
+            params: params
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    DispatchQueue.main.async {
+                        self.clearData()
+                        self.tableView.reloadData()
+                    }
+                    return
+                }
+                
+                print("==== 资金流水/明细接口 ====\n\(dict)\n===================")
+                
+                DispatchQueue.main.async {
+                    self.parseAndReload(list: list)
+                }
+            case .failure(let err):
+                DispatchQueue.main.async {
+                    Toast.show("获取记录失败: \(err.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func clearData() {
+        switch selectedTab {
+        case .detail: fundDetails = []
+        case .transferIn: transferInRecords = []
+        case .transferOut: transferOutRecords = []
+        }
+    }
+    
+    private func parseAndReload(list: [[String: Any]]) {
+        var parsedFunds: [FundDetailRecord] = []
+        var parsedTransfers: [TransferRecord] = []
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        transferInRecords = [
-            TransferRecord(type: .transferIn, status: .success, amount: 1000, timestamp: formatter.date(from: "2025-12-10 10:14:07") ?? Date()),
-            TransferRecord(type: .transferIn, status: .failed, amount: 1000, timestamp: formatter.date(from: "2025-12-10 10:14:07") ?? Date())
-        ]
-        transferOutRecords = [
-            TransferRecord(type: .transferOut, status: .success, amount: 500, timestamp: formatter.date(from: "2025-12-09 14:30:15") ?? Date()),
-            TransferRecord(type: .transferOut, status: .failed, amount: 2000, timestamp: formatter.date(from: "2025-12-07 16:45:22") ?? Date())
-        ]
+        
+        for item in list {
+            let typeName = item["pay_type_name"] as? String ?? ""
+            let moneyStr = "\(item["money"] ?? "0")"
+            
+            let timeVal = item["createtime"] as? TimeInterval ?? 0
+            let date = Date(timeIntervalSince1970: timeVal)
+            let dateStr = formatter.string(from: date)
+            
+            if selectedTab == .detail {
+                // 可能是明细，找一个长描述字段（如 memo, remark, content 等，如果没有就打平或者取空）
+                let detailInfo = item["remark"] as? String ?? (item["content"] as? String ?? "")
+                
+                parsedFunds.append(FundDetailRecord(
+                    type: typeName,
+                    capitalChange: moneyStr,
+                    dateTime: dateStr,
+                    detailText: detailInfo
+                ))
+            } else {
+                // 银证记录
+                let statusText = item["is_pay_name"] as? String ?? ""
+                let isPay = "\(item["is_pay"] ?? "")"
+                // 0失败 1成功(或需结合具体文本判断，这里只示意)
+                let isFailed = (isPay == "0" && statusText.contains("失败")) || statusText.contains("失败")
+                // 若状态明确有成功可做判断，如果无，则默认灰色等
+                let isSuccess = (isPay == "1") || statusText.contains("成功")
+                
+                parsedTransfers.append(TransferRecord(
+                    typeName: typeName,
+                    statusText: statusText,
+                    amount: moneyStr,
+                    timestamp: dateStr,
+                    isFailed: isFailed,
+                    isSuccess: isSuccess
+                ))
+            }
+        }
+        
+        switch selectedTab {
+        case .detail:
+            fundDetails = parsedFunds
+        case .transferIn:
+            transferInRecords = parsedTransfers
+        case .transferOut:
+            transferOutRecords = parsedTransfers
+        }
+        
         tableView.reloadData()
     }
 }
@@ -417,19 +494,21 @@ class TransferRecordCell: UITableViewCell {
     }
 
     func configure(with record: TransferRecord) {
-        typeLabel.text = record.type.rawValue
-        statusLabel.text = record.status.rawValue
-        let sign = record.type == .transferIn ? "+" : "-"
-        amountLabel.text = "\(sign)\(String(format: "%.2f", record.amount))"
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        timeLabel.text = formatter.string(from: record.timestamp)
-        if record.status == .failed {
-            statusLabel.textColor = Constants.Color.stockRise
+        typeLabel.text = record.typeName
+        statusLabel.text = record.statusText
+        
+        let moneyVal = Double(record.amount) ?? 0.0
+        let sign = record.typeName.contains("入") ? "+" : (moneyVal > 0 ? "" : "")
+        amountLabel.text = "\(sign)\(record.amount)"
+        
+        timeLabel.text = record.timestamp
+        
+        if record.isFailed {
+            statusLabel.textColor = Constants.Color.stockRise // 红色
             amountLabel.textColor = Constants.Color.stockRise
-        } else if record.status == .success {
-            statusLabel.textColor = Constants.Color.stockFall
-            amountLabel.textColor = Constants.Color.stockFall
+        } else if record.isSuccess {
+            statusLabel.textColor = Constants.Color.stockRise // 或根据需变为绿色，这里保留原有的逻辑修改
+            amountLabel.textColor = Constants.Color.stockRise
         } else {
             statusLabel.textColor = Constants.Color.textSecondary
             amountLabel.textColor = Constants.Color.textPrimary

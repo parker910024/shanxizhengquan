@@ -9,12 +9,14 @@ import UIKit
 
 /// 龙虎榜单条数据
 struct LongHuBangItem {
-    let name: String       // 股票名称，如 "N 至信"
-    let code: String       // 股票代码，如 "000060"
-    let exchange: String   // 交易所，如 "沪"、"深"
-    let close: String      // 收盘价，如 "8.75"
-    let netBuy: String     // 净买入，如 "8.75亿"
-    let changePercent: String // 涨跌幅，如 "8.75%"
+    let name: String           // 股票名称，如 "N 至信"
+    let code: String           // 股票代码，如 "000060"
+    let exchange: String       // 交易所，如 "沪"、"深"
+    let close: String          // 收盘价，如 "8.75"
+    let netBuy: String         // 净买入，如 "8.75亿"
+    let changePercent: String  // 涨跌幅，如 "8.75%"
+    let netBuyValue: Double    // 净买入原始数值，用于颜色判断
+    let changeRateValue: Double // 涨跌幅原始数值，用于颜色判断
 }
 
 class LongHuBangViewController: ZQViewController {
@@ -27,17 +29,14 @@ class LongHuBangViewController: ZQViewController {
 
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let columnHeaderView = UIView()
+    private let emptyLabel = UILabel()
 
     private var listData: [LongHuBangItem] = []
     private let cellSpacing: CGFloat = 4
     private let navH = Constants.Navigation.totalNavigationHeight
 
     /// 当前选中的日期，用于左右箭头加减、日期选择器
-    private var selectedDate: Date = {
-        var c = Calendar.current
-        c.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .current
-        return c.date(from: DateComponents(year: 2026, month: 1, day: 28)) ?? Date()
-    }() {
+    private var selectedDate: Date = Date() {
         didSet { updateDateLabel(); loadData() }
     }
     private lazy var dateFormatter: DateFormatter = {
@@ -54,7 +53,23 @@ class LongHuBangViewController: ZQViewController {
         updateDateLabel()
         setupColumnHeader()
         setupTableView()
+        setupEmptyLabel()
         loadData()
+    }
+
+    /// 配置空数据提示
+    private func setupEmptyLabel() {
+        emptyLabel.text = "暂无数据"
+        emptyLabel.font = UIFont.systemFont(ofSize: 15)
+        emptyLabel.textColor = Constants.Color.textTertiary
+        emptyLabel.textAlignment = .center
+        emptyLabel.isHidden = true
+        view.addSubview(emptyLabel)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            emptyLabel.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: tableView.centerYAnchor)
+        ])
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -249,13 +264,35 @@ class LongHuBangViewController: ZQViewController {
         dateLabel.text = dateFormatter.string(from: selectedDate)
     }
 
+    /// 是否正在加载（防止重复请求）
+    private var isLoading = false
+
     private func loadData() {
-        listData = [
-            LongHuBangItem(name: "N至信", code: "000060", exchange: "沪", close: "8.75", netBuy: "8.75亿", changePercent: "8.75%"),
-            LongHuBangItem(name: "N至信", code: "000060", exchange: "沪", close: "8.75", netBuy: "8.75亿", changePercent: "8.75%"),
-            LongHuBangItem(name: "N至信", code: "000060", exchange: "沪", close: "8.75", netBuy: "8.75亿", changePercent: "8.75%")
-        ]
-        tableView.reloadData()
+        guard !isLoading else { return }
+        isLoading = true
+
+        let dateString = dateFormatter.string(from: selectedDate)
+
+        EastMoneyAPI.shared.fetchLongHuBangList(date: dateString) { [weak self] result in
+            guard let self = self else { return }
+            self.isLoading = false
+
+            switch result {
+            case .success(let response):
+                if let items = response.result?.data, !items.isEmpty {
+                    self.listData = items.map { $0.toDisplayItem() }
+                } else {
+                    self.listData = []
+                }
+                self.tableView.reloadData()
+                self.emptyLabel.isHidden = !self.listData.isEmpty
+
+            case .failure(_):
+                self.listData = []
+                self.tableView.reloadData()
+                self.emptyLabel.isHidden = false
+            }
+        }
     }
 
     /// 左箭头：前一天
@@ -487,5 +524,23 @@ private class LongHuBangCell: UITableViewCell {
         closeLabel.text = item.close
         netBuyLabel.text = item.netBuy
         changePercentLabel.text = item.changePercent
+
+        // 涨跌幅颜色：正数红色，负数绿色，零灰色
+        if item.changeRateValue > 0 {
+            changePercentLabel.textColor = Constants.Color.stockRise
+        } else if item.changeRateValue < 0 {
+            changePercentLabel.textColor = Constants.Color.stockFall
+        } else {
+            changePercentLabel.textColor = Constants.Color.textSecondary
+        }
+
+        // 净买入颜色：正数红色，负数绿色
+        if item.netBuyValue > 0 {
+            netBuyLabel.textColor = Constants.Color.stockRise
+        } else if item.netBuyValue < 0 {
+            netBuyLabel.textColor = Constants.Color.stockFall
+        } else {
+            netBuyLabel.textColor = Constants.Color.textSecondary
+        }
     }
 }

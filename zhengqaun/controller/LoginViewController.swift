@@ -24,7 +24,7 @@ class LoginViewController: UIViewController {
     private let logoImageView = UIImageView()
     
     /// true = 手机号登录，false = 用户名登录；由外部在 present 前设置，与注册页 isPhoneRegistration 一致
-    var isPhoneLogin: Bool = false {
+    var isPhoneLogin: Bool = true {
         didSet { updateAccountRowForMode() }
     }
     

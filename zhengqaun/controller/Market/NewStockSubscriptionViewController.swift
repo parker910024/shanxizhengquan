@@ -86,47 +86,88 @@ class NewStockSubscriptionViewController: ZQViewController {
     }
     
     private func loadData() {
-        // 模拟数据
-        stocks = [
-            NewStockSubscription(
-                id: "1",
-                stockName: "舒泰神",
-                stockCode: "300204",
-                exchange: "深",
-                issuePrice: "¥21.93",
-                winningRate: "0.00%",
-                totalIssued: "3671.6万股"
-            ),
-            NewStockSubscription(
-                id: "2",
-                stockName: "舒泰神",
-                stockCode: "300204",
-                exchange: "深",
-                issuePrice: "¥21.93",
-                winningRate: "0.00%",
-                totalIssued: "3671.6万股"
-            ),
-            NewStockSubscription(
-                id: "3",
-                stockName: "舒泰神",
-                stockCode: "300204",
-                exchange: "深",
-                issuePrice: "¥21.93",
-                winningRate: "0.00%",
-                totalIssued: "3671.6万股"
-            ),
-            NewStockSubscription(
-                id: "4",
-                stockName: "舒泰神",
-                stockCode: "300204",
-                exchange: "深",
-                issuePrice: "¥21.93",
-                winningRate: "0.00%",
-                totalIssued: "3671.6万股"
-            )
-        ]
-        
-        tableView.reloadData()
+        SecureNetworkManager.shared.request(
+            api: Api.subscribe_api,
+            method: .get,
+            params: ["page": "1", "type": "0"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    DispatchQueue.main.async {
+                        self.stocks = []
+                        self.tableView.reloadData()
+                    }
+                    return
+                }
+                
+                var newStocks: [NewStockSubscription] = []
+                for item in list {
+                    // 真实数据包在 sub_info 的第一项里
+                    guard let subInfoArr = item["sub_info"] as? [[String: Any]],
+                          let realItem = subInfoArr.first else { continue }
+                    
+                    let idStr = "\(realItem["id"] ?? "")"
+                    let name = realItem["name"] as? String ?? (realItem["title"] as? String ?? "")
+                    let code = realItem["sgcode"] as? String ?? (realItem["code"] as? String ?? "")
+                    
+                    let fx_price = realItem["fx_price"]
+                    let cai_buy  = realItem["cai_buy"]
+                    let priceVal = fx_price != nil ? "\(fx_price!)" : (cai_buy != nil ? "\(cai_buy!)" : "0")
+                    
+                    let winningRate = "\(realItem["zq_rate"] ?? "0.00")%"
+                    
+                    // 发行总数，可能返回的数字较大，如果需要转万股，可以处理下
+                    let fxNum = realItem["fx_num"]
+                    var fxNumStr = "0万股"
+                    if let fxNumInt = fxNum as? Int {
+                        fxNumStr = String(format: "%.1f万股", Double(fxNumInt) / 10000.0)
+                    } else if let fxNumStrVal = fxNum as? String, let doubleVal = Double(fxNumStrVal) {
+                        fxNumStr = String(format: "%.1f万股", doubleVal / 10000.0)
+                    } else if fxNum != nil {
+                        fxNumStr = "\(fxNum!)"
+                    }
+                    
+                    let sgTypeStr: String
+                    if let typeInt = realItem["sg_type"] as? Int {
+                        sgTypeStr = "\(typeInt)"
+                    } else if let typeStr = realItem["sg_type"] as? String {
+                        sgTypeStr = typeStr
+                    } else {
+                        sgTypeStr = "\(realItem["type"] ?? "")"
+                    }
+                    
+                    let market: String = {
+                        switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
+                    }()
+                    
+                    let model = NewStockSubscription(
+                        id: idStr,
+                        stockName: name,
+                        stockCode: code,
+                        exchange: market,
+                        issuePrice: "¥\(priceVal)",
+                        winningRate: winningRate,
+                        totalIssued: fxNumStr
+                    )
+                    newStocks.append(model)
+                }
+                
+                DispatchQueue.main.async {
+                    self.stocks = newStocks
+                    self.tableView.reloadData()
+                    Toast.show("加载成功")
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    Toast.show("加载数据失败: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 }
 
@@ -140,8 +181,9 @@ extension NewStockSubscriptionViewController: UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NewStockSubscriptionCell", for: indexPath) as! NewStockSubscriptionCell
         cell.configure(with: stocks[indexPath.row])
         cell.onDetailTapped = { [weak self] stock in
-            // TODO: 跳转到详情页面
-            print("详情按钮被点击: \(stock.stockName)")
+            let detailVC = NewStockDetailViewController()
+            detailVC.stockId = stock.id
+            self?.navigationController?.pushViewController(detailVC, animated: true)
         }
         return cell
     }

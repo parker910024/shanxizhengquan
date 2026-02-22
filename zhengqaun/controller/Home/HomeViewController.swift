@@ -45,9 +45,34 @@ class HomeViewController: ZQViewController {
         showNewStockReminderPopupIfNeeded()
     }
 
-    /// 每次进入首页显示「今日新股申购提醒」弹框
+    /// 每次进入首页请求新股申购提醒接口，有数据则弹框
     private func showNewStockReminderPopupIfNeeded() {
         guard newStockReminderOverlay == nil else { return }
+        
+        SecureNetworkManager.shared.request(
+            api: Api.subscribe_api,
+            method: .get,
+            params: ["page": "1", "type": "0"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard res.statusCode == 200,
+                      let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]],
+                      !list.isEmpty else { return }
+                
+                DispatchQueue.main.async {
+                    self.displayNewStockReminderPopup(with: Array(list.prefix(3)))
+                }
+            case .failure:
+                break
+            }
+        }
+    }
+
+    private func displayNewStockReminderPopup(with list: [[String: Any]]) {
         let overlay = UIView()
         overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
         overlay.translatesAutoresizingMaskIntoConstraints = false
@@ -95,13 +120,32 @@ class HomeViewController: ZQViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
 
-        let items: [(String, String, String)] = [
-            ("沪", "000060", "N至信"),
-            ("沪", "000060", "N至信"),
-            ("沪", "000060", "N至信")
-        ]
-        for item in items {
-            let row = makeNewStockReminderRow(exchange: item.0, code: item.1, name: item.2, price: "8.75/股")
+        for item in list {
+            // 获取真实的股票数据：每个 item 可能包裹在 sub_info 数组的第一项里
+            guard let subInfoArr = item["sub_info"] as? [[String: Any]],
+                  let realItem = subInfoArr.first else { continue }
+            
+            let name   = realItem["name"] as? String ?? (realItem["title"] as? String ?? "")
+            let code   = realItem["sgcode"] as? String ?? (realItem["code"] as? String ?? "")
+            // 注意从 Any 中安全提取可能为 NSNumber 类型的金额
+            let fx_price = realItem["fx_price"]
+            let cai_buy  = realItem["cai_buy"]
+            let priceVal = fx_price != nil ? "\(fx_price!)" : (cai_buy != nil ? "\(cai_buy!)" : "0")
+            
+            let sgTypeStr: String
+            if let typeInt = realItem["sg_type"] as? Int {
+                sgTypeStr = "\(typeInt)"
+            } else if let typeStr = realItem["sg_type"] as? String {
+                sgTypeStr = typeStr
+            } else {
+                sgTypeStr = "\(realItem["type"] ?? "")"
+            }
+            
+            let market: String = {
+                switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
+            }()
+
+            let row = makeNewStockReminderRow(exchange: market, code: code, name: name, price: "\(priceVal)/股")
             stack.addArrangedSubview(row)
             NSLayoutConstraint.activate([
                 row.leadingAnchor.constraint(equalTo: stack.leadingAnchor),

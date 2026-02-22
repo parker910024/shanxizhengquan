@@ -187,7 +187,11 @@ class ProfileViewController: ZQViewController {
         return "\(start)****\(end)"
     }
 
-    @objc private func messageTapped() { }
+    @objc private func messageTapped() {
+        let vc = MessageCenterViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
     @objc private func settingsTapped() {
         let vc = SettingsViewController()
         vc.hidesBottomBarWhenPushed = true

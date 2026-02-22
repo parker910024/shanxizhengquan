@@ -1625,6 +1625,95 @@ class AccountTradeViewController: ZQViewController {
     
     private func loadStockData() {
         updateLimitUpDown()
+        fetchStockDetail(for: stockCode)
+        fetchUserAssets()
+        if selectedIndex == 1 {
+            fetchSellHoldings(for: stockCode)
+        }
+    }
+    
+    // MARK: - API calls
+    private func fetchStockDetail(for code: String) {
+        guard !code.isEmpty else { return }
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/stockDetail",
+            method: .post,
+            params: ["code": code]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [String: Any],
+                          let list = data["list"] as? [[String: Any]],
+                          let first = list.first else { return }
+                    
+                    let price = first["current_price"] as? String ?? "0.00"
+                    self?.currentPrice = price
+                    
+                    self?.buyPriceLabel?.text = price
+                    self?.buyCurrentPriceLabel?.text = price
+                    self?.sellCurrentPriceLabel?.text = price
+                    self?.buyPriceSellLabel?.text = price
+                    self?.stockName = first["title"] as? String ?? ""
+                    
+                    self?.updateLimitUpDown()
+                    if self?.selectedIndex == 0 {
+                        self?.calculateBuyAmount()
+                    } else {
+                        self?.calculateSellAmount()
+                    }
+                case .failure(let err):
+                    print("行情获取失败: \\(err)")
+                }
+            }
+        }
+    }
+    
+    private func fetchUserAssets() {
+        SecureNetworkManager.shared.request(
+            api: "/api/user/getUserPrice_all1",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [String: Any],
+                          let list = data["list"] as? [String: Any] else { return }
+                    let balance = list["balance"] as? Double ?? 0.0
+                    self?.availableAmountLabel?.text = String(format: "%.2f", balance)
+                case .failure(_):
+                    break
+                }
+            }
+        }
+    }
+    
+    private func fetchSellHoldings(for code: String) {
+        guard !code.isEmpty else { return }
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/mrSellLst",
+            method: .get,
+            params: ["keyword": code]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [[String: Any]],
+                          let holding = data.first else { 
+                        self?.holdingQuantityLabel?.text = "0"
+                        return 
+                    }
+                    let num = holding["number"] as? String ?? "0"
+                    self?.holdingQuantityLabel?.text = num
+                case .failure(_):
+                    break
+                }
+            }
+        }
     }
     
     private func updateLimitUpDown() {
@@ -1709,10 +1798,82 @@ class AccountTradeViewController: ZQViewController {
     }
     
     @objc private func buyConfirmTapped() {
-        Toast.show("买入下单功能待实现")
+        guard let p = Double(currentPrice), p > 0 else {
+            Toast.show("买入价格无效")
+            return
+        }
+        guard buyQuantity > 0 else {
+            Toast.show("请输入买入数量")
+            return
+        }
+        buyConfirmButton.isEnabled = false
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/addStrategy",
+            method: .post,
+            params: [
+                "allcode": stockCode,
+                "buyprice": "\(p)",
+                "canBuy": buyQuantity
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.buyConfirmButton.isEnabled = true
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                        Toast.show("买入委托已提交")
+                        self?.loadStockData() // 刷新可买
+                        self?.buyQuantity = 0
+                        self?.buyQuantityTextField?.text = "0"
+                        self?.calculateBuyAmount()
+                    } else {
+                        let msg = res.decrypted?["msg"] as? String ?? "提交失败"
+                        Toast.show(msg)
+                    }
+                case .failure(let err):
+                    Toast.show("买入失败: \\(err.localizedDescription)")
+                }
+            }
+        }
     }
     
     @objc private func sellConfirmTapped() {
-        Toast.show("确认卖出功能待实现")
+        guard let p = Double(currentPrice), p > 0 else {
+            Toast.show("卖出价格无效")
+            return
+        }
+        guard sellQuantity > 0 else {
+            Toast.show("请输入卖出数量")
+            return
+        }
+        sellConfirmButton.isEnabled = false
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/sell", // 接口文档未明示卖出接口，凭经验猜使用卖出/sell
+            method: .post,
+            params: [
+                "allcode": stockCode,
+                "sellprice": "\(p)",
+                "canSell": sellQuantity
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.sellConfirmButton.isEnabled = true
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                        Toast.show("卖出委托已提交")
+                        self?.loadStockData() // 刷新可卖
+                        self?.sellQuantity = 0
+                        self?.sellQuantityTextField?.text = "0"
+                        self?.calculateSellAmount()
+                    } else {
+                        let msg = res.decrypted?["msg"] as? String ?? "提交失败"
+                        Toast.show(msg)
+                    }
+                case .failure(let err):
+                    Toast.show("卖出失败: \\(err.localizedDescription)")
+                }
+            }
+        }
     }
 }
