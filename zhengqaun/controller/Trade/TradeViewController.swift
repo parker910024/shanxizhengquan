@@ -425,8 +425,7 @@ class TradeViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 5: // 委托
-            let vc = AccountTradeViewController()
-            vc.tradeType = .buy
+            let vc = EntrustmentListViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 6: // 成交
