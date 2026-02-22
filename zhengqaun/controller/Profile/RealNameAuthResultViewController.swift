@@ -17,12 +17,19 @@ class RealNameAuthResultViewController: ZQViewController {
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+
+    // 认证成功态：passIcon 70x70 + 恭喜您认证通过 + 确认按钮
+    private let successContainer = UIView()
+    private let passIcon = UIImageView()
+    private let successMessageLabel = UILabel()
+    private let confirmButton = UIButton(type: .system)
     
-    // 证件信息
+    // 证件信息（待审核/失败时显示）
     private let nameLabel = UILabel()
     private let idCardLabel = UILabel()
     private let statusStamp = UIView() // 审核状态印章
     private var idCardContainer: UIView! // 证件号容器
+    private var sectionLabel: UILabel!
     
     // 状态按钮
     private let statusButton = UIButton(type: .system)
@@ -58,11 +65,12 @@ class RealNameAuthResultViewController: ZQViewController {
     
     private func setupNavigationBar() {
         gk_navBackgroundColor = .white
-        gk_navTintColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "实名认证"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
+        gk_statusBarStyle = .default
         gk_backStyle = .black
     }
     
@@ -87,15 +95,69 @@ class RealNameAuthResultViewController: ZQViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
         
+        setupSuccessView()
         setupCertificateInfo()
         setupStatusButton()
         setupNotice()
     }
+
+    // MARK: - 认证成功态（passIcon 70x70 + 恭喜您认证通过 + 确认）
+    private func setupSuccessView() {
+        successContainer.backgroundColor = .white
+        view.addSubview(successContainer)
+        successContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        passIcon.image = UIImage(named: "passIcon")
+        passIcon.contentMode = .scaleAspectFit
+        successContainer.addSubview(passIcon)
+        passIcon.translatesAutoresizingMaskIntoConstraints = false
+
+        successMessageLabel.text = "恭喜您认证通过"
+        successMessageLabel.font = UIFont.systemFont(ofSize: 17)
+        successMessageLabel.textColor = Constants.Color.textPrimary
+        successContainer.addSubview(successMessageLabel)
+        successMessageLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        confirmButton.setTitle("确认", for: .normal)
+        confirmButton.setTitleColor(.white, for: .normal)
+        confirmButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        confirmButton.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.15, alpha: 1.0)
+        confirmButton.layer.cornerRadius = 8
+        confirmButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
+        successContainer.addSubview(confirmButton)
+        confirmButton.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            successContainer.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
+            successContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            successContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            successContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+
+            passIcon.topAnchor.constraint(equalTo: successContainer.topAnchor, constant: 60),
+            passIcon.centerXAnchor.constraint(equalTo: successContainer.centerXAnchor),
+            passIcon.widthAnchor.constraint(equalToConstant: 70),
+            passIcon.heightAnchor.constraint(equalToConstant: 70),
+
+            successMessageLabel.topAnchor.constraint(equalTo: passIcon.bottomAnchor, constant: 24),
+            successMessageLabel.centerXAnchor.constraint(equalTo: successContainer.centerXAnchor),
+
+            confirmButton.topAnchor.constraint(equalTo: successMessageLabel.bottomAnchor, constant: 40),
+            confirmButton.centerXAnchor.constraint(equalTo: successContainer.centerXAnchor),
+            confirmButton.widthAnchor.constraint(equalToConstant: 200),
+            confirmButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
+        successContainer.isHidden = true
+    }
+
+    @objc private func confirmTapped() {
+        navigationController?.popViewController(animated: true)
+    }
     
     // MARK: - 证件信息
     private func setupCertificateInfo() {
-        let sectionLabel = UILabel()
-        sectionLabel.text = "证件信息"
+        let secLabel = UILabel()
+        secLabel.text = "证件信息"
+        sectionLabel = secLabel
         sectionLabel.font = UIFont.systemFont(ofSize: 15)
         sectionLabel.textColor = Constants.Color.textSecondary
         contentView.addSubview(sectionLabel)
@@ -230,7 +292,8 @@ class RealNameAuthResultViewController: ZQViewController {
     }
     
     private func updatePendingUI() {
-        // 等待审核
+        successContainer.isHidden = true
+        scrollView.isHidden = false
         statusStamp.isHidden = true
         
         statusButton.setTitle("等待审核", for: .normal)
@@ -329,29 +392,16 @@ class RealNameAuthResultViewController: ZQViewController {
     }
     
     private func updateApprovedUI() {
-        // 审核通过
-        statusStamp.isHidden = false
-        stampLabel.text = "审核通过"
-        statusStamp.transform = CGAffineTransform(rotationAngle: -0.1) // 稍微旋转
+        // 认证成功：显示 passIcon 70x70 + 恭喜您认证通过 + 确认
+        successContainer.isHidden = false
+        scrollView.isHidden = true
         
-        // 更新印章颜色和形状
-        updateStampColor(UIColor(red: 0.1, green: 0.47, blue: 0.82, alpha: 1.0)) // 蓝色
-        
-        statusButton.setTitle("审核通过", for: .normal)
-        statusButton.setTitleColor(Constants.Color.textSecondary, for: .normal)
-        statusButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        statusButton.backgroundColor = Constants.Color.backgroundMain
-        statusButton.isEnabled = false
-        
-        // 强制更新布局
-        DispatchQueue.main.async { [weak self] in
-            self?.updateStampShape()
-            self?.addStampTexture()
-        }
+        statusStamp.isHidden = true
     }
     
     private func updateRejectedUI() {
-        // 审核失败
+        successContainer.isHidden = true
+        scrollView.isHidden = false
         statusStamp.isHidden = false
         stampLabel.text = "审核失败"
         statusStamp.transform = CGAffineTransform(rotationAngle: -0.1) // 稍微旋转

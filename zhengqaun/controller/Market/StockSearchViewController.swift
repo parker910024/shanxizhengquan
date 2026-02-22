@@ -21,18 +21,37 @@ class StockSearchViewController: ZQViewController {
     
     // 搜索输入框
     private let searchBar = UIView()
+    private let searchIconView = UIImageView()
     private let searchTextField = UITextField()
-    
-    // 股票列表表头
+    private let searchButton = UIButton(type: .system)
+
+    // 未输入时的「热门搜索」区域
+    private let hotSearchContainer = UIView()
+    private let hotSearchTitleLabel = UILabel()
+    private var hotItemViews: [(badge: UIView, badgeLabel: UILabel, nameLabel: UILabel, codeLabel: UILabel)] = []
+
+    // 输入后的股票列表表头
     private let listHeaderView = UIView()
     private let listTitleLabel = UILabel()
-    
-    // 空状态
+    private var headerRowView: UIView?
+
+    // 空状态（无搜索结果时的占位）
     private let emptyStateView = UIView()
     private let emptyIcon = UIImageView()
+
+    // 热门搜索数据（6 条，用于未输入时展示）
+    private let hotStocks: [(name: String, code: String)] = [
+        ("平安电工", "sz001856"),
+        ("示例股票2", "sh600001"),
+        ("示例股票3", "sz002001"),
+        ("示例股票4", "sh600002"),
+        ("示例股票5", "sz002002"),
+        ("示例股票6", "sh600003")
+    ]
     
     // 数据源（全部股票数据，用于搜索匹配）
     private let allStocks: [StockSearchResult] = [
+        StockSearchResult(exchange: "深", name: "平安电工", code: "001856", abbreviation: "PADG"),
         StockSearchResult(exchange: "深", name: "天溯计量", code: "301449", abbreviation: "TSJL"),
         StockSearchResult(exchange: "京", name: "江天科技", code: "920121", abbreviation: "JTKJ"),
         StockSearchResult(exchange: "沪", name: "超颖电子", code: "603175", abbreviation: "CYDZ"),
@@ -63,18 +82,20 @@ class StockSearchViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0)
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
-        gk_navTitle = "搜索"
-        gk_navLineHidden = true
+        gk_navTitleColor = Constants.Color.textPrimary
+        gk_navTitle = "股票搜索"
+        gk_navLineHidden = false
+        gk_statusBarStyle = .default
         gk_navItemLeftSpace = 15
         gk_navItemRightSpace = 15
+        gk_backStyle = .black
     }
     
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0) // 浅灰色
+        view.backgroundColor = .white
     }
     
     private func setupTableView() {
@@ -96,16 +117,34 @@ class StockSearchViewController: ZQViewController {
         ])
     }
     
+    private var headerContainerView: UIView!
+    private let searchRowContainer = UIView()
+    private var searchBarTrailingToContainer: NSLayoutConstraint?
+    private var searchButtonLeadingToBar: NSLayoutConstraint?
+    /// 非空态时折叠热门区域，避免与列表表头约束冲突导致搜索行被挤上去
+    private var hotSearchContainerHeightZero: NSLayoutConstraint?
+    private var hotSearchContainerBottom: NSLayoutConstraint?
+
     private func setupHeaderView() {
         let headerView = UIView()
-        headerView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0) // 浅灰色背景
-        
-        // 搜索输入框（白色背景）
-        searchBar.backgroundColor = .white
+        headerView.backgroundColor = .white
+        headerContainerView = headerView
+
+        // 搜索行：搜索框 + 右侧「搜索」按钮
+        searchRowContainer.backgroundColor = .white
+        headerView.addSubview(searchRowContainer)
+        searchRowContainer.translatesAutoresizingMaskIntoConstraints = false
+
         searchBar.layer.cornerRadius = 8
-        headerView.addSubview(searchBar)
+        searchRowContainer.addSubview(searchBar)
         searchBar.translatesAutoresizingMaskIntoConstraints = false
-        
+
+        searchIconView.image = UIImage(systemName: "magnifyingglass")
+        searchIconView.tintColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        searchIconView.contentMode = .scaleAspectFit
+        searchBar.addSubview(searchIconView)
+        searchIconView.translatesAutoresizingMaskIntoConstraints = false
+
         searchTextField.placeholder = "请输入股票代码/名称"
         searchTextField.font = UIFont.systemFont(ofSize: 14)
         searchTextField.textColor = Constants.Color.textPrimary
@@ -114,92 +153,259 @@ class StockSearchViewController: ZQViewController {
         searchTextField.addTarget(self, action: #selector(searchTextFieldDidChange), for: .editingChanged)
         searchBar.addSubview(searchTextField)
         searchTextField.translatesAutoresizingMaskIntoConstraints = false
-        
-        // "股票列表"标题行（白色背景）
+
+        searchButton.setTitle("搜索", for: .normal)
+        searchButton.setTitleColor(Constants.Color.textSecondary, for: .normal)
+        searchButton.titleLabel?.font = UIFont.systemFont(ofSize: 15)
+        searchButton.addTarget(self, action: #selector(searchButtonTapped), for: .touchUpInside)
+        searchRowContainer.addSubview(searchButton)
+        searchButton.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            searchRowContainer.topAnchor.constraint(equalTo: headerView.topAnchor),
+            searchRowContainer.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            searchRowContainer.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            searchRowContainer.heightAnchor.constraint(equalToConstant: 56),
+
+            searchBar.leadingAnchor.constraint(equalTo: searchRowContainer.leadingAnchor, constant: 16),
+            searchBar.centerYAnchor.constraint(equalTo: searchRowContainer.centerYAnchor),
+            searchBar.heightAnchor.constraint(equalToConstant: 40),
+
+            searchButton.trailingAnchor.constraint(equalTo: searchRowContainer.trailingAnchor, constant: -16),
+            searchButton.centerYAnchor.constraint(equalTo: searchRowContainer.centerYAnchor),
+            searchButton.widthAnchor.constraint(equalToConstant: 44),
+
+            searchIconView.leadingAnchor.constraint(equalTo: searchBar.leadingAnchor, constant: 12),
+            searchIconView.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
+            searchIconView.widthAnchor.constraint(equalToConstant: 18),
+            searchIconView.heightAnchor.constraint(equalToConstant: 18),
+
+            searchTextField.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
+            searchTextField.trailingAnchor.constraint(equalTo: searchBar.trailingAnchor, constant: -12),
+            searchTextField.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor)
+        ])
+        let btnLeading = searchButton.leadingAnchor.constraint(equalTo: searchBar.trailingAnchor, constant: 8)
+        searchButtonLeadingToBar = btnLeading
+        btnLeading.isActive = true
+        let barTrailing = searchBar.trailingAnchor.constraint(equalTo: searchRowContainer.trailingAnchor, constant: -16)
+        searchBarTrailingToContainer = barTrailing
+        barTrailing.isActive = false
+
+        // 热门搜索区域（未输入时显示）
+        hotSearchContainer.backgroundColor = .white
+        headerView.addSubview(hotSearchContainer)
+        hotSearchContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        hotSearchTitleLabel.text = "热门搜索"
+        hotSearchTitleLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        hotSearchTitleLabel.textColor = Constants.Color.textPrimary
+        hotSearchContainer.addSubview(hotSearchTitleLabel)
+        hotSearchTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let badgeColors: [UIColor] = [
+            UIColor(red: 1.0, green: 0.75, blue: 0.2, alpha: 1.0),   // 1 橙黄
+            UIColor(red: 0.95, green: 0.3, blue: 0.25, alpha: 1.0),   // 2 红
+            UIColor(red: 1.0, green: 0.8, blue: 0.2, alpha: 1.0),    // 3 黄
+            UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0),   // 4-6 灰
+            UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0),
+            UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0)
+        ]
+        let colCount = 3
+        let itemH: CGFloat = 56
+        let spacing: CGFloat = 12
+        let cellWidth = (UIScreen.main.bounds.width - 32 - spacing * CGFloat(colCount - 1)) / CGFloat(colCount)
+        var firstRowCells: [UIView] = []
+        var lastCell: UIView?
+        for (idx, stock) in hotStocks.enumerated() {
+            let cell = UIView()
+            cell.backgroundColor = .clear
+            hotSearchContainer.addSubview(cell)
+            cell.translatesAutoresizingMaskIntoConstraints = false
+
+            let badge = UIView()
+            badge.layer.cornerRadius = 4
+            badge.backgroundColor = idx < 3 ? badgeColors[idx] : badgeColors[3]
+            cell.addSubview(badge)
+            badge.translatesAutoresizingMaskIntoConstraints = false
+
+            let badgeLabel = UILabel()
+            badgeLabel.text = "\(idx + 1)"
+            badgeLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+            badgeLabel.textColor = .white
+            badge.addSubview(badgeLabel)
+            badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            let nameLabel = UILabel()
+            nameLabel.text = stock.name
+            nameLabel.font = UIFont.systemFont(ofSize: 15)
+            nameLabel.textColor = Constants.Color.textPrimary
+            cell.addSubview(nameLabel)
+            nameLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            let codeLabel = UILabel()
+            codeLabel.text = stock.code
+            codeLabel.font = UIFont.systemFont(ofSize: 12)
+            codeLabel.textColor = Constants.Color.textTertiary
+            cell.addSubview(codeLabel)
+            codeLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            hotItemViews.append((badge, badgeLabel, nameLabel, codeLabel))
+
+            let row = idx / colCount
+            let col = idx % colCount
+            let leadingConstant = 16 + CGFloat(col) * (cellWidth + spacing)
+
+            NSLayoutConstraint.activate([
+                badge.leadingAnchor.constraint(equalTo: cell.leadingAnchor),
+                badge.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                badge.widthAnchor.constraint(equalToConstant: 22),
+                badge.heightAnchor.constraint(equalToConstant: 22),
+                badgeLabel.centerXAnchor.constraint(equalTo: badge.centerXAnchor),
+                badgeLabel.centerYAnchor.constraint(equalTo: badge.centerYAnchor),
+                nameLabel.leadingAnchor.constraint(equalTo: badge.trailingAnchor, constant: 8),
+                nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: cell.trailingAnchor),
+                nameLabel.topAnchor.constraint(equalTo: cell.topAnchor, constant: 10),
+                codeLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+                codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4)
+            ])
+
+            if row == 0 {
+                cell.topAnchor.constraint(equalTo: hotSearchTitleLabel.bottomAnchor, constant: 12).isActive = true
+                firstRowCells.append(cell)
+            } else {
+                cell.topAnchor.constraint(equalTo: firstRowCells[col].bottomAnchor, constant: 8).isActive = true
+            }
+            cell.leadingAnchor.constraint(equalTo: hotSearchContainer.leadingAnchor, constant: leadingConstant).isActive = true
+            cell.widthAnchor.constraint(equalToConstant: cellWidth).isActive = true
+            cell.heightAnchor.constraint(equalToConstant: itemH).isActive = true
+            lastCell = cell
+            cell.tag = idx
+            cell.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(hotItemTapped(_:)))
+            cell.addGestureRecognizer(tap)
+        }
+
+        hotSearchContainer.leadingAnchor.constraint(equalTo: headerView.leadingAnchor).isActive = true
+        hotSearchContainer.trailingAnchor.constraint(equalTo: headerView.trailingAnchor).isActive = true
+        hotSearchContainer.topAnchor.constraint(equalTo: searchRowContainer.bottomAnchor).isActive = true
+        if let last = lastCell {
+            let bottomC = hotSearchContainer.bottomAnchor.constraint(equalTo: last.bottomAnchor, constant: 24)
+            hotSearchContainerBottom = bottomC
+            bottomC.isActive = true
+        }
+        hotSearchContainerHeightZero = hotSearchContainer.heightAnchor.constraint(equalToConstant: 0)
+        hotSearchContainerHeightZero?.isActive = false
+
+        // 股票列表表头（输入后显示，保持旧页样式）
         listHeaderView.backgroundColor = .white
         headerView.addSubview(listHeaderView)
         listHeaderView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         listTitleLabel.text = "股票列表"
         listTitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         listTitleLabel.textColor = Constants.Color.textPrimary
         listTitleLabel.textAlignment = .center
         listHeaderView.addSubview(listTitleLabel)
         listTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 表头标签（名称、代码、简拼）- 浅灰色背景，字体小一点
-        let headerRowView = UIView()
-        headerRowView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0) // 浅灰色背景
-        headerView.addSubview(headerRowView)
-        headerRowView.translatesAutoresizingMaskIntoConstraints = false
-        
+
+        let headerRow = UIView()
+        headerRow.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        headerView.addSubview(headerRow)
+        headerRow.translatesAutoresizingMaskIntoConstraints = false
+        headerRowView = headerRow
+
         let nameLabel = UILabel()
         nameLabel.text = "名称"
-        nameLabel.font = UIFont.systemFont(ofSize: 12) // 字体小一点
+        nameLabel.font = UIFont.systemFont(ofSize: 12)
         nameLabel.textColor = Constants.Color.textPrimary
         nameLabel.textAlignment = .left
-        headerRowView.addSubview(nameLabel)
+        headerRow.addSubview(nameLabel)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+
         let codeLabel = UILabel()
         codeLabel.text = "代码"
-        codeLabel.font = UIFont.systemFont(ofSize: 12) // 字体小一点
+        codeLabel.font = UIFont.systemFont(ofSize: 12)
         codeLabel.textColor = Constants.Color.textPrimary
         codeLabel.textAlignment = .center
-        headerRowView.addSubview(codeLabel)
+        headerRow.addSubview(codeLabel)
         codeLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+
         let abbreviationLabel = UILabel()
         abbreviationLabel.text = "简拼"
-        abbreviationLabel.font = UIFont.systemFont(ofSize: 12) // 字体小一点
+        abbreviationLabel.font = UIFont.systemFont(ofSize: 12)
         abbreviationLabel.textColor = Constants.Color.textPrimary
         abbreviationLabel.textAlignment = .right
-        headerRowView.addSubview(abbreviationLabel)
+        headerRow.addSubview(abbreviationLabel)
         abbreviationLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+
         NSLayoutConstraint.activate([
-            // 搜索框
-            searchBar.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
-            searchBar.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
-            searchBar.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
-            searchBar.heightAnchor.constraint(equalToConstant: 40),
-            
-            searchTextField.leadingAnchor.constraint(equalTo: searchBar.leadingAnchor, constant: 12),
-            searchTextField.trailingAnchor.constraint(equalTo: searchBar.trailingAnchor, constant: -12),
-            searchTextField.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
-            
-            // "股票列表"标题行（白色背景）
-            listHeaderView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 16),
+            hotSearchTitleLabel.topAnchor.constraint(equalTo: hotSearchContainer.topAnchor, constant: 4),
+            hotSearchTitleLabel.leadingAnchor.constraint(equalTo: hotSearchContainer.leadingAnchor, constant: 16),
+            listHeaderView.topAnchor.constraint(equalTo: searchRowContainer.bottomAnchor, constant: 0),
             listHeaderView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
             listHeaderView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
             listHeaderView.heightAnchor.constraint(equalToConstant: 44),
-            
             listTitleLabel.centerXAnchor.constraint(equalTo: listHeaderView.centerXAnchor),
             listTitleLabel.centerYAnchor.constraint(equalTo: listHeaderView.centerYAnchor),
-            
-            // 表头行（名称、代码、简拼）- 距离"股票列表"20pt，浅灰色背景
-            headerRowView.topAnchor.constraint(equalTo: listHeaderView.bottomAnchor, constant: 10),
-            headerRowView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
-            headerRowView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
-            headerRowView.heightAnchor.constraint(equalToConstant: 40),
-            headerRowView.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
-            
-            nameLabel.leadingAnchor.constraint(equalTo: headerRowView.leadingAnchor, constant: 16),
-            nameLabel.centerYAnchor.constraint(equalTo: headerRowView.centerYAnchor),
-            nameLabel.widthAnchor.constraint(equalTo: headerRowView.widthAnchor, multiplier: 0.4),
-            
-            codeLabel.centerXAnchor.constraint(equalTo: headerRowView.centerXAnchor),
-            codeLabel.centerYAnchor.constraint(equalTo: headerRowView.centerYAnchor),
-            codeLabel.widthAnchor.constraint(equalTo: headerRowView.widthAnchor, multiplier: 0.3),
-            
-            abbreviationLabel.trailingAnchor.constraint(equalTo: headerRowView.trailingAnchor, constant: -16),
-            abbreviationLabel.centerYAnchor.constraint(equalTo: headerRowView.centerYAnchor),
-            abbreviationLabel.widthAnchor.constraint(equalTo: headerRowView.widthAnchor, multiplier: 0.3)
+            headerRow.topAnchor.constraint(equalTo: listHeaderView.bottomAnchor, constant: 10),
+            headerRow.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            headerRow.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            headerRow.heightAnchor.constraint(equalToConstant: 40),
+            headerRow.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
+            nameLabel.leadingAnchor.constraint(equalTo: headerRow.leadingAnchor, constant: 16),
+            nameLabel.centerYAnchor.constraint(equalTo: headerRow.centerYAnchor),
+            codeLabel.centerXAnchor.constraint(equalTo: headerRow.centerXAnchor),
+            codeLabel.centerYAnchor.constraint(equalTo: headerRow.centerYAnchor),
+            abbreviationLabel.trailingAnchor.constraint(equalTo: headerRow.trailingAnchor, constant: -16),
+            abbreviationLabel.centerYAnchor.constraint(equalTo: headerRow.centerYAnchor)
         ])
-        
-        // 设置headerView高度：16 + 40 + 16 + 44 + 20 + 40 = 176
-        headerView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 176)
+
+        updateHeaderMode()
+        let h = headerHeightForCurrentMode()
+        headerView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: h)
+        headerView.layoutIfNeeded()
         tableView.tableHeaderView = headerView
+    }
+
+    private func headerHeightForCurrentMode() -> CGFloat {
+        let isEmpty = searchTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+        if isEmpty {
+            let rowH: CGFloat = 56
+            let titleH: CGFloat = 24
+            return 56 + 12 + titleH + 12 + rowH * 2 + 24
+        }
+        return 56 + 0 + 44 + 10 + 40
+    }
+
+    private func updateHeaderMode() {
+        let isEmpty = searchTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+        // 搜索框和搜索按钮始终使用新样式、位置一致（灰底 + 右侧「搜索」按钮）
+        searchBar.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        searchButton.isHidden = false
+        searchButtonLeadingToBar?.isActive = true
+        searchBarTrailingToContainer?.isActive = false
+        hotSearchContainer.isHidden = !isEmpty
+        // 搜索态时折叠热门区域：高度为 0 并断开 bottom，避免与列表表头约束冲突导致搜索行被挤上去
+        hotSearchContainerHeightZero?.isActive = !isEmpty
+        hotSearchContainerBottom?.isActive = isEmpty
+        listHeaderView.isHidden = isEmpty
+        headerRowView?.isHidden = isEmpty
+        let h = headerHeightForCurrentMode()
+        headerContainerView?.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: h)
+        headerContainerView?.layoutIfNeeded()
+        tableView.tableHeaderView = headerContainerView
+    }
+
+    @objc private func searchButtonTapped() {
+        searchTextField.becomeFirstResponder()
+        performSearch()
+    }
+
+    @objc private func hotItemTapped(_ g: UITapGestureRecognizer) {
+        guard let cell = g.view, cell.tag < hotStocks.count else { return }
+        let item = hotStocks[cell.tag]
+        searchTextField.text = item.name
+        performSearch()
     }
     
     private func setupEmptyState() {
@@ -224,14 +430,11 @@ class StockSearchViewController: ZQViewController {
     }
     
     private func updateUI() {
-        // 无论是否有数据，都要刷新tableView
+        updateHeaderMode()
         tableView.reloadData()
-        
         if searchResults.isEmpty {
-            // 显示空状态
             tableView.backgroundView = emptyStateView
         } else {
-            // 显示列表
             tableView.backgroundView = nil
         }
     }

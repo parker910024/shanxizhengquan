@@ -31,9 +31,8 @@ class BankSecuritiesTransferViewController: ZQViewController {
         gk_statusBarStyle = .default
         gk_navItemLeftSpace = 15
         gk_navItemRightSpace = 15
-        let searchBtn = UIBarButtonItem(image: UIImage(systemName: "magnifyingglass"), style: .plain, target: self, action: #selector(searchTapped))
-        searchBtn.tintColor = Constants.Color.textSecondary
-        gk_navRightBarButtonItem = searchBtn
+        gk_backStyle = .black
+       
     }
 
     @objc private func searchTapped() {}

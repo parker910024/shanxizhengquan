@@ -30,9 +30,19 @@ class BankCardViewController: ZQViewController {
     private let bindCardContainer = UIView()
     private let bindCardLabel = UILabel()
     private let bindCardIcon = UIImageView()
-    
+
+    // 无卡空态
+    private let emptyStateView = UIView()
+    private let addCardButton = UIButton(type: .system)
+    private let tip1Label = UILabel()
+    private let tip2Label = UILabel()
+
     // 数据
     private var bankCard: BankCard?
+
+    // 空态/有卡时 contentView 底部约束切换
+    private var emptyStateBottomConstraint: NSLayoutConstraint?
+    private var bindCardBottomConstraint: NSLayoutConstraint?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,13 +52,18 @@ class BankCardViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = UIColor(red: 0.1, green: 0.47, blue: 0.82, alpha: 1.0)
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "我的银行卡"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
+        gk_statusBarStyle = .default
+   
+        gk_backStyle = .black
     }
+
+    @objc private func searchTapped() {}
     
     private func setupUI() {
         view.backgroundColor = .white
@@ -70,11 +85,68 @@ class BankCardViewController: ZQViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
-        
+
+        setupEmptyState()
         setupBankCard()
         setupBindCard()
     }
-    
+
+    // MARK: - 无卡空态：橙红「添加储蓄卡」按钮 + 两条灰色说明
+    private func setupEmptyState() {
+        emptyStateView.backgroundColor = .white
+        contentView.addSubview(emptyStateView)
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
+
+        addCardButton.setTitle("添加储蓄卡", for: .normal)
+        addCardButton.setTitleColor(.white, for: .normal)
+        addCardButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        addCardButton.backgroundColor = UIColor(red: 1.0, green: 0.4, blue: 0.3, alpha: 1.0)
+        addCardButton.layer.cornerRadius = 8
+        addCardButton.addTarget(self, action: #selector(addCardTapped), for: .touchUpInside)
+        emptyStateView.addSubview(addCardButton)
+        addCardButton.translatesAutoresizingMaskIntoConstraints = false
+
+        tip1Label.text = "1. 新用户注册后必须通过添加银行卡。"
+        tip1Label.font = UIFont.systemFont(ofSize: 14)
+        tip1Label.textColor = Constants.Color.textTertiary
+        tip1Label.numberOfLines = 0
+        emptyStateView.addSubview(tip1Label)
+        tip1Label.translatesAutoresizingMaskIntoConstraints = false
+
+        tip2Label.text = "2. 真实姓名必须和绑定银行卡户名一样。"
+        tip2Label.font = UIFont.systemFont(ofSize: 14)
+        tip2Label.textColor = Constants.Color.textTertiary
+        tip2Label.numberOfLines = 0
+        emptyStateView.addSubview(tip2Label)
+        tip2Label.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            emptyStateView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            addCardButton.topAnchor.constraint(equalTo: emptyStateView.topAnchor, constant: 54),
+            addCardButton.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor, constant: 16),
+            addCardButton.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor, constant: -16),
+            addCardButton.heightAnchor.constraint(equalToConstant: 48),
+            tip1Label.topAnchor.constraint(equalTo: addCardButton.bottomAnchor, constant: 24),
+            tip1Label.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor, constant: 16),
+            tip1Label.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor, constant: -16),
+            tip2Label.topAnchor.constraint(equalTo: tip1Label.bottomAnchor, constant: 8),
+            tip2Label.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor, constant: 16),
+            tip2Label.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor, constant: -16),
+            tip2Label.bottomAnchor.constraint(equalTo: emptyStateView.bottomAnchor, constant: -24)
+        ])
+        let bottomC = emptyStateView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
+        emptyStateBottomConstraint = bottomC
+        bottomC.isActive = false
+    }
+
+    @objc private func addCardTapped() {
+        let vc = BindBankCardViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
     // MARK: - 银行卡卡片
     private func setupBankCard() {
         // 卡片容器（金色背景）
@@ -167,13 +239,15 @@ class BankCardViewController: ZQViewController {
         bindCardContainer.addSubview(bindCardIcon)
         bindCardIcon.translatesAutoresizingMaskIntoConstraints = false
         
+        let bindBottom = bindCardContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+        bindCardBottomConstraint = bindBottom
         NSLayoutConstraint.activate([
             bindCardContainer.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 20),
             bindCardContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             bindCardContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             bindCardContainer.heightAnchor.constraint(equalToConstant: 50),
-            bindCardContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
-            
+            bindBottom,
+
             bindCardLabel.leadingAnchor.constraint(equalTo: bindCardContainer.leadingAnchor, constant: 16),
             bindCardLabel.centerYAnchor.constraint(equalTo: bindCardContainer.centerYAnchor),
             
@@ -186,27 +260,29 @@ class BankCardViewController: ZQViewController {
     
     // MARK: - Data
     private func loadData() {
-        // 模拟数据
-        bankCard = BankCard(
-            cardName: "测试",
-            branchName: "测试",
-            cardNumber: "6464646946464949"
-        )
-        
+        // 无卡时显示空态；有卡时从接口或缓存读取后赋值 bankCard
+        bankCard = nil
         updateUI()
     }
     
     private func updateUI() {
-        guard let card = bankCard else {
-            // 如果没有银行卡，隐藏卡片，显示绑定提示
+        if bankCard == nil {
+            emptyStateView.isHidden = false
             cardContainer.isHidden = true
-            return
+            bindCardContainer.isHidden = true
+            bindCardBottomConstraint?.isActive = false
+            emptyStateBottomConstraint?.isActive = true
+        } else {
+            emptyStateView.isHidden = true
+            cardContainer.isHidden = false
+            bindCardContainer.isHidden = false
+            emptyStateBottomConstraint?.isActive = false
+            bindCardBottomConstraint?.isActive = true
+            let card = bankCard!
+            cardNameLabel.text = card.cardName
+            branchLabel.text = "开户支行:\(card.branchName)"
+            cardNumberLabel.text = card.cardNumber
         }
-        
-        cardContainer.isHidden = false
-        cardNameLabel.text = card.cardName
-        branchLabel.text = "开户支行:\(card.branchName)"
-        cardNumberLabel.text = card.cardNumber
     }
     
     // MARK: - Actions

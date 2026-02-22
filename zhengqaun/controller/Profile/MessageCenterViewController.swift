@@ -134,6 +134,10 @@ extension MessageCenterViewController: UITableViewDelegate {
             messages[indexPath.row] = message
             tableView.reloadRows(at: [indexPath], with: .none)
         }
+        let detailVC = MessageDetailViewController()
+        detailVC.message = message
+        detailVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
 
