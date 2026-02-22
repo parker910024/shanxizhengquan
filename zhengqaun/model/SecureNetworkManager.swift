@@ -117,9 +117,8 @@ final class SecureNetworkManager {
         request.httpMethod = "POST"
         request.setValue(token, forHTTPHeaderField: "token")
         request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        if httpMethod != "GET" {
-            request.httpBody = cipherB64.data(using: .utf8)
-        }
+        // 所有请求（含逻辑 GET）都必须携带密文 body，与 Android RequestEncryptInterceptor 一致
+        request.httpBody = cipherB64.data(using: .utf8)
 
         // 5. 发送请求（URLSession 回调在后台线程，统一回主线程再调 completion，避免在后台改 UI 崩溃）
         let task = session.dataTask(with: request) { data, response, error in

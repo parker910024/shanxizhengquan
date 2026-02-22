@@ -55,6 +55,10 @@ class MarketViewController: ZQViewController {
     private var rankingStocks: [StockRankItem] = []
     private var rankingTableView: UITableView!
     private var rankingTableHeightCons: NSLayoutConstraint?
+    // 多列横向滚动
+    private var rankingScrollOffset: CGFloat = 0
+    private var rankingColumnHeaderScroll: UIScrollView?
+    private var rankingColumnIndicator: UIView?
 
     // MARK: - 市场概括
     private var barChartContainer: UIView!
@@ -91,6 +95,11 @@ class MarketViewController: ZQViewController {
         let price: String
         let change: String
         let changePercent: String
+        var volume: String    = "--"   // 成交额
+        var turnover: String  = "--"   // 换手率
+        var prevClose: String = "--"   // 昨收
+        var open: String      = "--"   // 今开
+        var high: String      = "--"   // 最高
     }
 
     struct SectorDataItem {
@@ -651,21 +660,19 @@ class MarketViewController: ZQViewController {
     // MARK: - 4. 股票排行榜 (沪深 / 创业 / 北证 / 科创)
     // ===================================================================
     private func buildRankingSection() {
-        // 标题
+        // 1. 标题
         let title = makeTitle("股票排行榜")
         rankingContainer.addSubview(title)
         title.translatesAutoresizingMaskIntoConstraints = false
 
-        // 市场 Tab
+        // 2. 市场 Tab（沪深/创业/北证/科创）
         let tabWrap = UIView()
         rankingContainer.addSubview(tabWrap)
         tabWrap.translatesAutoresizingMaskIntoConstraints = false
-
         let tabStack = UIStackView()
         tabStack.axis = .horizontal; tabStack.spacing = 0; tabStack.distribution = .fillEqually
         tabWrap.addSubview(tabStack)
         tabStack.translatesAutoresizingMaskIntoConstraints = false
-
         for (i, t) in marketTabs.enumerated() {
             let btn = UIButton(type: .system)
             btn.setTitle(t, for: .normal)
@@ -676,38 +683,78 @@ class MarketViewController: ZQViewController {
             tabStack.addArrangedSubview(btn)
             marketTabButtons.append(btn)
         }
-
         marketTabIndicator = UIView()
         marketTabIndicator.backgroundColor = themeRed
         marketTabIndicator.layer.cornerRadius = 1.5
         tabWrap.addSubview(marketTabIndicator)
 
-        // 列标题
-        let headerView = UIView()
-        headerView.backgroundColor = bgColor
-        rankingContainer.addSubview(headerView)
-        headerView.translatesAutoresizingMaskIntoConstraints = false
-
-        let headers = [("名称", NSLayoutConstraint.Attribute.leading, 16),
-                       ("现价", .centerX, -30),
-                       ("涨跌", .centerX, 40)]
-        for (text, attr, offset) in headers {
-            let l = UILabel()
-            l.text = text; l.font = .systemFont(ofSize: 13); l.textColor = textSec; l.textAlignment = .center
-            headerView.addSubview(l); l.translatesAutoresizingMaskIntoConstraints = false
-            l.centerYAnchor.constraint(equalTo: headerView.centerYAnchor).isActive = true
-            if attr == .leading {
-                l.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: CGFloat(offset)).isActive = true
-            } else {
-                l.centerXAnchor.constraint(equalTo: headerView.centerXAnchor, constant: CGFloat(offset)).isActive = true
-            }
+        // 3. 列标题行：固定「名称」列 + 可横滑的数据列 tab
+        let colHeaderWrap = UIView()
+        colHeaderWrap.backgroundColor = bgColor
+        rankingContainer.addSubview(colHeaderWrap)
+        colHeaderWrap.translatesAutoresizingMaskIntoConstraints = false
+        // 左侧固定「名称」
+        let nameLbl = UILabel()
+        nameLbl.text = "名称"
+        nameLbl.font = .systemFont(ofSize: 13)
+        nameLbl.textColor = textSec
+        colHeaderWrap.addSubview(nameLbl)
+        nameLbl.translatesAutoresizingMaskIntoConstraints = false
+        // 右侧横向滚动区
+        let colScroll = UIScrollView()
+        colScroll.showsHorizontalScrollIndicator = false
+        colScroll.bounces = false
+        colScroll.delegate = self
+        colHeaderWrap.addSubview(colScroll)
+        colScroll.translatesAutoresizingMaskIntoConstraints = false
+        rankingColumnHeaderScroll = colScroll
+        let colContent = UIView()
+        colScroll.addSubview(colContent)
+        colContent.translatesAutoresizingMaskIntoConstraints = false
+        let totalColW = RankingStockCell.columnWidths.reduce(0, +)
+        NSLayoutConstraint.activate([
+            colContent.topAnchor.constraint(equalTo: colScroll.topAnchor),
+            colContent.leadingAnchor.constraint(equalTo: colScroll.leadingAnchor),
+            colContent.trailingAnchor.constraint(equalTo: colScroll.trailingAnchor),
+            colContent.bottomAnchor.constraint(equalTo: colScroll.bottomAnchor),
+            colContent.heightAnchor.constraint(equalTo: colScroll.heightAnchor),
+            colContent.widthAnchor.constraint(equalToConstant: totalColW),
+        ])
+        // 列 tab 按钮 + 下划线指示器（frame-based，宽度固定）
+        var btnX: CGFloat = 0
+        let colBtnH: CGFloat = 30
+        for i in 0..<RankingStockCell.columnTitles.count {
+            let colTitle = RankingStockCell.columnTitles[i]
+            let colW     = RankingStockCell.columnWidths[i]
+            let btn = UIButton(type: .system)
+            btn.setTitle(colTitle, for: .normal)
+            btn.setTitleColor(i == 0 ? themeRed : textSec, for: .normal)
+            btn.titleLabel?.font = i == 0 ? .boldSystemFont(ofSize: 13) : .systemFont(ofSize: 13)
+            btn.tag = i
+            btn.addTarget(self, action: #selector(rankingColumnTapped(_:)), for: .touchUpInside)
+            btn.frame = CGRect(x: btnX, y: 0, width: colW, height: colBtnH)
+            colContent.addSubview(btn)
+            btnX += colW
         }
-        let hPct = UILabel(); hPct.text = "涨跌幅"; hPct.font = .systemFont(ofSize: 13); hPct.textColor = textSec; hPct.textAlignment = .right
-        headerView.addSubview(hPct); hPct.translatesAutoresizingMaskIntoConstraints = false
-        hPct.centerYAnchor.constraint(equalTo: headerView.centerYAnchor).isActive = true
-        hPct.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16).isActive = true
+        let indicator = UIView()
+        indicator.backgroundColor = themeRed
+        indicator.layer.cornerRadius = 1.5
+        let iW: CGFloat = 20
+        let firstColW = RankingStockCell.columnWidths[0]
+        indicator.frame = CGRect(x: (firstColW - iW) / 2, y: colBtnH - 2.5, width: iW, height: 2.5)
+        colContent.addSubview(indicator)
+        rankingColumnIndicator = indicator
+        // 约束 colHeaderWrap 内部布局
+        NSLayoutConstraint.activate([
+            nameLbl.leadingAnchor.constraint(equalTo: colHeaderWrap.leadingAnchor, constant: 12),
+            nameLbl.centerYAnchor.constraint(equalTo: colHeaderWrap.centerYAnchor),
+            colScroll.leadingAnchor.constraint(equalTo: colHeaderWrap.leadingAnchor, constant: RankingStockCell.leftWidth),
+            colScroll.topAnchor.constraint(equalTo: colHeaderWrap.topAnchor),
+            colScroll.trailingAnchor.constraint(equalTo: colHeaderWrap.trailingAnchor),
+            colScroll.bottomAnchor.constraint(equalTo: colHeaderWrap.bottomAnchor),
+        ])
 
-        // TableView
+        // 4. TableView
         rankingTableView = UITableView(frame: .zero, style: .plain)
         rankingTableView.separatorStyle = .none
         rankingTableView.backgroundColor = .white
@@ -727,18 +774,17 @@ class MarketViewController: ZQViewController {
             tabWrap.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
             tabWrap.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
             tabWrap.heightAnchor.constraint(equalToConstant: 40),
-
             tabStack.topAnchor.constraint(equalTo: tabWrap.topAnchor),
             tabStack.leadingAnchor.constraint(equalTo: tabWrap.leadingAnchor),
             tabStack.trailingAnchor.constraint(equalTo: tabWrap.trailingAnchor),
             tabStack.heightAnchor.constraint(equalToConstant: 36),
 
-            headerView.topAnchor.constraint(equalTo: tabWrap.bottomAnchor, constant: 4),
-            headerView.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
-            headerView.heightAnchor.constraint(equalToConstant: 32),
+            colHeaderWrap.topAnchor.constraint(equalTo: tabWrap.bottomAnchor, constant: 4),
+            colHeaderWrap.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
+            colHeaderWrap.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
+            colHeaderWrap.heightAnchor.constraint(equalToConstant: 34),
 
-            rankingTableView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            rankingTableView.topAnchor.constraint(equalTo: colHeaderWrap.bottomAnchor),
             rankingTableView.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
             rankingTableView.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
             rankingTableView.bottomAnchor.constraint(equalTo: rankingContainer.bottomAnchor),
@@ -779,6 +825,44 @@ class MarketViewController: ZQViewController {
             rankingTableHeightCons = rankingTableView.heightAnchor.constraint(equalToConstant: max(h, 120))
             rankingTableHeightCons?.isActive = true
         }
+    }
+
+    /// 同步所有可见行和列标题到同一横向偏移（对应 Android setupScrollSync）
+    private func syncAllRankingRows(to offset: CGFloat) {
+        rankingScrollOffset = offset
+        if let scv = rankingColumnHeaderScroll, abs(scv.contentOffset.x - offset) > 0.5 {
+            scv.setContentOffset(CGPoint(x: offset, y: 0), animated: false)
+        }
+        for cell in (rankingTableView?.visibleCells ?? []).compactMap({ $0 as? RankingStockCell }) {
+            cell.syncOffset(offset)
+        }
+    }
+
+    /// 移动列指示器到指定列（对应 Android rankingTabIndicatorHelper.selectTab）
+    private func moveRankingColumnIndicator(to index: Int, animated: Bool) {
+        guard index < RankingStockCell.columnWidths.count,
+              let indicator = rankingColumnIndicator else { return }
+        var x: CGFloat = 0
+        for i in 0..<index { x += RankingStockCell.columnWidths[i] }
+        let colW = RankingStockCell.columnWidths[index]
+        let iW: CGFloat = 20
+        let target = CGRect(x: x + (colW - iW) / 2,
+                            y: indicator.frame.minY,
+                            width: iW, height: indicator.frame.height)
+        if animated { UIView.animate(withDuration: 0.2) { indicator.frame = target } }
+        else { indicator.frame = target }
+    }
+
+    /// 点击列 tab：滚动数据到该列并更新指示器
+    @objc private func rankingColumnTapped(_ sender: UIButton) {
+        let idx = sender.tag
+        var x: CGFloat = 0
+        for i in 0..<idx { x += RankingStockCell.columnWidths[i] }
+        let colW = RankingStockCell.columnWidths[idx]
+        let visibleW = (rankingContainer?.bounds.width ?? UIScreen.main.bounds.width) - RankingStockCell.leftWidth
+        let targetX = max(0, x - (visibleW - colW) / 2)
+        syncAllRankingRows(to: targetX)
+        moveRankingColumnIndicator(to: idx, animated: true)
     }
 
     // ===================================================================
@@ -837,6 +921,14 @@ class MarketViewController: ZQViewController {
     // ===================================================================
     private func makeTitle(_ text: String) -> UILabel {
         let l = UILabel(); l.text = text; l.font = .boldSystemFont(ofSize: 18); l.textColor = textPrimary; return l
+    }
+
+    /// 成交量格式化（对应 Android HqViewModel.formatVolume）
+    private func formatVolume(_ raw: String) -> String {
+        guard let v = Int64(raw.trimmingCharacters(in: .whitespaces)) else { return raw.isEmpty ? "--" : raw }
+        if v >= 100_000_000 { return String(format: "%.2f亿", Double(v) / 100_000_000.0) }
+        if v >= 10_000       { return String(format: "%.2f万", Double(v) / 10_000.0) }
+        return v == 0 ? "--" : "\(v)"
     }
 
     /// 外部调用切换分段
@@ -926,9 +1018,15 @@ class MarketViewController: ZQViewController {
                     let code    = item["code"] as? String ?? ""
                     let symbol  = item["symbol"] as? String ?? (item["allcode"] as? String ?? "")
                     let price   = "\(item["trade"] ?? item["cai_buy"] ?? "0")"
-                    let change  = "\(item["pricechange"] ?? "0")"
-                    let percent = "\(item["changepercent"] ?? "0")"
-                    stocks.append(StockRankItem(name: name, code: code, symbol: symbol, price: price, change: change, changePercent: percent))
+                    let change   = "\(item["pricechange"]   ?? "0")"
+                    let percent  = "\(item["changepercent"] ?? "0")"
+                    let volume   = formatVolume("\(item["buy"]        ?? "")")
+                    let prevClose = "\(item["settlement"]   ?? "--")"
+                    let openVal   = "\(item["open"]         ?? "--")"
+                    stocks.append(StockRankItem(name: name, code: code, symbol: symbol,
+                                               price: price, change: change, changePercent: percent,
+                                               volume: volume, turnover: "--",
+                                               prevClose: prevClose, open: openVal, high: "--"))
                 }
                 DispatchQueue.main.async {
                     self.rankingStocks = stocks
@@ -1172,12 +1270,18 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         return subscriptionList.count
     }
 
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if let rankCell = cell as? RankingStockCell {
+            rankCell.syncOffset(rankingScrollOffset)
+        }
+    }
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if tableView == rankingTableView {
             let cell = tableView.dequeueReusableCell(withIdentifier: "RankingCell", for: indexPath) as! RankingStockCell
             if indexPath.row < rankingStocks.count {
-                let s = rankingStocks[indexPath.row]
-                cell.configure(name: s.name, code: s.code, symbol: s.symbol, price: s.price, change: s.change, changePercent: s.changePercent)
+                cell.configure(stock: rankingStocks[indexPath.row])
+                cell.onScroll = { [weak self] offset in self?.syncAllRankingRows(to: offset) }
             }
             return cell
         }
@@ -1220,6 +1324,12 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         return 0
     }
 
+    /// 列标题横向滚 → 同步所有行
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard scrollView === rankingColumnHeaderScroll else { return }
+        syncAllRankingRows(to: scrollView.contentOffset.x)
+    }
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         if tableView == rankingTableView, indexPath.row < rankingStocks.count {
@@ -1239,99 +1349,194 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 // =====================================================================
-// MARK: - RankingStockCell
+// MARK: - RankingStockCell  （多列横向滚动，对应 Android StockAdapter）
 // =====================================================================
 class RankingStockCell: UITableViewCell {
 
-    private let nameLabel    = UILabel()
-    private let codeLabel    = UILabel()
-    private let marketBadge  = UILabel()
-    private let priceLabel   = UILabel()
-    private let changeLabel  = UILabel()
-    private let percentLabel = UILabel()
-    private let sep          = UIView()
+    // MARK: - 列宽定义（对齐 Android columnWidths dp≈pt）
+    static let leftWidth: CGFloat    = 120
+    static let columnWidths: [CGFloat] = [80, 70, 70, 100, 70, 80, 80, 80]
+    static let columnTitles            = ["现价", "涨跌", "涨跌幅", "成交额", "换手率", "昨收", "今开", "最高"]
 
+    // MARK: - 左侧固定视图
+    private let nameLabel   = UILabel()
+    private let codeLabel   = UILabel()
+    private let marketBadge = UILabel()
+
+    // MARK: - 右侧横向可滚动视图
+    let dataScrollView = UIScrollView()
+    private var dataLabels: [UILabel] = []
+    private let sep = UIView()
+
+    // MARK: - 滚动同步
+    var onScroll: ((CGFloat) -> Void)?
+    private var isSyncing = false
+
+    // MARK: - 颜色
     private let textP  = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
     private let textS  = UIColor(red: 0.45, green: 0.45, blue: 0.48, alpha: 1)
-    private let red    = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1)
-    private let green  = UIColor(red: 0.13, green: 0.73, blue: 0.33, alpha: 1)
+    private let red    = UIColor(red: 230/255, green: 0,     blue: 18/255,  alpha: 1)
+    private let green  = UIColor(red: 0.13,   green: 0.73,   blue: 0.33,   alpha: 1)
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        selectionStyle = .none; backgroundColor = .white
+        selectionStyle = .none
+        backgroundColor = .white
         setupViews()
     }
     required init?(coder: NSCoder) { fatalError() }
 
     private func setupViews() {
-        for v: UIView in [nameLabel, codeLabel, marketBadge, priceLabel, changeLabel, percentLabel, sep] {
-            contentView.addSubview(v); v.translatesAutoresizingMaskIntoConstraints = false
+        // ── 左侧固定面板 ──
+        let leftPanel = UIView()
+        contentView.addSubview(leftPanel)
+        leftPanel.translatesAutoresizingMaskIntoConstraints = false
+        for v: UIView in [nameLabel, codeLabel, marketBadge] {
+            leftPanel.addSubview(v); v.translatesAutoresizingMaskIntoConstraints = false
         }
         nameLabel.font = .boldSystemFont(ofSize: 15); nameLabel.textColor = textP
+        nameLabel.numberOfLines = 1; nameLabel.lineBreakMode = .byTruncatingMiddle
         codeLabel.font = .systemFont(ofSize: 12); codeLabel.textColor = textS
         marketBadge.font = .boldSystemFont(ofSize: 10); marketBadge.textColor = .white
         marketBadge.textAlignment = .center; marketBadge.layer.cornerRadius = 2; marketBadge.clipsToBounds = true
-        priceLabel.font = .systemFont(ofSize: 15, weight: .medium); priceLabel.textAlignment = .center
-        changeLabel.font = .systemFont(ofSize: 15, weight: .medium); changeLabel.textAlignment = .center
-        percentLabel.font = .systemFont(ofSize: 13, weight: .bold); percentLabel.textAlignment = .center
-        percentLabel.layer.cornerRadius = 4; percentLabel.clipsToBounds = true
-        sep.backgroundColor = UIColor(white: 0.93, alpha: 1)
-
         NSLayoutConstraint.activate([
-            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
-            codeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            nameLabel.leadingAnchor.constraint(equalTo: leftPanel.leadingAnchor, constant: 12),
+            nameLabel.topAnchor.constraint(equalTo: leftPanel.topAnchor, constant: 11),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: leftPanel.trailingAnchor, constant: -4),
+            codeLabel.leadingAnchor.constraint(equalTo: leftPanel.leadingAnchor, constant: 12),
             codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 3),
-            marketBadge.leadingAnchor.constraint(equalTo: codeLabel.trailingAnchor, constant: 5),
+            marketBadge.leadingAnchor.constraint(equalTo: codeLabel.trailingAnchor, constant: 4),
             marketBadge.centerYAnchor.constraint(equalTo: codeLabel.centerYAnchor),
-            marketBadge.widthAnchor.constraint(equalToConstant: 16), marketBadge.heightAnchor.constraint(equalToConstant: 14),
-            priceLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor, constant: -30),
-            priceLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            changeLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor, constant: 40),
-            changeLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            percentLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            percentLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            percentLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 70),
-            percentLabel.heightAnchor.constraint(equalToConstant: 28),
-            sep.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            sep.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            marketBadge.widthAnchor.constraint(equalToConstant: 16),
+            marketBadge.heightAnchor.constraint(equalToConstant: 14),
+        ])
+
+        // ── 右侧横向滚动面板 ──
+        dataScrollView.showsHorizontalScrollIndicator = false
+        dataScrollView.showsVerticalScrollIndicator   = false
+        dataScrollView.bounces = false
+        dataScrollView.delegate = self
+        contentView.addSubview(dataScrollView)
+        dataScrollView.translatesAutoresizingMaskIntoConstraints = false
+
+        let scrollContent = UIView()
+        dataScrollView.addSubview(scrollContent)
+        scrollContent.translatesAutoresizingMaskIntoConstraints = false
+        let totalW = RankingStockCell.columnWidths.reduce(0, +)
+        NSLayoutConstraint.activate([
+            scrollContent.topAnchor.constraint(equalTo: dataScrollView.topAnchor),
+            scrollContent.leadingAnchor.constraint(equalTo: dataScrollView.leadingAnchor),
+            scrollContent.trailingAnchor.constraint(equalTo: dataScrollView.trailingAnchor),
+            scrollContent.bottomAnchor.constraint(equalTo: dataScrollView.bottomAnchor),
+            scrollContent.heightAnchor.constraint(equalTo: dataScrollView.heightAnchor),
+            scrollContent.widthAnchor.constraint(equalToConstant: totalW),
+        ])
+
+        // 8 个数据列 label（用 leading + width 约束定位，简洁高效）
+        var leading: CGFloat = 0
+        for w in RankingStockCell.columnWidths {
+            let lbl = UILabel()
+            lbl.font = .systemFont(ofSize: 14, weight: .medium)
+            lbl.textAlignment = .center
+            lbl.adjustsFontSizeToFitWidth = true
+            lbl.minimumScaleFactor = 0.8
+            scrollContent.addSubview(lbl)
+            lbl.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                lbl.topAnchor.constraint(equalTo: scrollContent.topAnchor),
+                lbl.bottomAnchor.constraint(equalTo: scrollContent.bottomAnchor),
+                lbl.leadingAnchor.constraint(equalTo: scrollContent.leadingAnchor, constant: leading),
+                lbl.widthAnchor.constraint(equalToConstant: w),
+            ])
+            dataLabels.append(lbl)
+            leading += w
+        }
+
+        // 分隔线
+        sep.backgroundColor = UIColor(white: 0.93, alpha: 1)
+        contentView.addSubview(sep)
+        sep.translatesAutoresizingMaskIntoConstraints = false
+
+        // ── 外部约束 ──
+        NSLayoutConstraint.activate([
+            leftPanel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            leftPanel.topAnchor.constraint(equalTo: contentView.topAnchor),
+            leftPanel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            leftPanel.widthAnchor.constraint(equalToConstant: RankingStockCell.leftWidth),
+
+            dataScrollView.leadingAnchor.constraint(equalTo: leftPanel.trailingAnchor),
+            dataScrollView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            dataScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            dataScrollView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+            sep.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            sep.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             sep.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             sep.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
         ])
     }
 
-    func configure(name: String, code: String, symbol: String, price: String, change: String, changePercent: String) {
-        nameLabel.text = name
-        codeLabel.text = code
+    // MARK: - 公开 API
 
-        // 交易所标识
+    /// 由 VC 调用，同步横向偏移（不触发回调，避免循环）
+    func syncOffset(_ x: CGFloat) {
+        guard abs(dataScrollView.contentOffset.x - x) > 0.5 else { return }
+        isSyncing = true
+        dataScrollView.setContentOffset(CGPoint(x: x, y: 0), animated: false)
+        isSyncing = false
+    }
+
+    func configure(stock: MarketViewController.StockRankItem) {
+        nameLabel.text = stock.name
+        codeLabel.text = stock.code
+
         let market: String = {
-            if symbol.hasPrefix("sh") { return "沪" }
-            if symbol.hasPrefix("sz") { return "深" }
-            if symbol.hasPrefix("bj") { return "北" }
+            let s = stock.symbol.lowercased()
+            if s.hasPrefix("sh") { return "沪" }
+            if s.hasPrefix("sz") { return "深" }
+            if s.hasPrefix("bj") { return "北" }
             return ""
         }()
         marketBadge.text = market
         let badgeColors: [String: UIColor] = [
-            "沪": UIColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1),
+            "沪": UIColor(red: 1.0, green: 0.6,  blue: 0.0,  alpha: 1),
             "深": UIColor(red: 0.26, green: 0.65, blue: 0.96, alpha: 1),
             "北": UIColor(red: 0.26, green: 0.40, blue: 0.90, alpha: 1),
         ]
-        marketBadge.backgroundColor = badgeColors[market] ?? .gray
+        marketBadge.backgroundColor = badgeColors[market] ?? .lightGray
 
-        let cv = Double(change) ?? 0
+        let cv    = Double(stock.change) ?? 0
         let isRise = cv >= 0
-        let color = isRise ? red : green
+        let color  = isRise ? red : green
+        let sign   = (isRise && cv > 0) ? "+" : ""
+        let pv     = Double(stock.changePercent) ?? 0
+        let psign  = (isRise && pv > 0) ? "+" : ""
 
-        priceLabel.text = price; priceLabel.textColor = color
-        let s = isRise && cv > 0 ? "+" : ""
-        changeLabel.text = "\(s)\(change)"; changeLabel.textColor = color
+        // 现价, 涨跌, 涨跌幅, 成交额, 换手率, 昨收, 今开, 最高
+        let vals: [String] = [
+            stock.price,
+            "\(sign)\(stock.change)",
+            "\(psign)\(stock.changePercent)%",
+            stock.volume,
+            stock.turnover,
+            stock.prevClose,
+            stock.open,
+            stock.high,
+        ]
+        for (i, lbl) in dataLabels.enumerated() {
+            lbl.text = vals[i]
+            lbl.textColor = i < 3 ? color : textP
+            lbl.font = i == 2
+                ? .boldSystemFont(ofSize: 13)
+                : .systemFont(ofSize: 14, weight: .medium)
+        }
+    }
+}
 
-        let pv = Double(changePercent) ?? 0
-        let ps = isRise && pv > 0 ? "+" : ""
-        percentLabel.text = " \(ps)\(changePercent)% "
-        percentLabel.textColor = .white
-        percentLabel.backgroundColor = color
+extension RankingStockCell: UIScrollViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard !isSyncing else { return }
+        onScroll?(scrollView.contentOffset.x)
     }
 }
 
