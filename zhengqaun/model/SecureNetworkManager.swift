@@ -48,8 +48,8 @@ final class SecureNetworkManager {
             "method": method.rawValue,
             "param": params
         ]
-        // 如果你后面有登录态，可以在这里把 token 塞进去
-        payload["token"] = ""
+        // 使用用户登录 token
+        payload["token"] = UserAuthManager.shared.token
 
         guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
               let plainJSON = String(data: jsonData, encoding: .utf8) else {
