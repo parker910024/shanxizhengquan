@@ -56,7 +56,7 @@ class MarketViewController: ZQViewController {
     private var rankingTableView: UITableView!
     private var rankingTableHeightCons: NSLayoutConstraint?
 
-    // MARK: - 市场概括 (模拟)
+    // MARK: - 市场概括
     private var barChartContainer: UIView!
     private var riseCountLabel: UILabel!
     private var fallCountLabel: UILabel!
@@ -66,6 +66,10 @@ class MarketViewController: ZQViewController {
     private var sectorContainer: UIView!
     private var rankingContainer: UIView!
     private var barChartRendered = false
+    private weak var capFundValueLabel: UILabel?
+    // MARK: - 行业板块数据
+    private var sectorDataItems: [SectorDataItem] = []
+    private var sectorGridStack: UIStackView?
 
     // MARK: - Models
     struct IndexCardModel {
@@ -77,6 +81,7 @@ class MarketViewController: ZQViewController {
         let changePercent: String
         let volume: String
         let turnover: String
+        var sparklinePrices: [Float] = []
     }
 
     struct StockRankItem {
@@ -86,6 +91,14 @@ class MarketViewController: ZQViewController {
         let price: String
         let change: String
         let changePercent: String
+    }
+
+    struct SectorDataItem {
+        let name: String
+        let changePercent: Double
+        let topStock: String
+        let topStockChange: Double
+        let isUp: Bool
     }
 
     // MARK: - Lifecycle
@@ -355,19 +368,24 @@ class MarketViewController: ZQViewController {
         chartView.minOffset = 0
         chartView.setScaleEnabled(false)
 
-        // 生成模拟走势数据（基于真实价格波动）
+        // 优先使用真实走势数据，否则生成模拟走势
         let basePrice = Double(item.price) ?? 3000
         var entries: [ChartDataEntry] = []
-        var lastP = basePrice * (1 - abs(changeVal) / basePrice * 0.6)
-        let pointCount = 30
-        for j in 0..<pointCount {
-            let noiseFactor = Double.random(in: -0.002...0.002)
-            let trendFactor = (changeVal / basePrice) * (Double(j) / Double(pointCount - 1))
-            lastP = lastP * (1 + noiseFactor) + basePrice * trendFactor * 0.05
-            entries.append(ChartDataEntry(x: Double(j), y: lastP))
+        if !item.sparklinePrices.isEmpty {
+            for (j, p) in item.sparklinePrices.enumerated() {
+                entries.append(ChartDataEntry(x: Double(j), y: Double(p)))
+            }
+        } else {
+            var lastP = basePrice * (1 - abs(changeVal) / basePrice * 0.6)
+            let pointCount = 30
+            for j in 0..<pointCount {
+                let noiseFactor = Double.random(in: -0.002...0.002)
+                let trendFactor = (changeVal / basePrice) * (Double(j) / Double(pointCount - 1))
+                lastP = lastP * (1 + noiseFactor) + basePrice * trendFactor * 0.05
+                entries.append(ChartDataEntry(x: Double(j), y: lastP))
+            }
+            entries[entries.count - 1] = ChartDataEntry(x: Double(pointCount - 1), y: basePrice)
         }
-        // 最后一个点对齐真实价格
-        entries[entries.count - 1] = ChartDataEntry(x: Double(pointCount - 1), y: basePrice)
 
         let dataSet = LineChartDataSet(entries: entries, label: "")
         dataSet.colors = [color]
@@ -434,18 +452,19 @@ class MarketViewController: ZQViewController {
         title.translatesAutoresizingMaskIntoConstraints = false
 
         let capTitleLbl = UILabel()
-        capTitleLbl.text = "南向资金流入"
+        capTitleLbl.text = "北向资金净流入"
         capTitleLbl.font = .systemFont(ofSize: 13)
         capTitleLbl.textColor = textSec
         marketOverviewContainer.addSubview(capTitleLbl)
         capTitleLbl.translatesAutoresizingMaskIntoConstraints = false
 
         let capValLbl = UILabel()
-        capValLbl.text = "4373.61亿"
+        capValLbl.text = "--"
         capValLbl.font = .boldSystemFont(ofSize: 15)
         capValLbl.textColor = themeRed
         marketOverviewContainer.addSubview(capValLbl)
         capValLbl.translatesAutoresizingMaskIntoConstraints = false
+        capFundValueLabel = capValLbl
 
         barChartContainer = UIView()
         marketOverviewContainer.addSubview(barChartContainer)
@@ -560,16 +579,6 @@ class MarketViewController: ZQViewController {
     // ===================================================================
     // MARK: - 3. 行业板块
     // ===================================================================
-    private struct SectorItem { let name, pct, top, topPct: String }
-    private let sectors: [SectorItem] = [
-        .init(name: "贵金属",   pct: "+8.04%", top: "湖南黄金", topPct: "+10.01%"),
-        .init(name: "采掘行业", pct: "+8.04%", top: "湖南黄金", topPct: "+10.01%"),
-        .init(name: "酿酒行业", pct: "+8.04%", top: "湖南黄金", topPct: "+10.01%"),
-        .init(name: "文化传媒", pct: "+8.04%", top: "湖南黄金", topPct: "+10.01%"),
-        .init(name: "保险",    pct: "+8.04%", top: "湖南黄金", topPct: "+10.01%"),
-        .init(name: "房地产",   pct: "+8.04%", top: "湖南黄金", topPct: "+10.01%"),
-    ]
-
     private func buildSectorGrid() {
         let title = makeTitle("行业板块")
         sectorContainer.addSubview(title)
@@ -579,26 +588,8 @@ class MarketViewController: ZQViewController {
         grid.axis = .vertical; grid.spacing = 0; grid.distribution = .fillEqually
         sectorContainer.addSubview(grid)
         grid.translatesAutoresizingMaskIntoConstraints = false
+        sectorGridStack = grid
 
-        for row in 0..<2 {
-            let rowStack = UIStackView()
-            rowStack.axis = .horizontal; rowStack.spacing = 0; rowStack.distribution = .fillEqually
-            grid.addArrangedSubview(rowStack)
-            for col in 0..<3 {
-                let s = sectors[row * 3 + col]
-                let cell = UIView()
-                let nm = UILabel(); nm.text = s.name; nm.font = .boldSystemFont(ofSize: 15); nm.textColor = textPrimary; nm.textAlignment = .center
-                let pc = UILabel(); pc.text = s.pct; pc.font = .boldSystemFont(ofSize: 17); pc.textColor = themeRed; pc.textAlignment = .center
-                let sb = UILabel(); sb.text = "\(s.top) \(s.topPct)"; sb.font = .systemFont(ofSize: 11); sb.textColor = textSec; sb.textAlignment = .center
-                for l: UIView in [nm, pc, sb] { cell.addSubview(l); l.translatesAutoresizingMaskIntoConstraints = false }
-                NSLayoutConstraint.activate([
-                    nm.topAnchor.constraint(equalTo: cell.topAnchor, constant: 10), nm.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
-                    pc.topAnchor.constraint(equalTo: nm.bottomAnchor, constant: 6), pc.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
-                    sb.topAnchor.constraint(equalTo: pc.bottomAnchor, constant: 4), sb.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
-                ])
-                rowStack.addArrangedSubview(cell)
-            }
-        }
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: sectorContainer.topAnchor, constant: 16),
             title.leadingAnchor.constraint(equalTo: sectorContainer.leadingAnchor, constant: 16),
@@ -608,6 +599,52 @@ class MarketViewController: ZQViewController {
             grid.bottomAnchor.constraint(equalTo: sectorContainer.bottomAnchor, constant: -12),
             grid.heightAnchor.constraint(equalToConstant: 180),
         ])
+    }
+
+    /// 用 API 数据填充行业板块网格（加载完成后调用）
+    private func populateSectorGrid() {
+        guard let grid = sectorGridStack else { return }
+        grid.arrangedSubviews.forEach { grid.removeArrangedSubview($0); $0.removeFromSuperview() }
+        let items = Array(sectorDataItems.prefix(6))
+        guard !items.isEmpty else { return }
+        for row in 0..<2 {
+            let rowStack = UIStackView()
+            rowStack.axis = .horizontal; rowStack.spacing = 0; rowStack.distribution = .fillEqually
+            grid.addArrangedSubview(rowStack)
+            for col in 0..<3 {
+                let idx = row * 3 + col
+                let cell = UIView()
+                let nm = UILabel()
+                let pc = UILabel()
+                let sb = UILabel()
+                if idx < items.count {
+                    let s = items[idx]
+                    let sign = s.isUp ? "+" : ""
+                    let color = s.isUp ? themeRed : stockGreen
+                    let topSign = s.topStockChange >= 0 ? "+" : ""
+                    nm.text = s.name
+                    pc.text = "\(sign)\(String(format: "%.2f", s.changePercent))%"
+                    pc.textColor = color
+                    sb.text = "\(s.topStock) \(topSign)\(String(format: "%.2f", s.topStockChange))%"
+                } else {
+                    nm.text = ""; pc.text = ""; sb.text = ""
+                    pc.textColor = themeRed
+                }
+                nm.font = .boldSystemFont(ofSize: 15); nm.textColor = textPrimary; nm.textAlignment = .center
+                pc.font = .boldSystemFont(ofSize: 17); pc.textAlignment = .center
+                sb.font = .systemFont(ofSize: 11); sb.textColor = textSec; sb.textAlignment = .center
+                for l: UIView in [nm, pc, sb] { cell.addSubview(l); l.translatesAutoresizingMaskIntoConstraints = false }
+                NSLayoutConstraint.activate([
+                    nm.topAnchor.constraint(equalTo: cell.topAnchor, constant: 10),
+                    nm.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                    pc.topAnchor.constraint(equalTo: nm.bottomAnchor, constant: 6),
+                    pc.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                    sb.topAnchor.constraint(equalTo: pc.bottomAnchor, constant: 4),
+                    sb.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                ])
+                rowStack.addArrangedSubview(cell)
+            }
+        }
     }
 
     // ===================================================================
@@ -816,6 +853,9 @@ class MarketViewController: ZQViewController {
     private func loadAllData() {
         loadIndexData()
         loadRankingData()
+        loadMarketRiseCount()
+        loadMarketFundFlow()
+        loadSectorData()
     }
 
     /// 指数行情 — /api/Indexnew/sandahangqing_new
@@ -853,6 +893,7 @@ class MarketViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.indexItems = items
                     self.populateIndexCards()
+                    self.loadIndexSparklines()  // 加载真实走势图
                     print("[行情] 指数行情加载成功，共 \(items.count) 条")
                 }
             case .failure(let err):
@@ -899,6 +940,172 @@ class MarketViewController: ZQViewController {
                 print("[行情] 排行榜请求失败: \(err.localizedDescription)")
             }
         }
+    }
+
+    // ===================================================================
+    // MARK: - ★ East Money 公开行情接口（对齐 Android HqViewModel）
+    // ===================================================================
+
+    /// 指数走势折线 — 东方财富 trends2 API
+    /// 对应 Android: EastMoneyMarketRepository.fetchIndexSparkline
+    private func loadIndexSparklines() {
+        let items = indexItems
+        guard !items.isEmpty else { return }
+        let group  = DispatchGroup()
+        var sparklineMap: [String: [Float]] = [:]
+        let lock = NSLock()
+        for item in items {
+            let allcode = item.allcode.lowercased()
+            let secId: String
+            if allcode.hasPrefix("sh") {
+                secId = "1.\(allcode.dropFirst(2))"
+            } else if allcode.hasPrefix("sz") {
+                secId = "0.\(allcode.dropFirst(2))"
+            } else { continue }
+            let urlStr = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
+                + "?secid=\(secId)&fields1=f1,f2,f3,f4,f5,f6,f7,f8"
+                + "&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0"
+            group.enter()
+            fetchEastMoneyJSON(url: urlStr) { root in
+                defer { group.leave() }
+                guard let data = root?["data"] as? [String: Any],
+                      let trends = data["trends"] as? [String] else { return }
+                let prices = trends.compactMap { t -> Float? in
+                    let parts = t.split(separator: ",")
+                    guard parts.count > 1 else { return nil }
+                    return Float(parts[1])
+                }
+                lock.lock(); sparklineMap[item.code] = prices; lock.unlock()
+            }
+        }
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.indexItems = self.indexItems.map { item in
+                var updated = item
+                if let prices = sparklineMap[item.code], !prices.isEmpty {
+                    updated.sparklinePrices = prices
+                }
+                return updated
+            }
+            self.populateIndexCards()
+            print("[行情] 指数走势图更新完成")
+        }
+    }
+
+    /// 全市场涨跌家数 — 东方财富 ulist API
+    /// 对应 Android: EastMoneyMarketRepository.fetchRiseCount
+    private func loadMarketRiseCount() {
+        let url = "https://push2.eastmoney.com/api/qt/ulist/get"
+            + "?fltt=2&invt=2&pn=1&np=1&pz=5"
+            + "&secids=1.000001,0.399001&fields=f104,f105,f106"
+        fetchEastMoneyJSON(url: url) { [weak self] root in
+            guard let self = self,
+                  let data  = root?["data"] as? [String: Any],
+                  let diff  = data["diff"] as? [[String: Any]],
+                  let first = diff.first,
+                  let rise  = first["f104"] as? Int,
+                  let fall  = first["f105"] as? Int else { return }
+            DispatchQueue.main.async {
+                self.riseCount = rise
+                self.fallCount = fall
+                self.riseCountLabel?.text = "上涨\(rise)"
+                self.fallCountLabel?.text = "下跌\(fall)"
+                self.updateProgressBar()
+                print("[行情] 涨跌家数: 涨\(rise) 跌\(fall)")
+            }
+        }
+    }
+
+    /// 北向资金净流入 — 东方财富 kamt API
+    /// 对应 Android: EastMoneyMarketRepository.fetchFundFlow
+    private func loadMarketFundFlow() {
+        let url = "https://push2.eastmoney.com/api/qt/kamt/get"
+            + "?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f56,f62,f63,f65,f66"
+        fetchEastMoneyJSON(url: url) { [weak self] root in
+            guard let self = self, let root = root else { return }
+            // 北向资金：沪股通(sh2hk) + 深股通(sz2hk)
+            var amount: Double?
+            if let sh = (root["sh2hk"] as? [String: Any])?["netBuyAmt"] as? Double,
+               let sz = (root["sz2hk"] as? [String: Any])?["netBuyAmt"] as? Double {
+                amount = sh + sz
+            }
+            // fallback: 南向
+            if amount == nil,
+               let hkSh = (root["hk2sh"] as? [String: Any])?["netBuyAmt"] as? Double,
+               let hkSz = (root["hk2sz"] as? [String: Any])?["netBuyAmt"] as? Double {
+                amount = hkSh + hkSz
+            }
+            guard let amt = amount else { return }
+            let isPos = amt >= 0
+            let absAmt = Swift.abs(amt)
+            let sign   = isPos ? "" : "-"
+            let display: String
+            if absAmt >= 1_0000_0000 {
+                display = "\(sign)\(String(format: "%.2f", absAmt / 1_0000_0000))亿"
+            } else if absAmt >= 10000 {
+                display = "\(sign)\(String(format: "%.2f", absAmt / 10000))万"
+            } else {
+                display = "\(sign)\(String(format: "%.2f", absAmt))"
+            }
+            DispatchQueue.main.async {
+                self.capFundValueLabel?.text = display
+                self.capFundValueLabel?.textColor = isPos ? self.themeRed : self.stockGreen
+                print("[行情] 北向资金净流入: \(display)")
+            }
+        }
+    }
+
+    /// 行业板块 TOP6 — 东方财富 clist API (sectorType=2)
+    /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(2)
+    private func loadSectorData() {
+        let url = "https://push2.eastmoney.com/api/qt/clist/get"
+            + "?pn=1&pz=6&po=1&np=1&fltt=2&invt=2&fid=f3"
+            + "&fs=m:90+t:2&fields=f3,f12,f14,f128,f136"
+        fetchEastMoneyJSON(url: url) { [weak self] root in
+            guard let self = self,
+                  let data = root?["data"] as? [String: Any],
+                  let diff = data["diff"] as? [[String: Any]] else { return }
+            let items = diff.compactMap { obj -> SectorDataItem? in
+                guard let name = obj["f14"] as? String, !name.isEmpty else { return nil }
+                let changePct   = (obj["f3"]   as? Double) ?? 0.0
+                let topStock    = (obj["f128"]  as? String) ?? ""
+                let topChange   = (obj["f136"]  as? Double) ?? 0.0
+                return SectorDataItem(name: name, changePercent: changePct,
+                                      topStock: topStock, topStockChange: topChange,
+                                      isUp: changePct >= 0)
+            }
+            DispatchQueue.main.async {
+                self.sectorDataItems = items
+                self.populateSectorGrid()
+                print("[行情] 行业板块加载成功，共 \(items.count) 条")
+            }
+        }
+    }
+
+    /// 通用 JSON GET（东方财富公开 API，支持 JSONP 格式）
+    private func fetchEastMoneyJSON(url: String, completion: @escaping ([String: Any]?) -> Void) {
+        guard let reqUrl = URL(string: url) else { completion(nil); return }
+        var request = URLRequest(url: reqUrl, timeoutInterval: 10)
+        request.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+            forHTTPHeaderField: "User-Agent")
+        request.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+        URLSession.shared.dataTask(with: request) { data, _, _ in
+            guard let data = data,
+                  var jsonStr = String(data: data, encoding: .utf8) else {
+                completion(nil); return
+            }
+            // 去掉 JSONP 包装（如 jQuery12345(...)）
+            if let lp = jsonStr.firstIndex(of: "("),
+               let rp = jsonStr.lastIndex(of: ")") {
+                jsonStr = String(jsonStr[jsonStr.index(after: lp)..<rp])
+            }
+            guard let d = jsonStr.data(using: .utf8),
+                  let obj = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else {
+                completion(nil); return
+            }
+            completion(obj)
+        }.resume()
     }
 
     /// 新股申购 — /api/subscribe/lst
