@@ -735,63 +735,146 @@ class IndexDetailViewController: ZQViewController {
     // MARK: - 网络请求
     // ===================================================================
 
-    /// 加载指数行情详细数据
+    /// 将 indexCode / indexAllcode 转换为东方财富 secId（市场前缀.代码）
+    /// 逻辑与 Android SecIdResolver 一致
+    private func resolveSecId() -> String {
+        let code = indexCode
+        let allcode = indexAllcode.lowercased()
+
+        // 北交所
+        if allcode.hasPrefix("bj") { return "0.\(code)" }
+
+        // 上交所 sh prefix
+        if allcode.hasPrefix("sh") { return "1.\(code)" }
+
+        // 指数：特定代码归属上交所
+        let shIndexCodes = Set(["000001","000016","000300","000905","000852","000688"])
+        if shIndexCodes.contains(code) { return "1.\(code)" }
+        if code.hasPrefix("399") || code.hasPrefix("899") { return "0.\(code)" }
+        if code.hasPrefix("000") { return "1.\(code)" }
+
+        // 普通股票
+        if code.hasPrefix("6") || code.hasPrefix("5") || code.hasPrefix("9") { return "1.\(code)" }
+
+        // 深交所默认
+        return "0.\(code)"
+    }
+
+    /// 加载指数行情详细数据 —— 直接调用东方财富 push2 API，与 Android EastMoneyDetailRepository 一致
     private func loadIndexDetail() {
-        SecureNetworkManager.shared.request(
-            api: "/api/Indexnew/sandahangqing_new",
-            method: .get,
-            params: [:]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let res):
-                guard res.statusCode == 200,
-                      let dict = res.decrypted,
-                      let data = dict["data"] as? [String: Any],
-                      let list = data["list"] as? [[String: Any]] else { return }
+        let secId = resolveSecId()
+        let ut = "fa5fd1943c7b386f172d6893dbfba10b"
+        let fields = "f43,f44,f45,f46,f47,f48,f51,f52,f57,f58,f60,f116,f117,f168,f169,f170"
+        let urlStr = "https://push2.eastmoney.com/api/qt/stock/get"
+            + "?secid=\(secId)&fltt=2&invt=2&ut=\(ut)&fields=\(fields)"
+        guard let url = URL(string: urlStr) else { return }
 
-                // 从列表中找到匹配当前指数的条目
-                for obj in list {
-                    guard let arr = obj["allcodes_arr"] as? [Any], arr.count >= 11 else { continue }
-                    let str = arr.map { "\($0)" }
-                    let code = str[2]
-                    guard code == self.indexCode else { continue }
+        var req = URLRequest(url: url)
+        req.setValue(
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+            + "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+            forHTTPHeaderField: "User-Agent"
+        )
+        req.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
 
-                    DispatchQueue.main.async {
-                        // 更新价格
-                        self.indexPrice = str[3]
-                        self.indexChange = str[4]
-                        self.indexChangePercent = str[5]
-
-                        self.todayOpen = str[3]
-                        self.yesterdayClose = str[3]
-                        self.volume = str[6]
-                        self.turnover = str.count > 7 ? str[7] : "--"
-                        self.limitUp = "--"
-                        self.turnover = self.turnover
-                        self.limitDown = self.indexPrice
-                        self.amplitude = "\(str[5])%"
-                        self.highest = "--"
-                        self.lowest = self.indexPrice
-
-                        // allcodes_arr 可能含有额外数据：
-                        // 0=市场, 1=名称, 2=代码, 3=最新价, 4=涨跌额, 5=涨跌幅,
-                        // 6=成交量, 7=成交额, 8=预留, 9=总市值, 10=类型
-                        if str.count > 9 {
-                            // 用成交额做显示
-                            self.turnover = str[7]
-                        }
-
-                        self.applyInitialData()
-                        self.refreshMetrics()
-                        self.populateChart()
-                    }
-                    break
-                }
-            case .failure(let err):
-                print("[指数详情] 加载失败: \(err.localizedDescription)")
+        URLSession.shared.dataTask(with: req) { [weak self] data, _, error in
+            guard let self else { return }
+            if let error = error {
+                print("[指数详情] EastMoney 请求失败: \(error.localizedDescription)")
+                return
             }
-        }
+            guard let data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let d = json["data"] as? [String: Any] else {
+                print("[指数详情] EastMoney 响应解析失败")
+                return
+            }
+
+            // 将 JSON 值解析为 Double（兼容 Int / Double / String 三种类型）
+            func dbl(_ key: String) -> Double? {
+                guard let v = d[key] else { return nil }
+                if let n = v as? Double { return n }
+                if let n = v as? Int    { return Double(n) }
+                if let s = v as? String { return Double(s) }
+                return nil
+            }
+
+            let price    = dbl("f43")   // 最新价
+            let high     = dbl("f44")   // 最高
+            let low      = dbl("f45")   // 最低
+            let open     = dbl("f46")   // 今开
+            let vol      = dbl("f47")   // 成交量（手）
+            let amt      = dbl("f48")   // 成交额（元）
+            let lu       = dbl("f51")   // 涨停价
+            let ld       = dbl("f52")   // 跌停价
+            let preClose = dbl("f60")   // 昨收
+            let change   = dbl("f169")  // 涨跌额
+            let changePct = dbl("f170") // 涨跌幅（%）
+
+            // 格式化为两位小数字符串
+            func fmt2(_ v: Double?) -> String {
+                guard let v else { return "--" }
+                return String(format: "%.2f", v)
+            }
+
+            // 成交量格式化（与 Android formatVolume 一致）
+            func fmtVolume(_ v: Double?) -> String {
+                guard let v else { return "--" }
+                let a = abs(v)
+                if a >= 1e8 { return String(format: "%.2f亿", v / 1e8) }
+                if a >= 1e4 { return String(format: "%.2f万", v / 1e4) }
+                return String(format: "%.0f", v)
+            }
+
+            // 成交额格式化（与 Android formatAmount 一致）
+            func fmtAmount(_ v: Double?) -> String {
+                guard let v else { return "--" }
+                let a = abs(v)
+                if a >= 1e12 { return String(format: "%.2f万亿", v / 1e12) }
+                if a >= 1e8  { return String(format: "%.2f亿", v / 1e8) }
+                if a >= 1e4  { return String(format: "%.2f万", v / 1e4) }
+                return String(format: "%.2f", v)
+            }
+
+            // 振幅 = (最高 - 最低) / 昨收 × 100%（与 Android SnapshotData.amplitudePct 一致）
+            func amplitudePct() -> String {
+                guard let h = high, let l = low, let p = preClose, p != 0 else { return "--" }
+                return String(format: "%.2f%%", (h - l) / p * 100.0)
+            }
+
+            DispatchQueue.main.async {
+                // 刷新价格区
+                if let price, let change {
+                    let isRise = change >= 0
+                    let color = isRise ? self.themeRed : self.stockGreen
+                    let sign  = isRise ? "+" : ""
+                    self.indexPrice         = fmt2(price)
+                    self.indexChange        = fmt2(change)
+                    self.indexChangePercent = fmt2(changePct)
+
+                    self.priceLabel.text    = self.indexPrice
+                    self.priceLabel.textColor = color
+                    self.changeAmtLabel.text  = "\(sign)\(self.indexChange)"
+                    self.changeAmtLabel.textColor = color
+                    self.changePctLabel.text  = "\(sign)\(self.indexChangePercent)%"
+                    self.changePctLabel.textColor = color
+                }
+
+                // 刷新指标网格
+                self.todayOpen      = fmt2(open)
+                self.lowest         = fmt2(low)
+                self.yesterdayClose = fmt2(preClose)
+                self.volume         = fmtVolume(vol)
+                self.limitUp        = fmt2(lu)
+                self.turnover       = fmtAmount(amt)
+                self.limitDown      = fmt2(ld)
+                self.amplitude      = amplitudePct()
+                self.highest        = fmt2(high)
+
+                self.refreshMetrics()
+                self.populateChart()
+            }
+        }.resume()
     }
 
     /// 检查是否已加入自选
