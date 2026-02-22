@@ -284,11 +284,30 @@ class MarketViewController: ZQViewController {
             let card = buildIndexCard(item: item, width: cardW, height: cardH)
             indexCardsScroll.addSubview(card)
             card.frame = CGRect(x: pad + CGFloat(i) * (cardW + spacing), y: 6, width: cardW, height: cardH)
+            // 点击卡片进入指数详情
+            card.tag = i
+            card.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(indexCardTapped(_:)))
+            card.addGestureRecognizer(tap)
         }
         indexCardsScroll.contentSize = CGSize(
             width: pad + CGFloat(indexItems.count) * (cardW + spacing) + pad,
             height: cardH + 12
         )
+    }
+
+    @objc private func indexCardTapped(_ gesture: UITapGestureRecognizer) {
+        guard let card = gesture.view, card.tag < indexItems.count else { return }
+        let item = indexItems[card.tag]
+        let vc = IndexDetailViewController()
+        vc.indexName = item.name
+        vc.indexCode = item.code
+        vc.indexAllcode = item.allcode
+        vc.indexPrice = item.price
+        vc.indexChange = item.change
+        vc.indexChangePercent = item.changePercent
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
 
     private func buildIndexCard(item: IndexCardModel, width: CGFloat, height: CGFloat) -> UIView {
