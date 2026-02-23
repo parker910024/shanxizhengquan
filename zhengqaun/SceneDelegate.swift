@@ -7,9 +7,22 @@
 
 import UIKit
 
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+class SceneDelegate: UIResponder, UIWindowSceneDelegate , FloatViewDelegate{
 
     var window: UIWindow?
+    var floatView : FloatView?
+
+    /// 当前场景对应的 SceneDelegate（多场景时取第一个）
+    static var current: SceneDelegate? {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let delegate = scene.delegate as? SceneDelegate else { return nil }
+        return delegate
+    }
+
+    /// 从 SceneDelegate 获取 window，任意处可调
+    static var currentWindow: UIWindow? {
+        current?.window
+    }
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -17,16 +30,55 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         
-        // 根据登录状态设置根视图控制器
-        if UserAuthManager.shared.isLoggedIn {
-            let tabBarController = MainTabBarController()
-            window?.rootViewController = tabBarController
-        } else {
-            let loginViewController = LoginViewController()
-            window?.rootViewController = loginViewController
+        // 默认先显示启动页，3 秒后根据登录状态跳转登录页或 TabBar
+        let launchVC = LaunchViewController()
+        launchVC.onFinish = { [weak self] in
+            self?.switchFromLaunchToMain()
         }
-        
+        window?.rootViewController = launchVC
         window?.makeKeyAndVisible()
+        
+        
+    }
+
+    /// 启动页结束后：已登录 → TabBar，未登录 → 登录页
+    private func switchFromLaunchToMain() {
+        guard let window = window else { return }
+        let next: UIViewController
+        if UserAuthManager.shared.isLoggedIn {
+            next = MainTabBarController()
+        } else {
+            next = LoginViewController()
+        }
+        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            window.rootViewController = next
+        }, completion: nil)
+        
+        let floatView = FloatView(radius: 30, point: CGPointMake(window.frame.size.width-70, 120), image: UIImage(named: "logoIcon"), in: window)
+        floatView?.subViewShowType = .horizontal
+        floatView?.delegate = self
+        self.floatView = floatView
+        window.addSubview(floatView!)
+        
+        updateDataModel()
+    }
+    
+    func updateDataModel(){
+        var index = 0
+        for item in vpnDataModel.shared.ipDataArray ?? [] {
+            guard let dic = item as? Dictionary<String, Any> else { continue }
+            // 使用 str
+            let value = dic["value"] as? String ?? ""
+            self.floatView?.addSubFloatView(with: .lightGray, url: value, title: String(format: "线路%d", index), titleColor: .black, tag: 100+index)
+            index += 1
+        }
+    }
+
+
+    func floatViewSubViewClicked(withTag tag: Int) {
+        let dic = vpnDataModel.shared.ipDataArray?[tag-100]
+        guard let dict = dic as? Dictionary<String, Any> else {return}
+        vpnDataModel.shared.selectAddress = dict["value"] as? String ?? ""
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1779D18E2F4C1B8500FDC873 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 1779D18D2F4C1B8200FDC873 /* libresolv.9.tbd */; };
 		8891F9852D2418ACEEED0E4B /* libPods-zhengqaun.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1779D18D2F4C1B8200FDC873 /* libresolv.9.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.9.tbd; path = usr/lib/libresolv.9.tbd; sourceTree = SDKROOT; };
 		18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-zhengqaun.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84D1544F2F0D59F1001FC841 /* zhengqaun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zhengqaun.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84D154652F0D59F3001FC841 /* zhengqaunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = zhengqaunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,6 +74,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1779D18E2F4C1B8500FDC873 /* libresolv.9.tbd in Frameworks */,
 				8891F9852D2418ACEEED0E4B /* libPods-zhengqaun.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -96,6 +99,7 @@
 		3C270F0E75DAA61F2BAD4C9B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1779D18D2F4C1B8200FDC873 /* libresolv.9.tbd */,
 				18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */,
 			);
 			name = Frameworks;
