@@ -61,12 +61,68 @@ class EntrustmentListViewController: ZQViewController {
     }
 
     private func loadData() {
-        list = [
-            EntrustmentItem(exchange: "京", stockName: "世昌股份", stockCode: "920022", buySellCategory: "证券买入(大宗)", isBuy: true, currentStatus: "挂单", entrustedQuantity: "200", entrustedPrice: "10.90"),
-            EntrustmentItem(exchange: "深", stockName: "众捷汽车", stockCode: "301560", buySellCategory: "证券买入(大宗)", isBuy: true, currentStatus: "挂单", entrustedQuantity: "10900", entrustedPrice: "33.75"),
-            EntrustmentItem(exchange: "沪", stockName: "新疆交建", stockCode: "002941", buySellCategory: "证券卖出", isBuy: false, currentStatus: "已成交", entrustedQuantity: "500", entrustedPrice: "18.20")
-        ]
-        tableView.reloadData()
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/getNowWarehouse_weituo",
+            method: .get,
+            params: ["buytype": "1,7", "page": "1", "size": "50", "status": "2"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let items = data["list"] as? [[String: Any]] else {
+                    return
+                }
+                
+                self.list = items.compactMap { item in
+                    let title = item["title"] as? String ?? "--"
+                    let code = item["code"] as? String ?? "--"
+                    let allcode = item["allcode"] as? String ?? ""
+                    let buyPrice = item["buyprice"] as? Double ?? 0
+                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
+                    let cjlx = item["cjlx"] as? String ?? "--"
+                    let buytype = "\(item["buytype"] ?? "1")"
+                    
+                    // 根据 type 推导交易所
+                    let typeVal = item["type"] as? Int ?? 0
+                    let exchangeStr: String
+                    switch typeVal {
+                    case 1, 5: exchangeStr = "沪"
+                    case 2, 3: exchangeStr = "深"
+                    case 4:    exchangeStr = "京"
+                    default:
+                        if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
+                        else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
+                        else { exchangeStr = "深" }
+                    }
+                    
+                    // 判断买卖类别
+                    let isBuy = (item["status"] as? Int ?? 2) == 2  // 委托中
+                    let categoryText: String
+                    if buytype == "7" {
+                        categoryText = isBuy ? "证券买入(大宗)" : "证券卖出(大宗)"
+                    } else {
+                        categoryText = isBuy ? "证券买入" : "证券卖出"
+                    }
+                    
+                    return EntrustmentItem(
+                        exchange: exchangeStr,
+                        stockName: title,
+                        stockCode: code,
+                        buySellCategory: categoryText,
+                        isBuy: isBuy,
+                        currentStatus: cjlx,
+                        entrustedQuantity: number,
+                        entrustedPrice: String(format: "%.2f", buyPrice)
+                    )
+                }
+                
+                self.tableView.reloadData()
+                
+            case .failure(_): break
+            }
+        }
     }
 }
 

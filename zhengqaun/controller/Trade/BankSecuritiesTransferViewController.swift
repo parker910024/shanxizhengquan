@@ -12,6 +12,12 @@ class BankSecuritiesTransferViewController: ZQViewController {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let orangeRed = UIColor(red: 0.92, green: 0.35, blue: 0.14, alpha: 1.0)
+    
+    // 资金显示
+    private let t1ValueLabel = UILabel()
+    private let outValueLabel = UILabel()
+    private let amountField = UITextField()
+    private var availableBalance: Double = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,6 +25,7 @@ class BankSecuritiesTransferViewController: ZQViewController {
         setupNavBar()
         setupScrollView()
         setupContent()
+        loadFundData()
     }
 
     private func setupNavBar() {
@@ -70,7 +77,7 @@ class BankSecuritiesTransferViewController: ZQViewController {
         t1Label.textColor = redColor
         fundRow.addSubview(t1Label)
         t1Label.translatesAutoresizingMaskIntoConstraints = false
-        let t1Value = UILabel()
+        let t1Value = t1ValueLabel
         t1Value.text = "0.00"
         t1Value.font = UIFont.systemFont(ofSize: 15)
         t1Value.textColor = redColor
@@ -82,7 +89,7 @@ class BankSecuritiesTransferViewController: ZQViewController {
         outLabel.textColor = redColor
         fundRow.addSubview(outLabel)
         outLabel.translatesAutoresizingMaskIntoConstraints = false
-        let outValue = UILabel()
+        let outValue = outValueLabel
         outValue.text = "0.00"
         outValue.font = UIFont.systemFont(ofSize: 15)
         outValue.textColor = redColor
@@ -109,7 +116,7 @@ class BankSecuritiesTransferViewController: ZQViewController {
         yenLbl.textColor = Constants.Color.textPrimary
         inputRow.addSubview(yenLbl)
         yenLbl.translatesAutoresizingMaskIntoConstraints = false
-        let amountField = UITextField()
+        let amountField = self.amountField
         amountField.placeholder = "请输入转出金额"
         amountField.font = UIFont.systemFont(ofSize: 18)
         amountField.textColor = Constants.Color.textPrimary
@@ -170,10 +177,26 @@ class BankSecuritiesTransferViewController: ZQViewController {
         ])
     }
 
-    @objc private func withdrawAllTapped() {}
+    @objc private func withdrawAllTapped() {
+        // 填充全部可转出余额
+        amountField.text = String(format: "%.2f", availableBalance)
+    }
 
     @objc private func transferOutTapped() {
+        // 校验金额
+        guard let text = amountField.text, let amount = Double(text), amount > 0 else {
+            Toast.show("请输入有效的转出金额")
+            return
+        }
+        if amount > availableBalance {
+            Toast.show("转出金额不能超过可转出余额")
+            return
+        }
+        
         let passwordView = PaymentPasswordView()
+        passwordView.onComplete = { [weak self] password in
+            self?.submitWithdraw(amount: amount, password: password)
+        }
         passwordView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(passwordView)
         NSLayoutConstraint.activate([
@@ -183,6 +206,57 @@ class BankSecuritiesTransferViewController: ZQViewController {
             passwordView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
+    
+    // MARK: - 加载资金数据
+    private func loadFundData() {
+        SecureNetworkManager.shared.request(
+            api: "/api/user/capitalLog",
+            method: .get,
+            params: ["type": "1"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let userInfo = data["userInfo"] as? [String: Any] else { return }
+                
+                let balance = userInfo["balance"] as? Double ?? 0
+                let freezeProfit = userInfo["freeze_profit"] as? Double ?? 0
+                
+                self.availableBalance = balance
+                self.t1ValueLabel.text = String(format: "%.2f", freezeProfit)
+                self.outValueLabel.text = String(format: "%.2f", balance)
+                
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 提交转出
+    private func submitWithdraw(amount: Double, password: String) {
+        SecureNetworkManager.shared.request(
+            api: "/api/user/sendCode",
+            method: .get,
+            params: ["account_id": "1", "money": "\(amount)", "pass": password]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                if let dict = res.decrypted, let code = dict["code"] as? Int, code == 1 {
+                    Toast.show("转出申请已提交")
+                    self.amountField.text = ""
+                    // 刷新余额
+                    self.loadFundData()
+                } else {
+                    let msg = res.decrypted?["msg"] as? String ?? "转出失败"
+                    Toast.show(msg)
+                }
+            case .failure(let error):
+                Toast.show("请求失败: \(error.localizedDescription)")
+            }
+        }
+    }
 }
 
 // MARK: - 支付密码输入视图（6位数字 + 自定义数字键盘）
@@ -191,6 +265,7 @@ private class PaymentPasswordView: UIView {
     private let dimView = UIView()
     private let containerView = UIView()
     private let titleLabel = UILabel()
+    var onComplete: ((String) -> Void)?
     private var dotLabels: [UILabel] = []
     private var password: String = "" {
         didSet { updateDots() }
@@ -312,8 +387,11 @@ private class PaymentPasswordView: UIView {
             label.text = i < password.count ? "•" : ""
         }
         if password.count == 6 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self = self else { return }
+                let pwd = self.password
                 self.removeFromSuperview()
+                self.onComplete?(pwd)
             }
         }
     }

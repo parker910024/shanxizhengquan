@@ -17,6 +17,13 @@ struct StockSearchResult {
 
 class StockSearchViewController: ZQViewController {
     
+    /// 交易类型（从交易页传入，决定详情页点击交易后的行为）
+    enum TradeType {
+        case buy
+        case sell
+    }
+    var tradeType: TradeType = .buy
+    
     private let tableView = UITableView(frame: .zero, style: .plain)
     
     // 搜索输入框
@@ -570,6 +577,7 @@ extension StockSearchViewController: UITableViewDataSource, UITableViewDelegate 
         vc.indexName = result.name
         vc.indexCode = result.code
         vc.indexAllcode = "\(pfx)\(result.code)"
+        vc.tradeType = (tradeType == .sell) ? .sell : .buy
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
