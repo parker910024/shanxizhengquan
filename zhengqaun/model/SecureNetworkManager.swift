@@ -14,6 +14,8 @@ final class SecureNetworkManager {
     static let shared = SecureNetworkManager()
     private init() {}
 
+    var vpnSession : URLSession?
+    
     /// 在这里配置固定的 BaseURL 和 加密 key
     /// TODO: 按你实际环境改成自己的地址和 key
     private let baseURL = URL(string: vpnDataModel.shared.selectAddress ?? "")!
@@ -83,19 +85,20 @@ final class SecureNetworkManager {
             }
         }()
         
-        var vpnSession : URLSession?
-        if vpnDataModel.shared.isProxy == true {
-            let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
-            if start == true {
-                print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
-                print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
-                print("代理已启动")
+        if vpnSession == nil {
+            if vpnDataModel.shared.isProxy == true {
+                let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
+                if start == true {
+                    print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
+                    print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
+                    print("代理已启动")
+                }
+                vpnSession =  URLSessionNetworkProxy.newProxySession()
+            }else{
+                vpnSession = session
             }
-            vpnSession =  URLSessionNetworkProxy.newProxySession()
-        }else{
-            vpnSession = session
         }
-
+       
         // 2. 生成 path + confusePath，URL 与 HTML 一致：base（去尾斜杠）+ confusePath
         let realPath = PathHelper.pathFn(key: cryptoKey, unixString: baseUnixString)
         let confusePath = PathHelper.confusePath(realPath)
