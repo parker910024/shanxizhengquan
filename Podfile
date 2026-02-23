@@ -6,6 +6,7 @@ target 'zhengqaun' do
   pod 'JJException'
   pod 'GKNavigationBarViewController'
   pod 'FCUUID'
+  pod 'DGCharts'
 
 end
 

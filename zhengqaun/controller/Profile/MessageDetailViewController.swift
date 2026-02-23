@@ -22,7 +22,11 @@ class MessageDetailViewController: ZQViewController {
         super.viewDidLoad()
         setupNavigationBar()
         setupUI()
-        fillContent()
+        
+        mainTitleLabel.text = message?.typeLabel
+        timeLabel.text = "时间:" + (message?.date ?? "")
+        
+        loadDetailData()
     }
 
     private func setupNavigationBar() {
@@ -100,15 +104,62 @@ class MessageDetailViewController: ZQViewController {
         ])
     }
 
-    private func fillContent() {
-        guard let msg = message else {
-            mainTitleLabel.text = ""
-            bodyLabel.text = ""
-            timeLabel.text = ""
+    private func loadDetailData() {
+        guard let msgId = message?.id else {
+            bodyLabel.text = "暂无内容"
             return
         }
-        mainTitleLabel.text = msg.typeLabel
-        bodyLabel.text = msg.content
-        timeLabel.text = "时间:" + msg.date
+        
+        let params = ["id": msgId]
+        
+        SecureNetworkManager.shared.request(api: Api.message_detail_api, method: .get, params: params) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let response):
+                if response.statusCode == 200,
+                   let dec = response.decrypted,
+                   let code = dec["code"] as? Int, code == 1,
+                   let dataObj = dec["data"] as? [String: Any],
+                   let htmlString = dataObj["detail"] as? String {
+                    
+                    self.setHTMLContent(htmlString)
+                } else {
+                    self.bodyLabel.text = "获取详情失败"
+                }
+            case .failure(let error):
+                self.bodyLabel.text = "加载失败: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    private func setHTMLContent(_ htmlString: String) {
+        guard let data = htmlString.data(using: .utf8) else {
+            bodyLabel.text = htmlString
+            return
+        }
+        
+        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+            .documentType: NSAttributedString.DocumentType.html,
+            .characterEncoding: String.Encoding.utf8.rawValue
+        ]
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            if let attributedString = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
+                // 修改字体和颜色统一适配 UI
+                let mutableAttrStr = NSMutableAttributedString(attributedString: attributedString)
+                let fullRange = NSRange(location: 0, length: mutableAttrStr.length)
+                mutableAttrStr.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: fullRange)
+                mutableAttrStr.addAttribute(.foregroundColor, value: UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0), range: fullRange)
+                
+                DispatchQueue.main.async {
+                    self.bodyLabel.attributedText = mutableAttrStr
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.bodyLabel.text = htmlString.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
+                }
+            }
+        }
     }
 }

@@ -35,4 +35,14 @@ class Api: NSObject {
     
     //实名认证详情
     static let authenticationDetail_api = "/api/user/authenticationDetail"
+
+    //消息列表
+    static let message_list_api = "/api/news/index"
+    
+    //消息详情
+    static let message_detail_api = "/api/news/detail"
+    
+    // 新股申购列表
+    static let subscribe_api = "/api/subscribe/lst"
+    
 }

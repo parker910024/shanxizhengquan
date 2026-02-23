@@ -1,4 +1,7 @@
 PODS:
+  - DGCharts (5.1.0):
+    - DGCharts/Core (= 5.1.0)
+  - DGCharts/Core (5.1.0)
   - FCUUID (1.3.1):
     - UICKeyChainStore (~> 2.1.0)
   - GKNavigationBarViewController (3.0.2)
@@ -27,6 +30,7 @@ PODS:
   - UICKeyChainStore (2.1.2)
 
 DEPENDENCIES:
+  - DGCharts
   - FCUUID
   - GKNavigationBarViewController
   - IQKeyboardManager
@@ -35,6 +39,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - DGCharts
     - FCUUID
     - GKNavigationBarViewController
     - IQKeyboardManager
@@ -43,6 +48,7 @@ SPEC REPOS:
     - UICKeyChainStore
 
 SPEC CHECKSUMS:
+  DGCharts: 1c6daf585b6cfc78807af44ea690d357c410627f
   FCUUID: bb054fc90cd7cd99320f9f6ff8e130fe607fba05
   GKNavigationBarViewController: f1fe00cbe0e3693d072b4d565e6791bc71ba71d7
   IQKeyboardManager: c8665b3396bd0b79402b4c573eac345a31c7d485
@@ -50,6 +56,6 @@ SPEC CHECKSUMS:
   SVProgressHUD: 4837c74bdfe2e51e8821c397825996a8d7de6e22
   UICKeyChainStore: 85db518bb1d294366d15ec9b92a416c4e670518f
 
-PODFILE CHECKSUM: 41b1698d575b499bc4dee72248f1376e63c1f6af
+PODFILE CHECKSUM: efd1e055ce9540cad2f48694385e12d5996a0ccd
 
 COCOAPODS: 1.16.2

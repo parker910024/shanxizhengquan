@@ -44,6 +44,18 @@ class AccountTradeViewController: ZQViewController {
     private var payableLabel: UILabel!
     private let buyConfirmButton = UIButton(type: .system)
     
+    // 代码输入与查询（买入/卖出内嵌的用于布局占位；实际交互用 overlay）
+    private var buyCodeTextField: UITextField!
+    private var sellCodeTextField: UITextField!
+    private var buyCodeQueryButton: UIButton!
+    private var sellCodeQueryButton: UIButton!
+    /// 主 view 上的代码输入层，保证可输入、可点查询
+    private var codeInputOverlay: UIView!
+    private var codeInputOverlayTextField: UITextField!
+    private var codeInputOverlayQueryButton: UIButton!
+    private var buyCurrentPriceLabel: UILabel!  // 买入页「现价」右侧
+    private var sellCurrentPriceLabel: UILabel! // 卖出页「现价」右侧
+
     // 卖出页面
     private let sellView = UIView()
     private var buyPriceSellLabel: UILabel!
@@ -74,6 +86,7 @@ class AccountTradeViewController: ZQViewController {
         setupSegment()
         setupBuyView()
         setupSellView()
+        setupCodeInputOverlay()
         selectTab(selectedIndex)
         loadStockData()
         
@@ -88,6 +101,10 @@ class AccountTradeViewController: ZQViewController {
             }
             // 更新数量行控件的显示状态
             self.ensureQuantityControlsOnTop()
+            // 代码输入层置于最前，保证可输入、可点查询
+            if let overlay = self.codeInputOverlay {
+                self.view.bringSubviewToFront(overlay)
+            }
         }
     }
     
@@ -172,6 +189,10 @@ class AccountTradeViewController: ZQViewController {
         
         // 确保数量行控件也在最上层
         ensureQuantityControlsOnTop()
+        // 代码输入层始终在最前
+        if let overlay = codeInputOverlay {
+            view.bringSubviewToFront(overlay)
+        }
     }
     
     private func ensureButtonsOnTop() {
@@ -446,26 +467,43 @@ class AccountTradeViewController: ZQViewController {
         
         var lastView: UIView?
         
-        // 代码
-        lastView = addInfoRow(to: buyView, after: nil, title: "代码", value: "\(stockName)[\(stockCode)]", valueColor: .black)
+        // 代码（可输入 + 查询）
+        lastView = addCodeInputRow(to: buyView, after: nil, isBuy: true)
         
-        // 现价
-        lastView = addInfoRow(to: buyView, after: lastView, title: "现价", value: currentPrice, valueColor: .red)
+        // 现价（可点击编辑）
+        buyCurrentPriceLabel = UILabel()
+        buyCurrentPriceLabel.text = currentPrice
+        buyCurrentPriceLabel.textColor = .red
+        buyCurrentPriceLabel.font = UIFont.systemFont(ofSize: 15)
+        buyCurrentPriceLabel.textAlignment = .right
+        buyCurrentPriceLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: buyView, after: lastView, title: "现价", valueView: buyCurrentPriceLabel) { [weak self] newValue in
+            self?.currentPrice = newValue
+            self?.buyPriceLabel.text = newValue
+            self?.updateLimitUpDown()
+            self?.calculateBuyAmount()
+        }
         
-        // 买入价格
+        // 买入价格（可点击编辑）
         buyPriceLabel = UILabel()
         buyPriceLabel.text = currentPrice
         buyPriceLabel.textColor = .red
         buyPriceLabel.font = UIFont.systemFont(ofSize: 15)
         buyPriceLabel.textAlignment = .right
-        lastView = addInfoRow(to: buyView, after: lastView, title: "买入价格", valueView: buyPriceLabel)
+        buyPriceLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: buyView, after: lastView, title: "买入价格", valueView: buyPriceLabel) { [weak self] newValue in
+            self?.buyPriceLabel.text = newValue
+            self?.updateLimitUpDown()
+            self?.calculateBuyAmount()
+        }
         
-        // 涨跌停
+        // 涨跌停（可点击编辑）
         limitUpDownLabel = UILabel()
         limitUpDownLabel.font = UIFont.systemFont(ofSize: 15)
         limitUpDownLabel.textAlignment = .right
+        limitUpDownLabel.isUserInteractionEnabled = true
         updateLimitUpDown()
-        lastView = addInfoRow(to: buyView, after: lastView, title: "涨跌停", valueView: limitUpDownLabel)
+        lastView = addEditableInfoRow(to: buyView, after: lastView, title: "涨跌停", valueView: limitUpDownLabel) { _ in }
         
         // 仓位
         lastView = addPositionRow(to: buyView, after: lastView, isBuy: true)
@@ -473,29 +511,38 @@ class AccountTradeViewController: ZQViewController {
         // 买入手数
         lastView = addQuantityRow(to: buyView, after: lastView, isBuy: true)
         
-        // 服务费
+        // 服务费（可点击编辑）
         serviceFeeLabel = UILabel()
         serviceFeeLabel.text = "0.00"
         serviceFeeLabel.textColor = .black
         serviceFeeLabel.font = UIFont.systemFont(ofSize: 15)
         serviceFeeLabel.textAlignment = .right
-        lastView = addInfoRow(to: buyView, after: lastView, title: "服务费 元0.01%", valueView: serviceFeeLabel)
+        serviceFeeLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: buyView, after: lastView, title: "服务费 元0.01%", valueView: serviceFeeLabel) { [weak self] newValue in
+            self?.serviceFeeLabel.text = newValue
+        }
         
-        // 可用金额
+        // 可用金额（可点击编辑）
         availableAmountLabel = UILabel()
         availableAmountLabel.text = "0"
         availableAmountLabel.textColor = .black
         availableAmountLabel.font = UIFont.systemFont(ofSize: 15)
         availableAmountLabel.textAlignment = .right
-        lastView = addInfoRow(to: buyView, after: lastView, title: "可用金额", valueView: availableAmountLabel)
+        availableAmountLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: buyView, after: lastView, title: "可用金额", valueView: availableAmountLabel) { [weak self] newValue in
+            self?.availableAmountLabel.text = newValue
+        }
         
-        // 应付(元)
+        // 应付(元)（可点击编辑）
         payableLabel = UILabel()
         payableLabel.text = "0.00"
         payableLabel.textColor = .black
         payableLabel.font = UIFont.systemFont(ofSize: 15)
         payableLabel.textAlignment = .right
-        lastView = addInfoRow(to: buyView, after: lastView, title: "应付(元)", valueView: payableLabel)
+        payableLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: buyView, after: lastView, title: "应付(元)", valueView: payableLabel) { [weak self] newValue in
+            self?.payableLabel.text = newValue
+        }
         
         // 顶部约束
         let navH = Constants.Navigation.totalNavigationHeight
@@ -516,27 +563,42 @@ class AccountTradeViewController: ZQViewController {
         
         var lastView: UIView?
         
-        // 代码
-        lastView = addInfoRow(to: sellView, after: nil, title: "代码", value: "\(stockName)[\(stockCode)]", valueColor: .black)
+        // 代码（可输入 + 查询）
+        lastView = addCodeInputRow(to: sellView, after: nil, isBuy: false)
         
-        // 买入价
+        // 买入价（可点击编辑）
         buyPriceSellLabel = UILabel()
         buyPriceSellLabel.text = "--"
         buyPriceSellLabel.textColor = .black
         buyPriceSellLabel.font = UIFont.systemFont(ofSize: 15)
         buyPriceSellLabel.textAlignment = .right
-        lastView = addInfoRow(to: sellView, after: lastView, title: "买入价", valueView: buyPriceSellLabel)
+        buyPriceSellLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "买入价", valueView: buyPriceSellLabel) { [weak self] newValue in
+            self?.buyPriceSellLabel.text = newValue
+        }
         
-        // 现价
-        lastView = addInfoRow(to: sellView, after: lastView, title: "现价", value: currentPrice, valueColor: .red)
+        // 现价（可点击编辑）
+        sellCurrentPriceLabel = UILabel()
+        sellCurrentPriceLabel.text = currentPrice
+        sellCurrentPriceLabel.textColor = .red
+        sellCurrentPriceLabel.font = UIFont.systemFont(ofSize: 15)
+        sellCurrentPriceLabel.textAlignment = .right
+        sellCurrentPriceLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "现价", valueView: sellCurrentPriceLabel) { [weak self] newValue in
+            self?.currentPrice = newValue
+            self?.calculateSellAmount()
+        }
         
-        // 持仓手数
+        // 持仓手数（可点击编辑）
         holdingQuantityLabel = UILabel()
         holdingQuantityLabel.text = "0"
         holdingQuantityLabel.textColor = .black
         holdingQuantityLabel.font = UIFont.systemFont(ofSize: 15)
         holdingQuantityLabel.textAlignment = .right
-        lastView = addInfoRow(to: sellView, after: lastView, title: "持仓手数", valueView: holdingQuantityLabel)
+        holdingQuantityLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "持仓手数", valueView: holdingQuantityLabel) { [weak self] newValue in
+            self?.holdingQuantityLabel.text = newValue
+        }
         
         // 仓位
         lastView = addPositionRow(to: sellView, after: lastView, isBuy: false)
@@ -544,13 +606,16 @@ class AccountTradeViewController: ZQViewController {
         // 卖出手数
         lastView = addQuantityRow(to: sellView, after: lastView, isBuy: false)
         
-        // 总额(元)
+        // 总额(元)（可点击编辑）
         totalAmountLabel = UILabel()
         totalAmountLabel.text = "0.00"
         totalAmountLabel.textColor = .black
         totalAmountLabel.font = UIFont.systemFont(ofSize: 15)
         totalAmountLabel.textAlignment = .right
-        lastView = addInfoRow(to: sellView, after: lastView, title: "总额(元)", valueView: totalAmountLabel)
+        totalAmountLabel.isUserInteractionEnabled = true
+        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "总额(元)", valueView: totalAmountLabel) { [weak self] newValue in
+            self?.totalAmountLabel.text = newValue
+        }
         
         // 顶部约束
         let navH = Constants.Navigation.totalNavigationHeight
@@ -562,6 +627,257 @@ class AccountTradeViewController: ZQViewController {
         ])
     }
     
+    // MARK: - 主 view 上的代码输入层（保证可输入、可点查询）
+    private func setupCodeInputOverlay() {
+        codeInputOverlay = UIView()
+        codeInputOverlay.backgroundColor = .white
+        codeInputOverlay.isUserInteractionEnabled = true
+        view.addSubview(codeInputOverlay)
+        codeInputOverlay.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = "代码"
+        titleLabel.font = UIFont.systemFont(ofSize: 15)
+        titleLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
+        codeInputOverlay.addSubview(titleLabel)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        codeInputOverlayTextField = UITextField()
+        codeInputOverlayTextField.text = stockCode
+        codeInputOverlayTextField.placeholder = "输入股票代码"
+        codeInputOverlayTextField.font = UIFont.systemFont(ofSize: 15)
+        codeInputOverlayTextField.textColor = .black
+        codeInputOverlayTextField.keyboardType = .numberPad
+        codeInputOverlayTextField.borderStyle = .roundedRect
+        codeInputOverlayTextField.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        codeInputOverlayTextField.translatesAutoresizingMaskIntoConstraints = false
+        codeInputOverlay.addSubview(codeInputOverlayTextField)
+
+        codeInputOverlayQueryButton = UIButton(type: .system)
+        codeInputOverlayQueryButton.setTitle("查询", for: .normal)
+        codeInputOverlayQueryButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        codeInputOverlayQueryButton.setTitleColor(navBlue, for: .normal)
+        codeInputOverlayQueryButton.addTarget(self, action: #selector(queryStockTapped), for: .touchUpInside)
+        codeInputOverlayQueryButton.translatesAutoresizingMaskIntoConstraints = false
+        codeInputOverlay.addSubview(codeInputOverlayQueryButton)
+
+        let sep = UIView()
+        sep.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        codeInputOverlay.addSubview(sep)
+        sep.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            codeInputOverlay.topAnchor.constraint(equalTo: segmentContainer.bottomAnchor),
+            codeInputOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            codeInputOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            codeInputOverlay.heightAnchor.constraint(equalToConstant: 50),
+            titleLabel.leadingAnchor.constraint(equalTo: codeInputOverlay.leadingAnchor, constant: 16),
+            titleLabel.centerYAnchor.constraint(equalTo: codeInputOverlay.centerYAnchor),
+            codeInputOverlayQueryButton.trailingAnchor.constraint(equalTo: codeInputOverlay.trailingAnchor, constant: -16),
+            codeInputOverlayQueryButton.centerYAnchor.constraint(equalTo: codeInputOverlay.centerYAnchor),
+            codeInputOverlayQueryButton.widthAnchor.constraint(equalToConstant: 44),
+            codeInputOverlayTextField.trailingAnchor.constraint(equalTo: codeInputOverlayQueryButton.leadingAnchor, constant: -8),
+            codeInputOverlayTextField.centerYAnchor.constraint(equalTo: codeInputOverlay.centerYAnchor),
+            codeInputOverlayTextField.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 12),
+            codeInputOverlayTextField.heightAnchor.constraint(equalToConstant: 34),
+            sep.leadingAnchor.constraint(equalTo: codeInputOverlay.leadingAnchor),
+            sep.trailingAnchor.constraint(equalTo: codeInputOverlay.trailingAnchor),
+            sep.bottomAnchor.constraint(equalTo: codeInputOverlay.bottomAnchor),
+            sep.heightAnchor.constraint(equalToConstant: 1)
+        ])
+    }
+
+    // MARK: - 代码输入行（可输入 + 查询）- 仅作布局占位，实际交互用 overlay
+    private func addCodeInputRow(to parent: UIView, after previousView: UIView?, isBuy: Bool) -> UIView {
+        let container = UIView()
+        container.backgroundColor = .white
+        container.isUserInteractionEnabled = true
+        parent.addSubview(container)
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = "代码"
+        titleLabel.font = UIFont.systemFont(ofSize: 15)
+        titleLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
+        container.addSubview(titleLabel)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let textField = UITextField()
+        textField.text = stockCode
+        textField.placeholder = "输入股票代码"
+        textField.font = UIFont.systemFont(ofSize: 15)
+        textField.textColor = .black
+        textField.keyboardType = .numberPad
+        textField.borderStyle = .roundedRect
+        textField.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(textField)
+        if isBuy {
+            buyCodeTextField = textField
+        } else {
+            sellCodeTextField = textField
+        }
+
+        let queryBtn = UIButton(type: .system)
+        queryBtn.setTitle("查询", for: .normal)
+        queryBtn.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        queryBtn.setTitleColor(navBlue, for: .normal)
+        queryBtn.addTarget(self, action: #selector(queryStockTapped), for: .touchUpInside)
+        queryBtn.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(queryBtn)
+        if isBuy {
+            buyCodeQueryButton = queryBtn
+        } else {
+            sellCodeQueryButton = queryBtn
+        }
+
+        let separator = UIView()
+        separator.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        container.addSubview(separator)
+        separator.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: parent.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: parent.trailingAnchor),
+            container.heightAnchor.constraint(equalToConstant: 50),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            queryBtn.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            queryBtn.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            queryBtn.widthAnchor.constraint(equalToConstant: 44),
+            textField.trailingAnchor.constraint(equalTo: queryBtn.leadingAnchor, constant: -8),
+            textField.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            textField.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 12),
+            textField.heightAnchor.constraint(equalToConstant: 34),
+            separator.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            separator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            separator.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            separator.heightAnchor.constraint(equalToConstant: 1)
+        ])
+
+        if let prev = previousView {
+            container.topAnchor.constraint(equalTo: prev.bottomAnchor).isActive = true
+        } else {
+            container.topAnchor.constraint(equalTo: parent.topAnchor).isActive = true
+        }
+        return container
+    }
+
+    @objc private func queryStockTapped() {
+        let code = codeInputOverlayTextField?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !code.isEmpty else {
+            Toast.show("请输入股票代码")
+            return
+        }
+        stockCode = code
+        buyCodeTextField?.text = code
+        sellCodeTextField?.text = code
+        refreshRightSideData()
+        Toast.show("已更新")
+    }
+
+    /// 根据代码刷新下方列表右侧全部数据（可接真实接口，此处为模拟）
+    private func refreshRightSideData() {
+        let mock = mockStockData(for: stockCode)
+        stockName = mock.name
+        currentPrice = mock.currentPrice
+
+        buyPriceLabel?.text = currentPrice
+        buyCurrentPriceLabel?.text = currentPrice
+        limitUpDownLabel.attributedText = nil
+        updateLimitUpDown()
+        serviceFeeLabel?.text = mock.serviceFee
+        availableAmountLabel?.text = mock.availableAmount
+        calculateBuyAmount()
+
+        buyPriceSellLabel?.text = mock.buyPrice
+        sellCurrentPriceLabel?.text = currentPrice
+        holdingQuantityLabel?.text = mock.holdingQuantity
+        calculateSellAmount()
+    }
+
+    private func mockStockData(for code: String) -> (name: String, currentPrice: String, buyPrice: String, serviceFee: String, availableAmount: String, holdingQuantity: String) {
+        let defaults: (String, String, String, String, String, String) = ("股票\(code)", "10.00", "10.00", "0.00", "10000", "0")
+        let map: [String: (String, String, String, String, String, String)] = [
+            "300170": ("汉得信息", "22.67", "22.50", "0.02", "50000", "1000"),
+            "000001": ("平安银行", "12.35", "12.30", "0.01", "80000", "500"),
+            "600519": ("贵州茅台", "1680.00", "1675.00", "1.68", "100000", "100")
+        ]
+        return map[code] ?? defaults
+    }
+
+    // MARK: - 可编辑信息行（点击右侧数值弹出编辑）
+    private func addEditableInfoRow(to parent: UIView, after previousView: UIView?, title: String, valueView: UIView, onEdit: @escaping (String) -> Void) -> UIView {
+        let container = UIView()
+        container.backgroundColor = .white
+        container.isUserInteractionEnabled = true
+        parent.addSubview(container)
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = UIFont.systemFont(ofSize: 15)
+        titleLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
+        container.addSubview(titleLabel)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(valueView)
+        valueView.translatesAutoresizingMaskIntoConstraints = false
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(editableValueTapped(_:)))
+        valueView.addGestureRecognizer(tap)
+        valueView.gestureRecognizers?.forEach { $0.cancelsTouchesInView = false }
+        Self.editableCallbacks[ObjectIdentifier(valueView)] = onEdit
+
+        let separator = UIView()
+        separator.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        container.addSubview(separator)
+        separator.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: parent.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: parent.trailingAnchor),
+            container.heightAnchor.constraint(equalToConstant: 50),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            valueView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            valueView.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            separator.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            separator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            separator.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            separator.heightAnchor.constraint(equalToConstant: 1)
+        ])
+
+        if let prev = previousView {
+            container.topAnchor.constraint(equalTo: prev.bottomAnchor).isActive = true
+        } else {
+            container.topAnchor.constraint(equalTo: parent.topAnchor).isActive = true
+        }
+        return container
+    }
+
+    private static var editableCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
+
+    @objc private func editableValueTapped(_ gesture: UITapGestureRecognizer) {
+        guard let valueView = gesture.view else { return }
+        let callback = Self.editableCallbacks[ObjectIdentifier(valueView)]
+        let current = (valueView as? UILabel)?.text ?? ""
+        let alert = UIAlertController(title: "修改", message: nil, preferredStyle: .alert)
+        alert.addTextField { tf in
+            tf.text = current
+            tf.keyboardType = .decimalPad
+            tf.placeholder = "输入新值"
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
+            let newValue = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !newValue.isEmpty else { return }
+            (valueView as? UILabel)?.text = newValue
+            callback?(newValue)
+        })
+        present(alert, animated: true)
+    }
+
     // MARK: - Helper Methods
     
     private func addInfoRow(to parent: UIView, after previousView: UIView?, title: String, value: String, valueColor: UIColor = .black) -> UIView {
@@ -1309,6 +1625,95 @@ class AccountTradeViewController: ZQViewController {
     
     private func loadStockData() {
         updateLimitUpDown()
+        fetchStockDetail(for: stockCode)
+        fetchUserAssets()
+        if selectedIndex == 1 {
+            fetchSellHoldings(for: stockCode)
+        }
+    }
+    
+    // MARK: - API calls
+    private func fetchStockDetail(for code: String) {
+        guard !code.isEmpty else { return }
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/stockDetail",
+            method: .post,
+            params: ["code": code]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [String: Any],
+                          let list = data["list"] as? [[String: Any]],
+                          let first = list.first else { return }
+                    
+                    let price = first["current_price"] as? String ?? "0.00"
+                    self?.currentPrice = price
+                    
+                    self?.buyPriceLabel?.text = price
+                    self?.buyCurrentPriceLabel?.text = price
+                    self?.sellCurrentPriceLabel?.text = price
+                    self?.buyPriceSellLabel?.text = price
+                    self?.stockName = first["title"] as? String ?? ""
+                    
+                    self?.updateLimitUpDown()
+                    if self?.selectedIndex == 0 {
+                        self?.calculateBuyAmount()
+                    } else {
+                        self?.calculateSellAmount()
+                    }
+                case .failure(let err):
+                    print("行情获取失败: \\(err)")
+                }
+            }
+        }
+    }
+    
+    private func fetchUserAssets() {
+        SecureNetworkManager.shared.request(
+            api: "/api/user/getUserPrice_all1",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [String: Any],
+                          let list = data["list"] as? [String: Any] else { return }
+                    let balance = list["balance"] as? Double ?? 0.0
+                    self?.availableAmountLabel?.text = String(format: "%.2f", balance)
+                case .failure(_):
+                    break
+                }
+            }
+        }
+    }
+    
+    private func fetchSellHoldings(for code: String) {
+        guard !code.isEmpty else { return }
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/mrSellLst",
+            method: .get,
+            params: ["keyword": code]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [[String: Any]],
+                          let holding = data.first else { 
+                        self?.holdingQuantityLabel?.text = "0"
+                        return 
+                    }
+                    let num = holding["number"] as? String ?? "0"
+                    self?.holdingQuantityLabel?.text = num
+                case .failure(_):
+                    break
+                }
+            }
+        }
     }
     
     private func updateLimitUpDown() {
@@ -1393,10 +1798,82 @@ class AccountTradeViewController: ZQViewController {
     }
     
     @objc private func buyConfirmTapped() {
-        Toast.show("买入下单功能待实现")
+        guard let p = Double(currentPrice), p > 0 else {
+            Toast.show("买入价格无效")
+            return
+        }
+        guard buyQuantity > 0 else {
+            Toast.show("请输入买入数量")
+            return
+        }
+        buyConfirmButton.isEnabled = false
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/addStrategy",
+            method: .post,
+            params: [
+                "allcode": stockCode,
+                "buyprice": "\(p)",
+                "canBuy": buyQuantity
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.buyConfirmButton.isEnabled = true
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                        Toast.show("买入委托已提交")
+                        self?.loadStockData() // 刷新可买
+                        self?.buyQuantity = 0
+                        self?.buyQuantityTextField?.text = "0"
+                        self?.calculateBuyAmount()
+                    } else {
+                        let msg = res.decrypted?["msg"] as? String ?? "提交失败"
+                        Toast.show(msg)
+                    }
+                case .failure(let err):
+                    Toast.show("买入失败: \\(err.localizedDescription)")
+                }
+            }
+        }
     }
     
     @objc private func sellConfirmTapped() {
-        Toast.show("确认卖出功能待实现")
+        guard let p = Double(currentPrice), p > 0 else {
+            Toast.show("卖出价格无效")
+            return
+        }
+        guard sellQuantity > 0 else {
+            Toast.show("请输入卖出数量")
+            return
+        }
+        sellConfirmButton.isEnabled = false
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/sell", // 接口文档未明示卖出接口，凭经验猜使用卖出/sell
+            method: .post,
+            params: [
+                "allcode": stockCode,
+                "sellprice": "\(p)",
+                "canSell": sellQuantity
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.sellConfirmButton.isEnabled = true
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                        Toast.show("卖出委托已提交")
+                        self?.loadStockData() // 刷新可卖
+                        self?.sellQuantity = 0
+                        self?.sellQuantityTextField?.text = "0"
+                        self?.calculateSellAmount()
+                    } else {
+                        let msg = res.decrypted?["msg"] as? String ?? "提交失败"
+                        Toast.show(msg)
+                    }
+                case .failure(let err):
+                    Toast.show("卖出失败: \\(err.localizedDescription)")
+                }
+            }
+        }
     }
 }

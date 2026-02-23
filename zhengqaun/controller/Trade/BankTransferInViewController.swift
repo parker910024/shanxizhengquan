@@ -14,11 +14,15 @@ class BankTransferInViewController: ZQViewController {
     private let amountTextField = UITextField()
     private let transferButton = UIButton(type: .system)
     
+    private var sysbankId: Int?
+    private var minLimit: Double = 100
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupNavigationBar()
         setupUI()
+        loadConfig()
     }
     
     private func setupNavigationBar() {
@@ -89,17 +93,76 @@ class BankTransferInViewController: ZQViewController {
         ])
     }
     
+    private func loadConfig() {
+        SecureNetworkManager.shared.request(
+            api: "/api/index/getchargeconfignew",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["sysbank_list"] as? [[String: Any]],
+                      let firstBank = list.first else { return }
+                
+                self.sysbankId = firstBank["id"] as? Int
+                let minLow = Double("\(firstBank["minlow"] ?? "100")") ?? 100.0
+                self.minLimit = minLow
+                
+                DispatchQueue.main.async {
+                    self.amountHintLabel.text = "最小转入金额为\(Int(minLow))元"
+                    self.amountHintLabel.textColor = Constants.Color.textTertiary
+                }
+            case .failure(let err):
+                print("加载银证转入配置失败:", err.localizedDescription)
+            }
+        }
+    }
+    
     @objc private func transferTapped() {
-        // 这里可以增加输入校验和实际转入逻辑，目前先简单检查金额是否 >= 100
-        guard let text = amountTextField.text,
-              let value = Double(text),
-              value >= 100 else {
-            Toast.show("请输入不小于100的金额")
+        guard let text = amountTextField.text, !text.isEmpty,
+              let value = Double(text) else {
+            Toast.show("请输入有效的数字")
             return
         }
-        // TODO: 调用实际转入接口
-        Toast.show("银证转入提交成功（模拟）")
-        navigationController?.popViewController(animated: true)
+        guard value >= minLimit else {
+            Toast.show("最小转入金额为\(Int(minLimit))元")
+            return
+        }
+        guard let bankId = sysbankId else {
+            Toast.show("暂无可用的银证转入通道")
+            return
+        }
+        
+        transferButton.isEnabled = false
+        SecureNetworkManager.shared.request(
+            api: "/api/user/recharge",
+            method: .post,
+            params: ["money": "\(value)", "sysbankid": bankId]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.transferButton.isEnabled = true
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted {
+                        let retCode = dict["retCode"] as? Int ?? -1
+                        let retMsg = dict["retMsg"] as? String ?? ""
+                        if retCode == 0 {
+                            Toast.show("转入提交成功")
+                            self?.navigationController?.popViewController(animated: true)
+                        } else {
+                            Toast.show(retMsg.isEmpty ? "转入异常" : retMsg)
+                        }
+                    } else {
+                        Toast.show("转入异常(Code: \(res.statusCode))")
+                    }
+                case .failure(let err):
+                    Toast.show("网络请求失败: \(err.localizedDescription)")
+                }
+            }
+        }
     }
 }
 

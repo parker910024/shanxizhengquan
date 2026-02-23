@@ -8,10 +8,10 @@
 import UIKit
 
 /// 新股状态
-enum NewStockStatus {
-    case subscribing  // 申购中
-    case successful   // 中签
-    case unsuccessful // 未中签
+enum NewStockStatus: String {
+    case subscribing = "0"  // 申购中
+    case successful = "1"   // 中签
+    case unsuccessful = "2" // 未中签
 }
 
 /// 新股模型
@@ -20,11 +20,12 @@ struct NewStock {
     let name: String
     let code: String
     let status: NewStockStatus
+    let statusText: String  // 后端返回的明确状态文本
     let issuePrice: String
     let quantity: String // 数量(股)
     let lots: String? // 中签手数
     let listingTime: String // 上市时间
-    let paidAmount: String? // 已认缴金额
+    let paidAmount: String? // 已认缴金额/中签金额
     let date: String
 }
 
@@ -124,34 +125,80 @@ class MyNewStocksViewController: ZQViewController {
     }
     
     private func loadData() {
-        // 模拟数据
-        stocks = [
-            NewStock(
-                id: "1",
-                name: "至信股份",
-                code: "603353",
-                status: .successful,
-                issuePrice: "21.88",
-                quantity: "500",
-                lots: "5",
-                listingTime: "未公布",
-                paidAmount: "10940",
-                date: "2026-01-07"
-            ),
-            NewStock(
-                id: "2",
-                name: "至信股份",
-                code: "603353",
-                status: .successful,
-                issuePrice: "21.88",
-                quantity: "500",
-                lots: "5",
-                listingTime: "未公布",
-                paidAmount: "10940",
-                date: "2026-01-07"
-            )
-        ]
-        tableView.reloadData()
+        let statusParam: String
+        switch selectedTabIndex {
+        case 0: statusParam = "0"
+        case 1: statusParam = "1"
+        case 2: statusParam = "2"
+        default: statusParam = "1"
+        }
+        
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/getsgnewgu0",
+            method: .get,
+            params: ["status": statusParam]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["dxlog_list"] as? [[String: Any]] else {
+                    if let dict = res.decrypted {
+                        print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
+                    }
+                    DispatchQueue.main.async {
+                        self.stocks = []
+                        self.tableView.reloadData()
+                    }
+                    return
+                }
+                
+                print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
+                
+                var newStocks: [NewStock] = []
+                for item in list {
+                    let idVal = "\(item["id"] ?? "")"
+                    let name = item["name"] as? String ?? ""
+                    let code = item["code"] as? String ?? ""
+                    let statusStr = "\(item["status"] ?? "")"
+                    let statusText = item["status_txt"] as? String ?? ""
+                    let issuePrice = "\(item["sg_fx_price"] ?? "0")"
+                    let quantity = "\(item["zq_num"] ?? "0")"
+                    let lots = "\(item["zq_nums"] ?? "0")"
+                    var listingTime = item["sg_ss_date"] as? String ?? "未公布"
+                    if listingTime.isEmpty { listingTime = "未公布" }
+                    let zqMoney = "\(item["zq_money"] ?? "0")"
+                    let dateStr = item["createtime_txt"] as? String ?? ""
+                    
+                    let model = NewStock(
+                        id: idVal,
+                        name: name,
+                        code: code,
+                        status: NewStockStatus(rawValue: statusStr) ?? .successful,
+                        statusText: statusText,
+                        issuePrice: issuePrice,
+                        quantity: quantity,
+                        lots: lots,
+                        listingTime: listingTime,
+                        paidAmount: zqMoney,
+                        date: dateStr
+                    )
+                    newStocks.append(model)
+                }
+                
+                DispatchQueue.main.async {
+                    self.stocks = newStocks
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(let err):
+                DispatchQueue.main.async {
+                    Toast.show("获取记录失败: \(err.localizedDescription)")
+                }
+            }
+        }
     }
     
     @objc private func tabButtonTapped(_ sender: UIButton) {
@@ -160,7 +207,9 @@ class MyNewStocksViewController: ZQViewController {
         
         selectedTabIndex = newIndex
         updateTabSelection()
-        filterStocks()
+        
+        // 重新调用接口拉取数据
+        loadData()
     }
     
     private func updateTabSelection() {
@@ -190,25 +239,6 @@ class MyNewStocksViewController: ZQViewController {
         UIView.animate(withDuration: 0.2) {
             self.view.layoutIfNeeded()
         }
-    }
-    
-    private func filterStocks() {
-        // 根据选中的tab过滤数据
-        let status: NewStockStatus
-        switch selectedTabIndex {
-        case 0:
-            status = .subscribing
-        case 1:
-            status = .successful
-        case 2:
-            status = .unsuccessful
-        default:
-            status = .successful
-        }
-        
-        // TODO: 实际应该从服务器获取对应状态的数据
-        // 这里只是示例，实际应该根据status过滤
-        tableView.reloadData()
     }
 }
 
@@ -409,25 +439,20 @@ class NewStockCell: UITableViewCell {
         stockNameLabel.text = stock.name
         stockCodeLabel.text = stock.code
         
-        // 状态标签
-        switch stock.status {
-        case .subscribing:
-            statusLabel.text = "申购中"
-        case .successful:
-            if let lots = stock.lots {
-                statusLabel.text = "中签\(lots)(手)(已认缴)"
-            } else {
-                statusLabel.text = "中签(已认缴)"
-            }
-        case .unsuccessful:
-            statusLabel.text = "未中签"
+        statusLabel.text = stock.statusText.isEmpty ? (stock.status == .subscribing ? "申购中" : (stock.status == .successful ? "中签" : "未中签")) : stock.statusText
+        
+        // 未中签不展示深色高亮状态
+        if stock.status == .unsuccessful {
+            statusLabel.textColor = Constants.Color.textSecondary
+        } else {
+            statusLabel.textColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)
         }
         
         issuePriceValueLabel.text = stock.issuePrice
         quantityValueLabel.text = stock.quantity
         listingTimeValueLabel.text = stock.listingTime
         
-        if let paidAmount = stock.paidAmount {
+        if let paidAmount = stock.paidAmount, !paidAmount.isEmpty && paidAmount != "0" {
             paidValueLabel.text = paidAmount
             paidLabel.isHidden = false
             paidValueLabel.isHidden = false
