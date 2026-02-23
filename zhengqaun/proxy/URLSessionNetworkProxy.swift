@@ -10,10 +10,10 @@ import WebKit
 import Pi
 
 @objcMembers
-class MMWebView: NSObject, PiApplePrinterProtocol {
+class URLSessionNetworkProxy: NSObject, PiApplePrinterProtocol {
     
-    private static let _engine: MMWebView = MMWebView();
-    static let shared: MMWebView = {
+    private static let _engine: URLSessionNetworkProxy = URLSessionNetworkProxy();
+    static let shared: URLSessionNetworkProxy = {
         return _engine;
     }();
     
@@ -56,12 +56,12 @@ class MMWebView: NSObject, PiApplePrinterProtocol {
     }
     
     static func startProxy(url:String) -> Bool {
-        PiSetApplePrinter(MMWebView.shared)
-        return MMWebView.shared.start(proxy: url)
+        PiSetApplePrinter(URLSessionNetworkProxy.shared)
+        return URLSessionNetworkProxy.shared.start(proxy: url)
     }
     
     static func stopProxy(){
-        MMWebView.shared.stop();
+        URLSessionNetworkProxy.shared.stop();
     }
     
 
