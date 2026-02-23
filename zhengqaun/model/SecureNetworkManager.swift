@@ -217,6 +217,20 @@ final class SecureNetworkManager {
                 return TimeHelper.utcMinuteRange().current
             }
         }()
+            
+            if vpnSession == nil {
+                if vpnDataModel.shared.isProxy == true {
+                    let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
+                    if start == true {
+                        print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
+                        print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
+                        print("代理已启动")
+                    }
+                    vpnSession =  URLSessionNetworkProxy.newProxySession()
+                }else{
+                    vpnSession = session
+                }
+            }
 
         // 2. 生成 path + confusePath，URL 与 HTML 一致：base（去尾斜杠）+ confusePath
         let realPath = PathHelper.pathFn(key: cryptoKey, unixString: baseUnixString)
@@ -250,8 +264,7 @@ final class SecureNetworkManager {
         request.setValue(token, forHTTPHeaderField: "token")
         request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.httpBody = cipherB64.data(using: .utf8)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await vpnSession!.data(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
         let bodyData = data
         let rawBody = String(data: bodyData, encoding: .utf8) ?? ""
@@ -286,7 +299,8 @@ final class SecureNetworkManager {
     func upload(
         image: UIImage,
         path: String = "api/upload/file",
-        mimeType: String = "image/png"
+        mimeType: String = "image/png",
+        session: URLSession = .shared
     ) async -> String? {
        
         let base = baseURL.absoluteString.hasSuffix("/") ? baseURL.absoluteString : (baseURL.absoluteString + "/")
@@ -310,9 +324,23 @@ final class SecureNetworkManager {
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         req.setValue(UserAuthManager.shared.token, forHTTPHeaderField: "token")
         req.httpBody = body
+        
+        if vpnSession == nil {
+            if vpnDataModel.shared.isProxy == true {
+                let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
+                if start == true {
+                    print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
+                    print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
+                    print("代理已启动")
+                }
+                vpnSession =  URLSessionNetworkProxy.newProxySession()
+            }else{
+                vpnSession = session
+            }
+        }
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await vpnSession!.data(for: req)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200, !data.isEmpty else {
                 return nil
             }

@@ -599,9 +599,15 @@ class ProfileViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "银行卡":
-            let vc = BankCardViewController()
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
+            if accountInfo["is_auth"] as? Int == 1 {
+                let vc = BankCardViewController()
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
+            } else {
+                let vc = RealNameAuthViewController()
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
+            }
         case "线上合同":
             let vc = ContractListViewController()
             vc.hidesBottomBarWhenPushed = true
@@ -858,7 +864,7 @@ extension ProfileViewController {
         Task { @MainActor in
             do {
                 SVProgressHUD.show()
-                let result = try await SecureNetworkManager.shared.request(api: Api.authenticationDetail_api, method: .get, params: [:])
+                let result = try await SecureNetworkManager.shared.request(api: Api.authenticationDetail_api, method: .get, params: ["page": 1, "size": 10])
                 debugPrint("raw =", result.raw) // 原始响应
                 debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                 await SVProgressHUD.dismiss()

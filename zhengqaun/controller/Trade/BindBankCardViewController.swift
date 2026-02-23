@@ -4,7 +4,7 @@
 //
 //  绑定银行卡页面
 //
-
+import SVProgressHUD
 import UIKit
 
 class BindBankCardViewController: ZQViewController {
@@ -27,6 +27,8 @@ class BindBankCardViewController: ZQViewController {
     private var cardNumberContainer = UIView()
     private let cardNumberLabel = UILabel()
     private let cardNumberTextField = UITextField()
+    
+    private var name = ""
 
     // 提交按钮
     private let submitButton = UIButton(type: .system)
@@ -37,6 +39,7 @@ class BindBankCardViewController: ZQViewController {
         setupNavigationBar()
         setupScrollView()
         setupContent()
+        requestAuthenticationDetail()
         loadBankCardData()
     }
     
@@ -47,9 +50,9 @@ class BindBankCardViewController: ZQViewController {
         }
         
         // 回显银行卡信息
-        bankTextField.text = card.cardName
-        branchTextField.text = card.branchName
-        cardNumberTextField.text = card.cardNumber
+        bankTextField.text = card.depositBank
+        branchTextField.text = card.khzhihang
+        cardNumberTextField.text = card.account
         
         // 更新提交按钮状态
         updateSubmitButton()
@@ -223,10 +226,75 @@ class BindBankCardViewController: ZQViewController {
               let cardNumber = cardNumberTextField.text else {
             return
         }
-        // TODO: 提交银行卡信息到接口
-        Toast.showSuccess("绑定成功")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.navigationController?.popViewController(animated: true)
+        
+        Task {
+            var param: [String: Any] = [:]
+            if let bankCard {
+                param = [
+                    "name": self.name,
+                   "khzhihang": branch,         // 支行名称
+                   "deposit_bank": bank,  // 银行名称
+                   "account": cardNumber,  // 卡号
+                   "id": bankCard.id ]
+            } else {
+                param = [
+                    "name": self.name,
+                    "khzhihang": branch,         // 支行名称
+                    "deposit_bank": bank,  // 银行名称
+                    "account": cardNumber,  // 卡号
+                ]
+            }
+            do {
+                SVProgressHUD.show()
+                let result = try await SecureNetworkManager.shared.request(api: Api.bindaccount_api, method: .post, params: param)
+                await SVProgressHUD.dismiss()
+                debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                let dict = result.decrypted
+                if dict?["code"] as? NSNumber != 1 {
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                    }
+                    return
+                }
+                Toast.showSuccess("绑定成功")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [unowned self] in
+                    self.navigationController?.popViewController(animated: true)
+                }
+            } catch {
+                await SVProgressHUD.dismiss()
+                debugPrint("error =", error.localizedDescription, #function)
+                await SVProgressHUD.dismiss()
+                Toast.showError(error.localizedDescription)
+            }
+        }
+        
+    }
+    
+    func requestAuthenticationDetail() {
+        Task { @MainActor in
+            do {
+                SVProgressHUD.show()
+                let result = try await SecureNetworkManager.shared.request(api: Api.authenticationDetail_api, method: .get, params: ["page": 1, "size": 10])
+                debugPrint("raw =", result.raw) // 原始响应
+                debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                await SVProgressHUD.dismiss()
+                if let dict = result.decrypted, let detail = dict["data"] as? [String: Any], let json = detail["detail"] {
+                    if dict["msg"] as? String != "success" {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict["msg"] as? String ?? "")
+                        }
+                        return
+                    } else {
+                        let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
+                        let model = try JSONDecoder().decode(AuthenticationDetailModel.self, from: jsonData)
+                        self.name = model.name
+                    }
+                }
+            } catch {
+                debugPrint("error =", error.localizedDescription, #function)
+                await SVProgressHUD.dismiss()
+                Toast.showError(error.localizedDescription)
+            }
         }
     }
 }
