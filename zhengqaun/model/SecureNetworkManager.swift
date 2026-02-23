@@ -52,13 +52,29 @@ final class SecureNetworkManager {
             return
         }
 
+        print("\n📤 [请求] \(method.rawValue) \(api)")
+        print("📦 [参数] \(params)")
+
         sendEncryptedRequest(
             httpMethod: method.rawValue,
             api: api,
             plainJSON: plainJSON,
             token: token,
             session: session,
-            completion: completion
+            completion: { result in
+                switch result {
+                case .success(let res):
+                    print("\n📥 [响应] \(method.rawValue) \(api) (\(res.statusCode))")
+                    if let dict = res.decrypted {
+                        print("📄 [数据] \(dict)")
+                    } else {
+                        print("📄 [原始] \(res.raw.prefix(500))")
+                    }
+                case .failure(let err):
+                    print("\n❌ [失败] \(method.rawValue) \(api): \(err.localizedDescription)")
+                }
+                completion(result)
+            }
         )
     }
 

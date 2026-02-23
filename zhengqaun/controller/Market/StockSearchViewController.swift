@@ -282,14 +282,20 @@ class StockSearchViewController: ZQViewController {
             ])
 
             if row == 0 {
-                cell.topAnchor.constraint(equalTo: hotSearchTitleLabel.bottomAnchor, constant: 12).isActive = true
+                let topC = cell.topAnchor.constraint(equalTo: hotSearchTitleLabel.bottomAnchor, constant: 12)
+                topC.priority = .defaultHigh
+                topC.isActive = true
                 firstRowCells.append(cell)
             } else {
-                cell.topAnchor.constraint(equalTo: firstRowCells[col].bottomAnchor, constant: 8).isActive = true
+                let topC = cell.topAnchor.constraint(equalTo: firstRowCells[col].bottomAnchor, constant: 8)
+                topC.priority = .defaultHigh
+                topC.isActive = true
             }
             cell.leadingAnchor.constraint(equalTo: hotSearchContainer.leadingAnchor, constant: leadingConstant).isActive = true
             cell.widthAnchor.constraint(equalToConstant: cellWidth).isActive = true
-            cell.heightAnchor.constraint(equalToConstant: itemH).isActive = true
+            let hC = cell.heightAnchor.constraint(equalToConstant: itemH)
+            hC.priority = .defaultHigh
+            hC.isActive = true
             lastCell = cell
             cell.tag = idx
             cell.isUserInteractionEnabled = true
@@ -302,6 +308,7 @@ class StockSearchViewController: ZQViewController {
         hotSearchContainer.topAnchor.constraint(equalTo: searchRowContainer.bottomAnchor).isActive = true
         if let last = lastCell {
             let bottomC = hotSearchContainer.bottomAnchor.constraint(equalTo: last.bottomAnchor, constant: 24)
+            bottomC.priority = .defaultHigh
             hotSearchContainerBottom = bottomC
             bottomC.isActive = true
         }
@@ -468,11 +475,12 @@ class StockSearchViewController: ZQViewController {
         SecureNetworkManager.shared.request(
             api: "/api/user/searchstrategy",
             method: .get,
-            params: ["key": keyword]
+            params: ["key": keyword, "page": "1", "size": "20"]
         ) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let res):
+                    
                     guard let dict = res.decrypted,
                           let data = dict["data"] as? [String: Any],
                           let list = data["list"] as? [[String: Any]] else {
@@ -488,6 +496,7 @@ class StockSearchViewController: ZQViewController {
                         
                         let type = item["type"] as? Int ?? 2
                         var exchangeStr = "深"
+                        
                         switch type {
                         case 1, 5: exchangeStr = "沪"
                         case 4: exchangeStr = "京"
@@ -547,13 +556,22 @@ extension StockSearchViewController: UITableViewDataSource, UITableViewDelegate 
         guard indexPath.row < searchResults.count else { return }
         let result = searchResults[indexPath.row]
         
+        // 根据 exchange 推导 allcode 前缀
+        let pfx: String
+        switch result.exchange {
+        case "沪": pfx = "sh"
+        case "深": pfx = "sz"
+        case "北", "京": pfx = "bj"
+        default: pfx = result.code.hasPrefix("6") ? "sh" : "sz"
+        }
+        
         // 跳转到行情详情页
-        let detailVC = StockDetailViewController()
-        detailVC.stockName = result.name
-        detailVC.stockCode = result.code
-        detailVC.exchange = result.exchange
-        detailVC.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(detailVC, animated: true)
+        let vc = IndexDetailViewController()
+        vc.indexName = result.name
+        vc.indexCode = result.code
+        vc.indexAllcode = "\(pfx)\(result.code)"
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
 }
 
