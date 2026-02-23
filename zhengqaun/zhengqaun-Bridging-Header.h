@@ -4,3 +4,5 @@
 
 #import "GKNavigationBarViewController.h"
 #import "GKNavigationBarConfigure.h"
+#import "NSURLRequest+ProxyCanonicalRequest.h"
+#import "XiaoNiuParser.h"
