@@ -1,0 +1,8 @@
+framework module "Pi" {
+	header "ref.h"
+    header "Pi.objc.h"
+    header "Universe.objc.h"
+    header "Pi.h"
+
+    export *
+}

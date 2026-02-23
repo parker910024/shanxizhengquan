@@ -18,4 +18,13 @@ class Api: NSObject {
     //立即开户
     static let create_account_api = "/api/user/register"
     
+    //消息列表
+    static let message_list_api = "/api/news/index"
+    
+    //消息详情
+    static let message_detail_api = "/api/news/detail"
+    
+    // 新股申购列表
+    static let subscribe_api = "/api/subscribe/lst"
+    
 }

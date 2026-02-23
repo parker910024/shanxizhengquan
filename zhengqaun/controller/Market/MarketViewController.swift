@@ -555,7 +555,10 @@ class MarketViewController: ZQViewController {
             let x = CGFloat(i) * (bw + sp)
             let h = max(4, CGFloat(bar.count) / maxC * maxH)
             let y = ch - labH - h
-            let col = bar.isRise ? themeRed : stockGreen
+            var col = bar.isRise ? themeRed : stockGreen
+            if bar.label == "平" {
+                col = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+            }
 
             let bv = UIView(frame: CGRect(x: x, y: y, width: bw, height: h))
             bv.backgroundColor = col; bv.layer.cornerRadius = 2
@@ -1207,7 +1210,8 @@ class MarketViewController: ZQViewController {
         }.resume()
     }
 
-    /// 新股申购 — /api/subscribe/lst
+    /// 新股申购 — Api.subscribe_api
+    /// 天玑护航 — /api/dzjy/lst
     private func loadSubscriptionData() {
         let typeParam: String
         switch selectedSegmentIndex {
@@ -1219,8 +1223,8 @@ class MarketViewController: ZQViewController {
 
         let api: String
         switch selectedSegmentIndex {
-        case 1: api = "/api/subscribe/lst"
-        case 2: api = "/api/subscribe/xxlst"
+        case 1: api = Api.subscribe_api
+        case 2: api = "/api/dzjy/lst" // 天玑护航
         case 3: api = "/api/dzjy/lst"
         default: return
         }
@@ -1292,14 +1296,27 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             let item = subscriptionList[indexPath.row]
             let name   = item["name"] as? String ?? (item["title"] as? String ?? "")
             let code   = item["sgcode"] as? String ?? (item["code"] as? String ?? "")
-            let price  = "\(item["fx_price"] ?? item["cai_buy"] ?? "0")"
-            let sgType = item["sg_type"] as? String ?? ""
+            
+            let fx_price = item["fx_price"]
+            let cai_buy  = item["cai_buy"]
+            let priceVal = fx_price != nil ? "\(fx_price!)" : (cai_buy != nil ? "\(cai_buy!)" : "0")
+            
+            let sgTypeStr: String
+            if let typeInt = item["sg_type"] as? Int {
+                sgTypeStr = "\(typeInt)"
+            } else if let typeStr = item["sg_type"] as? String {
+                sgTypeStr = typeStr
+            } else {
+                sgTypeStr = "\(item["type"] ?? "")"
+            }
+            
+            let rateVal = item["fx_rate"] ?? item["rate"] ?? "0"
+            
             let market: String = {
-                switch sgType { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "" }
+                switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
             }()
-            let rate   = "\(item["fx_rate"] ?? "0")%"
-            let sector = item["industry"] as? String ?? ""
-            cell.configure(name: name, code: code, market: market, price: price, sector: sector.isEmpty ? marketLabel(sgType) : sector, pe: rate)
+
+            cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: "\(rateVal)%")
         }
         return cell
     }
@@ -1586,9 +1603,9 @@ class SubscriptionRowCell: UITableViewCell {
         codeLabel.font = .systemFont(ofSize: 12); codeLabel.textColor = ts
         marketBadge.font = .boldSystemFont(ofSize: 11); marketBadge.textColor = .white
         marketBadge.textAlignment = .center; marketBadge.layer.cornerRadius = 2; marketBadge.clipsToBounds = true
-        priceLabel.font = .systemFont(ofSize: 14); priceLabel.textColor = tp
+        priceLabel.font = .boldSystemFont(ofSize: 15); priceLabel.textColor = tp
         sectorLabel.font = .systemFont(ofSize: 13); sectorLabel.textColor = tp
-        peLabel.font = .systemFont(ofSize: 13); peLabel.textColor = tp
+        peLabel.font = .boldSystemFont(ofSize: 15); peLabel.textColor = tp
         sep.backgroundColor = UIColor(white: 0.9, alpha: 1)
 
         NSLayoutConstraint.activate([

@@ -834,7 +834,7 @@ class IndexDetailViewController: ZQViewController {
             let btn = UIButton(type: .system)
             btn.setTitle(t, for: .normal)
             btn.tag = i
-            btn.titleLabel?.font = .systemFont(ofSize: 15)
+            btn.titleLabel?.font = .systemFont(ofSize: 16)
             btn.addTarget(self, action: #selector(newsTabTapped(_:)), for: .touchUpInside)
             tabStack.addArrangedSubview(btn)
             newsTabButtons.append(btn)
@@ -842,7 +842,7 @@ class IndexDetailViewController: ZQViewController {
 
         newsTabIndicator = UIView()
         newsTabIndicator.backgroundColor = themeRed
-        newsTabIndicator.layer.cornerRadius = 1.5
+        newsTabIndicator.layer.cornerRadius = 2
         tabScroll.addSubview(newsTabIndicator)
 
         // TableView
@@ -891,10 +891,12 @@ class IndexDetailViewController: ZQViewController {
     }
 
     private func refreshNewsTabs() {
+        let selColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1) // 深黑
+        let norColor = UIColor(red: 0.55, green: 0.55, blue: 0.58, alpha: 1)       // 浅灰
         for (i, btn) in newsTabButtons.enumerated() {
             let sel = (i == selectedNewsTab)
-            btn.setTitleColor(sel ? textPrimary : textSec, for: .normal)
-            btn.titleLabel?.font = sel ? .boldSystemFont(ofSize: 15) : .systemFont(ofSize: 15)
+            btn.setTitleColor(sel ? selColor : norColor, for: .normal)
+            btn.titleLabel?.font = sel ? .boldSystemFont(ofSize: 17) : .systemFont(ofSize: 16)
         }
         DispatchQueue.main.async { [weak self] in
             self?.moveNewsIndicator()
@@ -908,7 +910,7 @@ class IndexDetailViewController: ZQViewController {
         let frame = btn.convert(btn.bounds, to: sv)
         let w: CGFloat = 20
         UIView.animate(withDuration: 0.25) {
-            self.newsTabIndicator.frame = CGRect(x: frame.midX - w / 2, y: frame.maxY - 4, width: w, height: 3)
+            self.newsTabIndicator.frame = CGRect(x: frame.midX - w / 2, y: frame.maxY - 4, width: w, height: 4)
         }
     }
 

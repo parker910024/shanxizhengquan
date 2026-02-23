@@ -39,33 +39,14 @@ class StockSearchViewController: ZQViewController {
     private let emptyStateView = UIView()
     private let emptyIcon = UIImageView()
 
-    // 热门搜索数据（6 条，用于未输入时展示）
-    private let hotStocks: [(name: String, code: String)] = [
-        ("平安电工", "sz001856"),
-        ("示例股票2", "sh600001"),
-        ("示例股票3", "sz002001"),
-        ("示例股票4", "sh600002"),
-        ("示例股票5", "sz002002"),
-        ("示例股票6", "sh600003")
-    ]
-    
-    // 数据源（全部股票数据，用于搜索匹配）
-    private let allStocks: [StockSearchResult] = [
-        StockSearchResult(exchange: "深", name: "平安电工", code: "001856", abbreviation: "PADG"),
-        StockSearchResult(exchange: "深", name: "天溯计量", code: "301449", abbreviation: "TSJL"),
-        StockSearchResult(exchange: "京", name: "江天科技", code: "920121", abbreviation: "JTKJ"),
-        StockSearchResult(exchange: "沪", name: "超颖电子", code: "603175", abbreviation: "CYDZ"),
-        StockSearchResult(exchange: "深", name: "天溯计量", code: "301449", abbreviation: "TSJL"),
-        StockSearchResult(exchange: "京", name: "江天科技", code: "920121", abbreviation: "JTKJ"),
-        StockSearchResult(exchange: "沪", name: "超颖电子", code: "603175", abbreviation: "CYDZ"),
-        StockSearchResult(exchange: "深", name: "天溯计量", code: "301449", abbreviation: "TSJL"),
-        StockSearchResult(exchange: "京", name: "江天科技", code: "920121", abbreviation: "JTKJ"),
-        StockSearchResult(exchange: "沪", name: "超颖电子", code: "603175", abbreviation: "CYDZ"),
-        StockSearchResult(exchange: "深", name: "天溯计量", code: "301449", abbreviation: "TSJL"),
-        StockSearchResult(exchange: "京", name: "江天科技", code: "920121", abbreviation: "JTKJ"),
-        StockSearchResult(exchange: "沪", name: "超颖电子", code: "603175", abbreviation: "CYDZ"),
-        StockSearchResult(exchange: "深", name: "天溯计量", code: "301449", abbreviation: "TSJL"),
-        StockSearchResult(exchange: "京", name: "江天科技", code: "920121", abbreviation: "JTKJ")
+    // 热门搜索数据（6 条，初始占位待替换）
+    private var hotStocks: [(name: String, code: String)] = [
+        ("平安电工", "001856"),
+        ("天溯计量", "301449"),
+        ("江天科技", "920121"),
+        ("超颖电子", "603175"),
+        ("赛力斯", "601127"),
+        ("中芯国际", "688981")
     ]
     
     // 搜索结果数据源（动态更新）
@@ -79,6 +60,37 @@ class StockSearchViewController: ZQViewController {
         setupHeaderView()
         setupEmptyState()
         updateUI()
+        loadHotStocks()
+    }
+    
+    private func loadHotStocks() {
+        EastMoneyAPI.shared.fetchHotSearchStocks(count: 6) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let items):
+                if items.count > 0 {
+                    // 更新数据源
+                    for (index, item) in items.enumerated() {
+                        if index < self.hotStocks.count {
+                            self.hotStocks[index] = item
+                        } else if self.hotStocks.count < 6 {
+                            self.hotStocks.append(item)
+                        }
+                    }
+                    
+                    // 刷新UI
+                    for (idx, views) in self.hotItemViews.enumerated() {
+                        if idx < self.hotStocks.count {
+                            let stock = self.hotStocks[idx]
+                            views.nameLabel.text = stock.name
+                            views.codeLabel.text = stock.code
+                        }
+                    }
+                }
+            case .failure(let error):
+                print("加载东方财富热搜失败: \(error.localizedDescription)")
+            }
+        }
     }
     
     private func setupNavigationBar() {
@@ -452,13 +464,47 @@ class StockSearchViewController: ZQViewController {
             return
         }
         
-        // 动态匹配数据源：只匹配名称和代码，只要包含就显示
-        searchResults = allStocks.filter { stock in
-            // 匹配股票名称或代码（包含即显示）
-            stock.name.contains(keyword) || stock.code.contains(keyword)
+        // 发送真实搜索请求
+        SecureNetworkManager.shared.request(
+            api: "/api/user/searchstrategy",
+            method: .get,
+            params: ["key": keyword]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [String: Any],
+                          let list = data["list"] as? [[String: Any]] else {
+                        self?.searchResults = []
+                        self?.updateUI()
+                        return
+                    }
+                    self?.searchResults = list.map { item in
+                        let name = item["name"] as? String ?? (item["title"] as? String ?? "")
+                        let code = item["code"] as? String ?? ""
+                        // API 中叫 latter，映射为简拼
+                        let abbreviation = item["latter"] as? String ?? ""
+                        
+                        let type = item["type"] as? Int ?? 2
+                        var exchangeStr = "深"
+                        switch type {
+                        case 1, 5: exchangeStr = "沪"
+                        case 4: exchangeStr = "京"
+                        case 6: exchangeStr = "基"
+                        default: exchangeStr = "深"
+                        }
+                        
+                        return StockSearchResult(exchange: exchangeStr, name: name, code: code, abbreviation: abbreviation)
+                    }
+                    self?.updateUI()
+                case .failure(let err):
+                    Toast.show("搜索失败: \(err.localizedDescription)")
+                    self?.searchResults = []
+                    self?.updateUI()
+                }
+            }
         }
-        
-        updateUI()
     }
 }
 
