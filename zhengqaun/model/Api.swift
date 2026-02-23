@@ -44,5 +44,10 @@ class Api: NSObject {
     
     // 新股申购列表
     static let subscribe_api = "/api/subscribe/lst"
+
+    //银行卡列表
+    static let accountLst_api = "/api/user/accountLst"
     
+    //绑定银行卡
+    static let bindaccount_api = "/api/user/bindaccount"
 }
