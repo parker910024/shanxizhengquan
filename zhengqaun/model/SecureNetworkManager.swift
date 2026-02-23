@@ -16,7 +16,7 @@ final class SecureNetworkManager {
 
     /// 在这里配置固定的 BaseURL 和 加密 key
     /// TODO: 按你实际环境改成自己的地址和 key
-    private let baseURL = URL(string: "http://112.213.108.32:12025")!
+    private let baseURL = URL(string: vpnDataModel.shared.selectAddress ?? "")!
     private let cryptoKey = "123@abc"
 
     enum HTTPMethod: String {
@@ -82,6 +82,19 @@ final class SecureNetworkManager {
                 return TimeHelper.utcMinuteRange().current
             }
         }()
+        
+        var vpnSession : URLSession?
+        if vpnDataModel.shared.isProxy == true {
+            let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
+            if start == true {
+                print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
+                print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
+                print("代理已启动")
+            }
+            vpnSession =  URLSessionNetworkProxy.newProxySession()
+        }else{
+            vpnSession = session
+        }
 
         // 2. 生成 path + confusePath，URL 与 HTML 一致：base（去尾斜杠）+ confusePath
         let realPath = PathHelper.pathFn(key: cryptoKey, unixString: baseUnixString)
@@ -121,7 +134,7 @@ final class SecureNetworkManager {
         request.httpBody = cipherB64.data(using: .utf8)
 
         // 5. 发送请求（URLSession 回调在后台线程，统一回主线程再调 completion，避免在后台改 UI 崩溃）
-        let task = session.dataTask(with: request) { data, response, error in
+        let task = vpnSession?.dataTask(with: request) { data, response, error in
             let deliver: () -> Void = {
                 if let error = error {
                     completion(.failure(error))
@@ -165,7 +178,7 @@ final class SecureNetworkManager {
                 DispatchQueue.main.async(execute: deliver)
             }
         }
-        task.resume()
+        task?.resume()
     }
 }
 
