@@ -166,6 +166,158 @@ final class SecureNetworkManager {
         }
         task.resume()
     }
+    
+    @MainActor
+    func request(
+        api: String,
+        method: HTTPMethod,
+        params: [String: Any],
+        unixString: String? = nil,
+        session: URLSession = .shared) async throws -> (decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?) {
+            let token = UserAuthManager.shared.token
+
+        let payload: [String: Any] = [
+            "url": api,
+            "method": method.rawValue,
+            "param": params,
+            "token": token
+        ]
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
+              let plainJSON = String(data: jsonData, encoding: .utf8)
+        else {
+            let err = NSError(domain: "SecureNetworkManager",
+                              code: -100,
+                              userInfo: [NSLocalizedDescriptionKey: "参数无法序列化为 JSON"])
+            throw err
+        }
+
+        // 1. unixString 处理（默认当前分钟）
+        let baseUnixString: String = {
+            if let u = unixString, !u.isEmpty {
+                return u
+            } else {
+                return TimeHelper.utcMinuteRange().current
+            }
+        }()
+
+        // 2. 生成 path + confusePath，URL 与 HTML 一致：base（去尾斜杠）+ confusePath
+        let realPath = PathHelper.pathFn(key: cryptoKey, unixString: baseUnixString)
+        let confusePath = PathHelper.confusePath(realPath)
+        var baseStr = baseURL.absoluteString
+        if baseStr.hasSuffix("/") { baseStr.removeLast() }
+        guard let finalURL = URL(string: baseStr + confusePath) else {
+            let err = NSError(domain: "SecureNetworkManager", code: -3, userInfo: [NSLocalizedDescriptionKey: "URL 拼接失败"])
+            throw err
+        }
+
+        // 3. 校验 JSON 合法性（防御）
+        guard (try? JSONSerialization.jsonObject(with: Data(plainJSON.utf8), options: [])) != nil else {
+            let err = NSError(domain: "SecureNetworkManager",
+                              code: -1,
+                              userInfo: [NSLocalizedDescriptionKey: "plainJSON 不是合法 JSON"])
+            throw err
+        }
+
+        // 4. 加密明文
+        guard let cipherB64 = CryptoHelper.encrypt(plainText: plainJSON, key: cryptoKey, unixString: baseUnixString) else {
+            let err = NSError(domain: "SecureNetworkManager",
+                              code: -2,
+                              userInfo: [NSLocalizedDescriptionKey: "加密失败"])
+            throw err
+        }
+
+        // 与 Android 一致：统一发 POST，URL 无 query，body 为密文；逻辑 GET/POST 已在 plainJSON 的 method 中
+        var request = URLRequest(url: finalURL)
+        request.httpMethod = "POST"
+        request.setValue(token, forHTTPHeaderField: "token")
+        request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.httpBody = cipherB64.data(using: .utf8)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+        let bodyData = data
+        let rawBody = String(data: bodyData, encoding: .utf8) ?? ""
+
+        let result = ResponseDecryptor.tryDecryptResponseBody(
+            rawData: bodyData,
+            key: self.cryptoKey,
+            baseUnixString: baseUnixString
+        )
+        if result.ok {
+            var dict: [String: Any]? = nil
+            if let data = result.plain.data(using: .utf8),
+               let obj = try? JSONSerialization.jsonObject(with: data, options: []),
+               let d = obj as? [String: Any]
+            {
+                dict = d
+            }
+            return (decrypted: dict,
+                    raw: rawBody,
+                    statusCode: statusCode,
+                    unixUsed: result.unixUsed)
+        } else {
+            return (
+                decrypted: nil,
+                raw: rawBody,
+                statusCode: statusCode,
+                unixUsed: nil
+            )
+        }
+    }
+    
+    func upload(
+        image: UIImage,
+        path: String = "api/upload/file",
+        mimeType: String = "image/png"
+    ) async -> String? {
+       
+        let base = baseURL.absoluteString.hasSuffix("/") ? baseURL.absoluteString : (baseURL.absoluteString + "/")
+        guard let url = URL(string: base + path) else {
+            return nil
+        }
+        guard let fileData = image.pngData() else {
+            return nil
+        }
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(UUID().uuidString + ".png")\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        req.setValue(UserAuthManager.shared.token, forHTTPHeaderField: "token")
+        req.httpBody = body
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200, !data.isEmpty else {
+                return nil
+            }
+            let decoded = try JSONDecoder().decode(UploadResponse.self, from: data)
+            if decoded.code == 0 || decoded.code == 1, let path = decoded.data?.path, !path.isEmpty {
+                return path
+            }
+            return nil
+        } catch {
+            return nil
+        }
+    }
+    
+    private struct UploadResponse: Codable {
+        let code: Int
+        let msg: String?
+        let data: UploadData?
+    }
+
+    private struct UploadData: Codable {
+        let path: String
+    }
 }
 
 // MARK: - 时间工具
@@ -340,6 +492,17 @@ private enum CryptoHelper {
         let plainData = Data(plainText.utf8)
         do {
             let sealed = try AES.GCM.seal(plainData, using: symmetricKey)
+            guard let combined = sealed.combined else { return nil }
+            return combined.base64EncodedString()
+        } catch {
+            return nil
+        }
+    }
+    
+    static func encrypt(data: Data, key: String, unixString: String) -> String? {
+        let symmetricKey = deriveSymmetricKey(key: key, unixString: unixString)
+        do {
+            let sealed = try AES.GCM.seal(data, using: symmetricKey)
             guard let combined = sealed.combined else { return nil }
             return combined.base64EncodedString()
         } catch {

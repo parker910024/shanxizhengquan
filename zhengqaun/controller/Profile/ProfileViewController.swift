@@ -790,25 +790,41 @@ extension ProfileViewController {
     }
     
     func requestUserInfo() {
-        SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
-            switch result {
-                case .success(let res):
-                    debugPrint("status =", res.statusCode)
-                    debugPrint("raw =", res.raw)          // 原始响应
-                    debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
-                    let dict = res.decrypted
-                    debugPrint(dict ?? "nil")
+        Task {
+            do {
+                let result = try await SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:])
+                let dict = result.decrypted
+                debugPrint(dict ?? "nil")
                 if dict?["code"] as? NSNumber != 1 {
-                        DispatchQueue.main.async {
-                            Toast.showInfo(dict?["msg"] as? String ?? "")
-                        }
-                        return
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
                     }
-            case .failure(let error):
+                    return
+                }
+            } catch {
                 debugPrint("error =", error.localizedDescription)
                 Toast.showError(error.localizedDescription)
             }
         }
+//        SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:]) { result in
+//            switch result {
+//                case .success(let res):
+//                    debugPrint("status =", res.statusCode)
+//                    debugPrint("raw =", res.raw)          // 原始响应
+//                    debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+//                    let dict = res.decrypted
+//                    debugPrint(dict ?? "nil")
+//                if dict?["code"] as? NSNumber != 1 {
+//                        DispatchQueue.main.async {
+//                            Toast.showInfo(dict?["msg"] as? String ?? "")
+//                        }
+//                        return
+//                    }
+//            case .failure(let error):
+//                debugPrint("error =", error.localizedDescription)
+//                Toast.showError(error.localizedDescription)
+//            }
+//        }
     }
 }
 

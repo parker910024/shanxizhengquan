@@ -16,8 +16,6 @@ class TransactionPasswordViewController: ZQViewController {
     private let passwordField = UITextField()
     private let underline = UIView()
     private let confirmButton = UIButton(type: .system)
-
-    private var password: String = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,7 +66,6 @@ class TransactionPasswordViewController: ZQViewController {
         passwordField.clearButtonMode = .whileEditing
         passwordRow.addSubview(passwordField)
         passwordField.translatesAutoresizingMaskIntoConstraints = false
-        passwordField.delegate = self
 
         underline.backgroundColor = Constants.Color.separator
         passwordRow.addSubview(underline)
@@ -131,11 +128,11 @@ class TransactionPasswordViewController: ZQViewController {
             return
         }
         // TODO: 调用设置/修改交易密码接口
-        self.checkOldpay()
+        self.checkOldpay(password: pwd)
     }
     
-    private func checkOldpay() {
-        SecureNetworkManager.shared.request(api: Api.checkOldpay_api, method: .post, params: ["paypass": self.password]) { [unowned self] result in
+    private func checkOldpay(password: String) {
+        SecureNetworkManager.shared.request(api: Api.checkOldpay_api, method: .post, params: ["paypass": password]) { [unowned self] result in
             switch result {
             case .success(let res):
                 let dict = res.decrypted
@@ -146,7 +143,7 @@ class TransactionPasswordViewController: ZQViewController {
                     }
                     return
                 } else {
-                    self.editPass()
+                    self.editPass(password: password)
                 }
             case .failure(let error):
                 debugPrint("error =", error.localizedDescription)
@@ -155,8 +152,8 @@ class TransactionPasswordViewController: ZQViewController {
         }
     }
     
-    private func editPass() {
-        SecureNetworkManager.shared.request(api: Api.editPass_api, method: .post, params: ["password": self.password]) { [unowned self] result in
+    private func editPass(password: String) {
+        SecureNetworkManager.shared.request(api: Api.editPass_api, method: .post, params: ["password": password]) { [unowned self] result in
             switch result {
             case .success(let res):
                 let dict = res.decrypted
@@ -175,11 +172,5 @@ class TransactionPasswordViewController: ZQViewController {
                 Toast.showError(error.localizedDescription)
             }
         }
-    }
-}
-
-extension TransactionPasswordViewController: UITextFieldDelegate {
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        self.password = textField.text ?? ""
     }
 }
