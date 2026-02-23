@@ -4,7 +4,7 @@
 //
 //  个人中心 - 按 UI 图严格布局
 //
-
+import SVProgressHUD
 import UIKit
 import SafariServices
 
@@ -576,9 +576,7 @@ class ProfileViewController: ZQViewController {
         let title = titles[v.tag]
         switch title {
         case "实名认证":
-            let vc = RealNameAuthViewController()
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
+            requestAuthenticationDetail()
         case "个人资料":
             let vc = PersonalProfileViewController()
             vc.hidesBottomBarWhenPushed = true
@@ -769,8 +767,13 @@ extension ProfileViewController {
                 case .success(let res):
                     debugPrint("raw =", res.raw)          // 原始响应
                     debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
-                    
-//                    debugPrint(dict ?? "nil")
+                    let dict = res.decrypted
+                    if dict?["code"] as? NSNumber != 1 {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict?["msg"] as? String ?? "")
+                        }
+                        return
+                    }
                     do {
                         if let dict = res.decrypted, let list = dict["data"] as? [String: Any], let json = list["list"] {
                             let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
@@ -826,6 +829,47 @@ extension ProfileViewController {
 //            }
 //        }
     }
+    
+    func requestAuthenticationDetail() {
+        Task { @MainActor in
+            do {
+                SVProgressHUD.show()
+                let result = try await SecureNetworkManager.shared.request(api: Api.authenticationDetail_api, method: .get, params: [:])
+                debugPrint("raw =", result.raw)          // 原始响应
+                debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                await SVProgressHUD.dismiss()
+                if let dict = result.decrypted, let detail = dict["data"] as? [String: Any], let json = detail["detail"]  {
+                    if dict["mag"] as? String != "success" {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict["msg"] as? String ?? "")
+                        }
+                        return
+                    } else {
+                        let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
+                        let model = try JSONDecoder().decode(AuthenticationDetailModel.self, from: jsonData)
+                        debugPrint(model)
+                        if model.isAudit == "1" {
+                            let resultVC = RealNameAuthResultViewController()
+                            resultVC.name = model.name
+                            resultVC.idCard = "\(model.idCard)"
+                            resultVC.hidesBottomBarWhenPushed = true
+                            navigationController?.pushViewController(resultVC, animated: true)
+                        } else if model.isAudit == "3" {
+                            Toast.showInfo("审核中...")
+                        } else {
+                            let vc = RealNameAuthViewController()
+                            vc.hidesBottomBarWhenPushed = true
+                            navigationController?.pushViewController(vc, animated: true)
+                        }
+                    }
+                }
+            } catch {
+                debugPrint("error =", error.localizedDescription, #function)
+                await SVProgressHUD.dismiss()
+                Toast.showError(error.localizedDescription)
+            }
+        }
+    }
 }
 
 
@@ -846,3 +890,29 @@ struct AssetsModel: Codable {
         case xinguTotal = "xingu_total"
     }
 }
+
+enum AuthenticationStatus: Int, Codable {
+    // 实名状态 0=待审 1=审核通过 2=驳回 3=审核中
+    case wait = 0
+    case approved = 1
+    case reject = 2
+    case review = 3
+}
+
+// MARK: - AuthenticationDetailModel
+struct AuthenticationDetailModel: Codable {
+    var authContact, backcardimage, frontcardimage: String
+    var id: Int
+    var idCard, isAudit, name, reject: String
+    var userID: Int
+
+    enum CodingKeys: String, CodingKey {
+        case authContact = "auth_contact"
+        case backcardimage, frontcardimage, id
+        case idCard = "id_card"
+        case isAudit = "is_audit"
+        case name, reject
+        case userID = "user_id"
+    }
+}
+

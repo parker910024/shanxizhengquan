@@ -1,4 +1,4 @@
-module Pods_zhengqaun {
+framework module Pods_zhengqaun {
   umbrella header "Pods-zhengqaun-umbrella.h"
 
   export *

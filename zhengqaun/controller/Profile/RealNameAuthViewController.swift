@@ -5,6 +5,7 @@
 //  Created by admin on 2026/1/6.
 //
 
+import SVProgressHUD
 import PhotosUI
 import UIKit
 
@@ -392,6 +393,7 @@ class RealNameAuthViewController: ZQViewController {
         
         Task {
             do {
+                SVProgressHUD.show()
                 if let frontPath = await SecureNetworkManager.shared.upload(image: frontImage),
                    let backPath = await SecureNetworkManager.shared.upload(image: backImage)
                 {
@@ -401,9 +403,11 @@ class RealNameAuthViewController: ZQViewController {
                     if dict?["code"] as? NSNumber != 1 {
                         DispatchQueue.main.async {
                             Toast.showInfo(dict?["msg"] as? String ?? "")
+                            SVProgressHUD.dismiss()
                         }
                         return
                     }
+                    await SVProgressHUD.dismiss()
                     // 跳转到结果页面（等待审核状态）
                     let resultVC = RealNameAuthResultViewController()
                     resultVC.name = name
@@ -411,9 +415,11 @@ class RealNameAuthViewController: ZQViewController {
                     resultVC.hidesBottomBarWhenPushed = true
                     navigationController?.pushViewController(resultVC, animated: true)
                 } else {
+                     await SVProgressHUD.dismiss()
                     Toast.showError("上传图片失败,请稍候再试")
                 }
             } catch {
+                await SVProgressHUD.dismiss()
                 debugPrint("error =", error.localizedDescription)
                 Toast.showError(error.localizedDescription)
             }

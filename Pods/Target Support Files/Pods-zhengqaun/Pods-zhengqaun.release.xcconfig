@@ -1,16 +1,16 @@
 ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES
 CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO
+FRAMEWORK_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/DGCharts" "${PODS_CONFIGURATION_BUILD_DIR}/FCUUID" "${PODS_CONFIGURATION_BUILD_DIR}/GKNavigationBarViewController" "${PODS_CONFIGURATION_BUILD_DIR}/IQKeyboardManager" "${PODS_CONFIGURATION_BUILD_DIR}/JJException" "${PODS_CONFIGURATION_BUILD_DIR}/SVProgressHUD" "${PODS_CONFIGURATION_BUILD_DIR}/UICKeyChainStore"
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
-HEADER_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/FCUUID" "${PODS_ROOT}/Headers/Public/GKNavigationBarViewController" "${PODS_ROOT}/Headers/Public/IQKeyboardManager" "${PODS_ROOT}/Headers/Public/JJException" "${PODS_ROOT}/Headers/Public/SVProgressHUD" "${PODS_ROOT}/Headers/Public/UICKeyChainStore"
-LIBRARY_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/DGCharts" "${PODS_CONFIGURATION_BUILD_DIR}/FCUUID" "${PODS_CONFIGURATION_BUILD_DIR}/GKNavigationBarViewController" "${PODS_CONFIGURATION_BUILD_DIR}/IQKeyboardManager" "${PODS_CONFIGURATION_BUILD_DIR}/JJException" "${PODS_CONFIGURATION_BUILD_DIR}/SVProgressHUD" "${PODS_CONFIGURATION_BUILD_DIR}/UICKeyChainStore" "${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}" /usr/lib/swift
-OTHER_CFLAGS = $(inherited) -fmodule-map-file="${PODS_CONFIGURATION_BUILD_DIR}/DGCharts/DGCharts.modulemap"
-OTHER_LDFLAGS = $(inherited) -ObjC -l"DGCharts" -l"FCUUID" -l"GKNavigationBarViewController" -l"IQKeyboardManager" -l"JJException" -l"SVProgressHUD" -l"UICKeyChainStore" -framework "CoreGraphics" -framework "Foundation" -framework "QuartzCore" -framework "Security" -framework "UIKit"
+HEADER_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/DGCharts/DGCharts.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/FCUUID/FCUUID.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/GKNavigationBarViewController/GKNavigationBarViewController.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/IQKeyboardManager/IQKeyboardManager.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/JJException/JJException.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/SVProgressHUD/SVProgressHUD.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/UICKeyChainStore/UICKeyChainStore.framework/Headers"
+LD_RUNPATH_SEARCH_PATHS = $(inherited) /usr/lib/swift '@executable_path/Frameworks' '@loader_path/Frameworks'
+LIBRARY_SEARCH_PATHS = $(inherited) "${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}" /usr/lib/swift
+OTHER_LDFLAGS = $(inherited) -framework "CoreGraphics" -framework "DGCharts" -framework "FCUUID" -framework "Foundation" -framework "GKNavigationBarViewController" -framework "IQKeyboardManager" -framework "JJException" -framework "QuartzCore" -framework "SVProgressHUD" -framework "Security" -framework "UICKeyChainStore" -framework "UIKit"
 OTHER_MODULE_VERIFIER_FLAGS = $(inherited) "-F${PODS_CONFIGURATION_BUILD_DIR}/DGCharts" "-F${PODS_CONFIGURATION_BUILD_DIR}/FCUUID" "-F${PODS_CONFIGURATION_BUILD_DIR}/GKNavigationBarViewController" "-F${PODS_CONFIGURATION_BUILD_DIR}/IQKeyboardManager" "-F${PODS_CONFIGURATION_BUILD_DIR}/JJException" "-F${PODS_CONFIGURATION_BUILD_DIR}/SVProgressHUD" "-F${PODS_CONFIGURATION_BUILD_DIR}/UICKeyChainStore"
-OTHER_SWIFT_FLAGS = $(inherited) -D COCOAPODS -Xcc -fmodule-map-file="${PODS_CONFIGURATION_BUILD_DIR}/DGCharts/DGCharts.modulemap"
+OTHER_SWIFT_FLAGS = $(inherited) -D COCOAPODS
 PODS_BUILD_DIR = ${BUILD_DIR}
 PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
 PODS_PODFILE_DIR_PATH = ${SRCROOT}/.
 PODS_ROOT = ${SRCROOT}/Pods
 PODS_XCFRAMEWORKS_BUILD_DIR = $(PODS_CONFIGURATION_BUILD_DIR)/XCFrameworkIntermediates
-SWIFT_INCLUDE_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/DGCharts"
 USE_RECURSIVE_SCRIPT_INPUTS_IN_SCRIPT_PHASES = YES
