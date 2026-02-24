@@ -13,6 +13,7 @@ class AccountTradeViewController: ZQViewController {
     var stockName: String = "汉得信息"
     var stockCode: String = "300170"
     var exchange: String = "深"
+    var currentPrice: String = "22.67"
     var tradeType: TradeType = .buy // 买入或卖出
     var sellBuyPrice: String = "--"   // 卖出时的买入价
     var sellHoldingQty: String = "0"  // 卖出时的持仓手数
