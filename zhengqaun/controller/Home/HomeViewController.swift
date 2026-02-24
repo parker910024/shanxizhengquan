@@ -549,7 +549,8 @@ extension HomeViewController: UITableViewDataSource {
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
                 case "银证转出":
-                    let vc = BankSecuritiesTransferViewController()
+                    let vc = BankTransferIntroViewController()
+                    vc.initialTabIndex = 1 // 默认选中银证转出
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
                 case "新股申购":
