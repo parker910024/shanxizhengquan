@@ -109,6 +109,7 @@ class PersonalProfileViewController: ZQViewController {
             ("手机号", maskPhone(phone), false),
             ("账号", account, false),
             ("交易密码", "修改>", true),
+            ("登录密码", "修改>", true),
             ("系统版本", "V25.1.1>", true)
         ]
         for (idx, item) in items.enumerated() {
@@ -199,6 +200,11 @@ class PersonalProfileViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 3:
+            let vc = LoginPasswordViewController()
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
+            break
+        case 4:
             // 系统版本 -> 关于/版本说明（若有）
             break
         default:
