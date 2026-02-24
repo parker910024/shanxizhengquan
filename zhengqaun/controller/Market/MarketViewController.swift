@@ -121,6 +121,21 @@ class MarketViewController: ZQViewController {
         setupSubscriptionContent()
         updateVisibleContent()
         loadAllData()
+        // 监听功能开关通知
+        NotificationCenter.default.addObserver(self, selector: #selector(updateFeatureSegments), name: FeatureSwitchManager.didUpdateNotification, object: nil)
+        updateFeatureSegments()
+    }
+
+    /// 根据功能开关隐藏/显示分段 tab
+    @objc private func updateFeatureSegments() {
+        let mgr = FeatureSwitchManager.shared
+        for btn in segmentButtons {
+            switch btn.tag {
+            case 1: btn.isHidden = !mgr.isXgsgEnabled  // 新股申购
+            case 2: btn.isHidden = !mgr.isXxpsEnabled   // 战略配售
+            default: break
+            }
+        }
     }
 
     // MARK: - Segment Bar

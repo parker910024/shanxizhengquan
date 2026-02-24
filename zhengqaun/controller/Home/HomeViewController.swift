@@ -18,7 +18,20 @@ class HomeViewController: ZQViewController {
     
     // 数据源（与 new UI 一致：2 行 x 5 列）
     private var bannerImages: [UIImage] = []
-    private let menuItems: [(String, String)] = [
+    private var menuItems: [(String, String)] = [
+        ("极速开户", "icon_home_1"),
+        ("市场行情", "icon_home_7"),
+        ("持仓记录", "icon2"),
+        ("银证转入", "icon1"),
+        ("银证转出", "icon11"),
+        ("新股申购", "icon_home_6"),
+        ("场外撮合交易", "icon_home_9"),
+        ("智能选股", "icon12"),
+        ("AI智投", "icon_home_13"),
+        ("龙虎榜", "icon4")
+    ]
+    /// 原始菜单列表（用于开关过滤）
+    private let allMenuItems: [(String, String)] = [
         ("极速开户", "icon_home_1"),
         ("市场行情", "icon_home_7"),
         ("持仓记录", "icon2"),
@@ -40,7 +53,20 @@ class HomeViewController: ZQViewController {
         // 南向/北向资金
         capitalInflow()
         showNewStockReminderPopupIfNeeded()
+        // 加载功能开关配置
+        FeatureSwitchManager.shared.loadConfig()
+        NotificationCenter.default.addObserver(self, selector: #selector(featureSwitchDidUpdate), name: FeatureSwitchManager.didUpdateNotification, object: nil)
+    }
 
+    /// 功能开关更新后刷新菜单
+    @objc private func featureSwitchDidUpdate() {
+        let mgr = FeatureSwitchManager.shared
+        menuItems = allMenuItems.filter { item in
+            let title = item.0
+            if title == "新股申购" && !mgr.isXgsgEnabled { return false }
+            return true
+        }
+        tableView.reloadData()
     }
 
     override func viewDidAppear(_ animated: Bool) {
