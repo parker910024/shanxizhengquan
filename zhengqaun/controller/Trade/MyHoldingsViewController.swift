@@ -145,7 +145,7 @@ class MyHoldingsViewController: ZQViewController {
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
-        let navH = Constants.Navigation.totalNavigationHeight
+//        let navH = Constants.Navigation.totalNavigationHeight
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: segmentContainer.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -507,13 +507,14 @@ extension MyHoldingsViewController: UITableViewDataSource {
                 if indexPath.section < self.rawHistoricalData.count {
                     vc.holdingData = self.rawHistoricalData[indexPath.section]
                 }
+                vc.hiddingButton = true
                 vc.hidesBottomBarWhenPushed = true
                 self.navigationController?.pushViewController(vc, animated: true)
             }
-            cell.onMarket = { [weak self] in
+            cell.onMarket = { [unowned self] in
                 // 行情
             }
-            cell.onProfit = { [weak self] in
+            cell.onProfit = { [unowned self] in
                 // 盈利
             }
             return cell

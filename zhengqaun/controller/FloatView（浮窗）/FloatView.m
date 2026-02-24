@@ -175,224 +175,41 @@
 
 /**
  *  主浮窗移动时候的响应事件
+ *  可随意拖动，松手后根据中心点靠近左/右哪一侧自动靠边
  */
 - (void)floatViewMove:(UIPanGestureRecognizer *)pan
 {
+    CGPoint trans = [pan translationInView:self.fatherView];
 
-        CGPoint trans = [pan translationInView:self.fatherView];
-        //在view上移动的距离
+    if (pan.state == UIGestureRecognizerStateChanged) {
+        // 拖动中：主浮窗 + 子浮窗同步移动
         pan.view.center = CGPointMake(pan.view.center.x + trans.x, pan.view.center.y + trans.y);
         for (FloatViewSubView *subView in self.subFloatViews) {
-            subView.center = CGPointMake(pan.view.center.x + trans.x, pan.view.center.y + trans.y);
+            subView.center = pan.view.center;
         }
-    
-        //清空移动的距离
         [pan setTranslation:CGPointZero inView:self.fatherView];
-    
-    
-    
-    
-    
-    CGPoint removePoint  = [pan translationInView:self.fatherView];
-    
-    if (pan.state == UIGestureRecognizerStateEnded ) {
-        
-        if (removePoint.x + pan.view.center.x <= SCREEN_WIDTH/2 ) {
-            //左侧
-            if ( removePoint.y + pan.view.center.y <= 64) {
-                //顶部
-                if (removePoint.x + pan.view.center.x <= pan.view.frame.size.width/2) {
-                
-                    [UIView animateWithDuration:0.2 animations:^{
-                        pan.view.center = CGPointMake(pan.view.frame.size.width/2, pan.view.frame.size.height/2);
-                    }];
-                    for (FloatViewSubView *subView in self.subFloatViews) {
-                        subView.center = CGPointMake(pan.view.frame.size.width/2 , pan.view.frame.size.height/2);
-                    }
-                    
-                    //清空移动的距离
-                    [pan setTranslation:CGPointZero inView:self.fatherView];
-                    
-                }else if (removePoint.x + pan.view.center.x >= SCREEN_WIDTH - pan.view.frame.size.width/2){
-                    
-                    [UIView animateWithDuration:0.2 animations:^{
-                        pan.view.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2, pan.view.frame.size.height/2);
-                    }];
-                    for (FloatViewSubView *subView in self.subFloatViews) {
-                        subView.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2, pan.view.frame.size.height/2);
-                    }
-                    
-                    //清空移动的距离
-                    [pan setTranslation:CGPointZero inView:self.fatherView];
-                    
-                }else{
-                
-                [UIView animateWithDuration:0.2 animations:^{
-                    pan.view.center = CGPointMake(removePoint.x + pan.view.center.x , pan.view.frame.size.height/2);
-                }];
-                for (FloatViewSubView *subView in self.subFloatViews) {
-                    subView.center = CGPointMake(removePoint.x + pan.view.center.x , pan.view.frame.size.height/2);
-                }
-                
-                //清空移动的距离
-                [pan setTranslation:CGPointZero inView:self.fatherView];
-                    
-                }
-                
-            } else if (removePoint.y + pan.view.center.y >= SCREEN_HEIGHT - 64 ) {
-                //底部
-                if (removePoint.x + pan.view.center.x <= pan.view.frame.size.width/2) {
-                    
-                    [UIView animateWithDuration:0.2 animations:^{
-                        pan.view.center = CGPointMake(pan.view.frame.size.width/2,  SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }];
-                    for (FloatViewSubView *subView in self.subFloatViews) {
-                        subView.center = CGPointMake(pan.view.frame.size.width/2 , SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }
-                    
-                    //清空移动的距离
-                    [pan setTranslation:CGPointZero inView:self.fatherView];
+    } else if (pan.state == UIGestureRecognizerStateEnded) {
+        CGFloat halfW = pan.view.frame.size.width / 2;
+        CGFloat halfH = pan.view.frame.size.height / 2;
+        CGFloat centerX = pan.view.center.x;
+        CGFloat centerY = pan.view.center.y;
 
-                }else if (removePoint.x + pan.view.center.x >= SCREEN_WIDTH - pan.view.frame.size.width/2){
-                    
-                    [UIView animateWithDuration:0.2 animations:^{
-                        pan.view.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2,  SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }];
-                    for (FloatViewSubView *subView in self.subFloatViews) {
-                        subView.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2,  SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }
-                    
-                    //清空移动的距离
-                    [pan setTranslation:CGPointZero inView:self.fatherView];
-                    
-                }else{
+        // 靠近哪一侧就靠哪边
+        CGFloat targetX = (centerX < SCREEN_WIDTH / 2) ? halfW : (SCREEN_WIDTH - halfW);
+        // 垂直方向保持当前位置，限制在屏幕内
+        CGFloat targetY = centerY;
+        if (targetY < halfH) targetY = halfH;
+        if (targetY > SCREEN_HEIGHT - halfH) targetY = SCREEN_HEIGHT - halfH;
 
-                [UIView animateWithDuration:0.2 animations:^{
-                    pan.view.center = CGPointMake(removePoint.x + pan.view.center.x , SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                }];
-                for (FloatViewSubView *subView in self.subFloatViews) {
-                    subView.center = CGPointMake(removePoint.x + pan.view.center.x , SCREEN_HEIGHT - pan.view.frame.size.height/2);
-                }
-                //清空移动的距离
-                [pan setTranslation:CGPointZero inView:self.fatherView];
-                
-                }
-            }else{
-            //中间位置
-                [UIView animateWithDuration:0.2 animations:^{
-                    pan.view.center = CGPointMake(pan.view.frame.size.width/2, removePoint.y + pan.view.center.y);
-                }];
-                for (FloatViewSubView *subView in self.subFloatViews) {
-                    subView.center = CGPointMake(pan.view.frame.size.width/2, removePoint.y + pan.view.center.y);
-                }
-                //清空移动的距离
-                [pan setTranslation:CGPointZero inView:self.fatherView];
-                
-                
+        CGPoint target = CGPointMake(targetX, targetY);
+        [UIView animateWithDuration:0.2 animations:^{
+            pan.view.center = target;
+            for (FloatViewSubView *subView in self.subFloatViews) {
+                subView.center = target;
             }
-        }else{
-            //右侧
-            if ( removePoint.y + pan.view.center.y <= 64) {
-                    //顶部
-                    if (removePoint.x + pan.view.center.x <= pan.view.frame.size.width/2) {
-                        
-                        [UIView animateWithDuration:0.2 animations:^{
-                            pan.view.center = CGPointMake(pan.view.frame.size.width/2, pan.view.frame.size.height/2);
-                        }];
-                        for (FloatViewSubView *subView in self.subFloatViews) {
-                            subView.center = CGPointMake(pan.view.frame.size.width/2 , pan.view.frame.size.height/2);
-                        }
-                        
-                        //清空移动的距离
-                        [pan setTranslation:CGPointZero inView:self.fatherView];
-                        
-                    }else if (removePoint.x + pan.view.center.x >= SCREEN_WIDTH - pan.view.frame.size.width/2){
-                        
-                        [UIView animateWithDuration:0.2 animations:^{
-                            pan.view.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2, pan.view.frame.size.height/2);
-                        }];
-                        for (FloatViewSubView *subView in self.subFloatViews) {
-                            subView.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2, pan.view.frame.size.height/2);
-                        }
-                        
-                        //清空移动的距离
-                        [pan setTranslation:CGPointZero inView:self.fatherView];
-                        
-                    }else{
-                
-                [UIView animateWithDuration:0.2 animations:^{
-                    pan.view.center = CGPointMake(removePoint.x + pan.view.center.x ,pan.view.frame.size.height/2);
-                }];
-                for (FloatViewSubView *subView in self.subFloatViews) {
-                    subView.center = CGPointMake(removePoint.x + pan.view.center.x,pan.view.frame.size.height/2);
-                }
-                //清空移动的距离
-                [pan setTranslation:CGPointZero inView:self.fatherView];
-                
-                }
-                
-            } else if (removePoint.y + pan.view.center.y >= SCREEN_HEIGHT - 64 ) {
-                //底部
-                
-                if (removePoint.x + pan.view.center.x <= pan.view.frame.size.width/2) {
-                    
-                    [UIView animateWithDuration:0.2 animations:^{
-                        pan.view.center = CGPointMake(pan.view.frame.size.width/2,  SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }];
-                    for (FloatViewSubView *subView in self.subFloatViews) {
-                        subView.center = CGPointMake(pan.view.frame.size.width/2 , SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }
-                    
-                    //清空移动的距离
-                    [pan setTranslation:CGPointZero inView:self.fatherView];
-                    
-                }else if (removePoint.x + pan.view.center.x >= SCREEN_WIDTH - pan.view.frame.size.width/2){
-                    
-                    [UIView animateWithDuration:0.2 animations:^{
-                        pan.view.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2,  SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }];
-                    for (FloatViewSubView *subView in self.subFloatViews) {
-                        subView.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2,  SCREEN_HEIGHT- pan.view.frame.size.height/2);
-                    }
-                    
-                    //清空移动的距离
-                    [pan setTranslation:CGPointZero inView:self.fatherView];
-                    
-                }else{
-                    
-                [UIView animateWithDuration:0.2 animations:^{
-                    pan.view.center = CGPointMake(removePoint.x + pan.view.center.x , SCREEN_HEIGHT - pan.view.frame.size.height/2);
-                }];
-                for (FloatViewSubView *subView in self.subFloatViews) {
-                    subView.center = CGPointMake(removePoint.x + pan.view.center.x, SCREEN_HEIGHT -pan.view.frame.size.height/2 );
-                }
-                //清空移动的距离
-                [pan setTranslation:CGPointZero inView:self.fatherView];
-                
-                }
-            }else{
-                //中间位置
-                [UIView animateWithDuration:0.2 animations:^{
-                    pan.view.center = CGPointMake( SCREEN_WIDTH - pan.view.frame.size.width/2,removePoint.y + pan.view.center.y);
-                }];
-                for (FloatViewSubView *subView in self.subFloatViews) {
-                    subView.center = CGPointMake(SCREEN_WIDTH - pan.view.frame.size.width/2, removePoint.y + pan.view.center.y);
-                }
-                //清空移动的距离
-                [pan setTranslation:CGPointZero inView:self.fatherView];
-                
-            }
-        }
+        }];
+        [pan setTranslation:CGPointZero inView:self.fatherView];
     }
-    
-    
-//    if (!self.isShowing) {
-    
-
-    
-    //    }
-    
-    
 }
 
 - (void)showSubViews

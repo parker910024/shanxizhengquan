@@ -4,13 +4,14 @@
 //
 //  Created by admin on 2026/1/6.
 //
-
+import SafariServices
+import SVProgressHUD
 import UIKit
 
 class ContractListViewController: ZQViewController {
 
     private let tableView = UITableView(frame: .zero, style: .plain)
-    private var contracts: [Contract] = []
+    private var contracts: [ContractModel] = []
     private var tableViewTopConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
@@ -125,19 +126,52 @@ class ContractListViewController: ZQViewController {
     }
 
     private func loadData() {
-        contracts = Contract.mockContracts()
-        tableView.reloadData()
+//        contracts = Contract.mockContracts()
+        requestContracts()
+    }
+    
+    func requestContracts() {
+        Task {
+            do {
+                SVProgressHUD.show()
+                let result = try await SecureNetworkManager.shared.request(api: Api.contracts_api, method: .get, params: [:])
+                await SVProgressHUD.dismiss()
+                debugPrint("raw =", result.raw) // 原始响应
+                debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                let dict = result.decrypted
+                if dict?["code"] as? NSNumber != 1 {
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                    }
+                    return
+                }
+                if let dict = result.decrypted, let list = dict["data"] {
+                    let jsonData = try JSONSerialization.data(withJSONObject: list, options: [])
+                    let model = try JSONDecoder().decode([ContractModel].self, from: jsonData)
+                    debugPrint(model)
+                    self.contracts = model
+                    
+                    tableView.reloadData()
+                }
+            } catch {
+                debugPrint("error =", error.localizedDescription, #function)
+                Toast.showError(error.localizedDescription)
+            }
+        }
     }
 
-    func openContractDetail(_ contract: Contract) {
-        let vc = ContractDetailViewController()
-        vc.contract = contract
-        vc.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(vc, animated: true)
+    func openContractDetail(_ contract: ContractModel) {
+//        let vc = ContractDetailViewController()
+//        vc.contract = contract
+//        vc.hidesBottomBarWhenPushed = true
+//        navigationController?.pushViewController(vc, animated: true)
+        guard let url = URL(string: contract.link) else { return }
+        let vc = SFSafariViewController(url: url)
+        present(vc, animated: true)
     }
 
     /// 点击签订时弹出「合同信息」弹框，确认后进入合同详情
-    func showContractSignPopup(for contract: Contract) {
+    func showContractSignPopup(for contract: ContractModel) {
         let popup = ContractSignInfoViewController()
         popup.contract = contract
         popup.modalPresentationStyle = .overFullScreen
@@ -159,7 +193,13 @@ extension ContractListViewController: UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ContractCell", for: indexPath) as! ContractCell
         let contract = contracts[indexPath.row]
         cell.configure(with: contract) { [weak self] in
-            self?.showContractSignPopup(for: contract)
+//            self?.showContractSignPopup(for: contract)
+            let con = Contract.mockContracts()
+            let vc = ContractDetailViewController()
+            vc.contract = con.first
+            vc.model = contract
+            vc.hidesBottomBarWhenPushed = true
+            self?.navigationController?.pushViewController(vc, animated: true)
         }
         return cell
     }
@@ -252,19 +292,21 @@ class ContractCell: UITableViewCell {
         onSignTapped?()
     }
 
-    func configure(with contract: Contract, onSign: (() -> Void)?) {
+    func configure(with contract: ContractModel, onSign: (() -> Void)?) {
         nameLabel.text = contract.name
         onSignTapped = onSign
 
-        switch contract.status {
-        case .signed:
+        switch contract.status { //是否签署 1否 2是
+        case 1:
             statusLabel.text = "已签订"
             statusLabel.textColor = Constants.Color.textSecondary
             signButton.isHidden = true
-        case .unsigned:
+        case 0:
             statusLabel.text = "未签订"
             statusLabel.textColor = Constants.Color.stockRise
             signButton.isHidden = false
+        default:
+            break
         }
     }
 }

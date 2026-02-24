@@ -5,18 +5,18 @@
 //  Created by admin on 2026/1/6.
 //
 
-import UIKit
+import SVProgressHUD
 import PhotosUI
+import UIKit
 
 class RealNameAuthViewController: ZQViewController {
-    
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     
     // 信息区
-    private let nationalityLabel = UILabel()  // 国籍，点击选择
+    private let nationalityLabel = UILabel() // 国籍，点击选择
     private let nameTextField = UITextField() // 真实姓名
-    private let idTypeLabel = UILabel()       // 证件类型，显示「身份证」
+    private let idTypeLabel = UILabel() // 证件类型，显示「身份证」
     private let idCardTextField = UITextField()
     
     // 图片上传
@@ -53,7 +53,7 @@ class RealNameAuthViewController: ZQViewController {
         gk_navBackgroundColor = .white
         gk_navTintColor = .white
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = .black
         gk_navTitle = "实名认证"
         gk_navLineHidden = true
         gk_backStyle = .black
@@ -90,6 +90,7 @@ class RealNameAuthViewController: ZQViewController {
     private var infoSectionContainer: UIView!
     
     // MARK: - 证件信息（国籍 / 真实姓名 / 证件类型 / 身份证号码，表格式+分隔线）
+
     private func setupCertificateInfo() {
         let card = UIView()
         card.backgroundColor = .white
@@ -116,13 +117,15 @@ class RealNameAuthViewController: ZQViewController {
         nameTextField.font = UIFont.systemFont(ofSize: 15)
         nameTextField.textColor = Constants.Color.textPrimary
         nameTextField.borderStyle = .none
-        let nameRow = addInfoRow(to: card, label: "真实姓名", rightView: nameTextField, top: rowH, height: rowH, showSeparator: true, sepColor: sepColor)
+        // nameRow
+        _ = addInfoRow(to: card, label: "真实姓名", rightView: nameTextField, top: rowH, height: rowH, showSeparator: true, sepColor: sepColor)
         
         // 证件类型
         idTypeLabel.text = "身份证"
         idTypeLabel.font = UIFont.systemFont(ofSize: 15)
         idTypeLabel.textColor = Constants.Color.textPrimary
-        let idTypeRow = addInfoRow(to: card, label: "证件类型", rightView: idTypeLabel, top: rowH * 2, height: rowH, showSeparator: true, sepColor: sepColor)
+        // idTypeRow
+        _ = addInfoRow(to: card, label: "证件类型", rightView: idTypeLabel, top: rowH * 2, height: rowH, showSeparator: true, sepColor: sepColor)
         
         // 身份证号码
         idCardTextField.placeholder = "请输入身份证号码"
@@ -130,7 +133,7 @@ class RealNameAuthViewController: ZQViewController {
         idCardTextField.textColor = Constants.Color.textPrimary
         idCardTextField.borderStyle = .none
         idCardTextField.keyboardType = .numberPad
-        let _ = addInfoRow(to: card, label: "身份证号码", rightView: idCardTextField, top: rowH * 3, height: rowH, showSeparator: false, sepColor: sepColor)
+        _ = addInfoRow(to: card, label: "身份证号码", rightView: idCardTextField, top: rowH * 3, height: rowH, showSeparator: false, sepColor: sepColor)
         
         infoSectionContainer = card
         NSLayoutConstraint.activate([
@@ -201,6 +204,7 @@ class RealNameAuthViewController: ZQViewController {
     }
     
     // MARK: - 图片上传
+
     private func setupImageUpload() {
         // 证件正面上传（头像面）：左右结构，右侧图片 touxiangmian
         setupImageUploadContainer(
@@ -303,6 +307,7 @@ class RealNameAuthViewController: ZQViewController {
     }
     
     // MARK: - 提交按钮
+
     private func setupSubmitButton() {
         submitButton.setTitle("确定", for: .normal)
         submitButton.setTitleColor(.white, for: .normal)
@@ -322,6 +327,7 @@ class RealNameAuthViewController: ZQViewController {
     }
     
     // MARK: - 注意事项
+
     private func setupNotice() {
         noticeLabel.text = "注意事项:\n务必使用真实的本人姓名、身份证号码信息进行填写。系统会校验信息的真实性,如果信息有误将直接会影响到山西证券为您提供的服务的正常使用。"
         noticeLabel.font = UIFont.systemFont(ofSize: 12)
@@ -339,6 +345,7 @@ class RealNameAuthViewController: ZQViewController {
     }
     
     // MARK: - Actions
+
     @objc private func frontImageTapped() {
         showImagePicker(isFront: true)
     }
@@ -364,45 +371,74 @@ class RealNameAuthViewController: ZQViewController {
     
     @objc private func submitTapped() {
         // 验证输入
-//        guard let name = nameTextField.text, !name.isEmpty else {
-//            Toast.showInfo("请输入姓名")
-//            return
-//        }
-//        
-//        guard let idCard = idCardTextField.text, !idCard.isEmpty else {
-//            Toast.showInfo("请输入证件号")
-//            return
-//        }
-//        
-//        guard frontImage != nil else {
-//            Toast.showInfo("请上传证件正面")
-//            return
-//        }
-//        
-//        guard backImage != nil else {
-//            Toast.showInfo("请上传证件反面")
-//            return
-//        }
+        guard let name = nameTextField.text, !name.isEmpty else {
+            Toast.showInfo("请输入姓名")
+            return
+        }
+
+        guard let idCard = idCardTextField.text, !idCard.isEmpty else {
+            Toast.showInfo("请输入证件号")
+            return
+        }
+
+        guard let frontImage else {
+            Toast.showInfo("请上传证件正面")
+            return
+        }
+
+        guard let backImage else {
+            Toast.showInfo("请上传证件反面")
+            return
+        }
         
-        // 跳转到结果页面（等待审核状态）
-        let resultVC = RealNameAuthResultViewController()
-        resultVC.name = "222"
-        resultVC.idCard = "22222222"
-        resultVC.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(resultVC, animated: true)
+        Task {
+            do {
+                SVProgressHUD.show()
+                if let frontPath = await SecureNetworkManager.shared.upload(image: frontImage),
+                   let backPath = await SecureNetworkManager.shared.upload(image: backImage)
+                {
+                    let result = try await SecureNetworkManager.shared.request(api: Api.authentication_api, method: .post, params: ["name": name, "id_card": idCard, "f": frontPath, "b": backPath])
+                    let dict = result.decrypted
+                    debugPrint(dict ?? "nil")
+                    if dict?["code"] as? NSNumber != 1 {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict?["msg"] as? String ?? "")
+                            SVProgressHUD.dismiss()
+                        }
+                        return
+                    }
+                    await SVProgressHUD.dismiss()
+                    // 跳转到结果页面（等待审核状态）
+                    let resultVC = RealNameAuthResultViewController()
+                    resultVC.name = name
+                    resultVC.idCard = idCard
+                    resultVC.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(resultVC, animated: true)
+                } else {
+                     await SVProgressHUD.dismiss()
+                    Toast.showError("上传图片失败,请稍候再试")
+                }
+            } catch {
+                await SVProgressHUD.dismiss()
+                debugPrint("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
     }
 }
 
 // MARK: - PHPickerViewControllerDelegate
+
 extension RealNameAuthViewController: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
         
         guard let result = results.first else { return }
         
-        result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+        result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
             guard let self = self,
-                  let image = object as? UIImage else {
+                  let image = object as? UIImage
+            else {
                 return
             }
             
@@ -422,4 +458,3 @@ extension RealNameAuthViewController: PHPickerViewControllerDelegate {
         }
     }
 }
-

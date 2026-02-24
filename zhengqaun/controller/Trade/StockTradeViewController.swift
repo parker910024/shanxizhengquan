@@ -109,6 +109,7 @@ class StockTradeViewController: ZQViewController {
         gk_navTitleFont        = .boldSystemFont(ofSize: 17)
         gk_navLineHidden       = false
         gk_statusBarStyle      = .default
+        gk_backStyle = .black
 
         let kfBtn  = makeNavIconButton(systemName: "headphones",      action: #selector(kfTapped))
         let schBtn = makeNavIconButton(systemName: "magnifyingglass", action: #selector(searchTapped))

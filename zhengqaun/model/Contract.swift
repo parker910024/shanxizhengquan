@@ -13,6 +13,13 @@ enum ContractStatus {
     case unsigned    // 未签（签订）
 }
 
+struct ContractModel: Codable {
+    var id: Int
+    var link, name: String
+    var status, type: Int
+}
+
+
 /// 合同模型
 struct Contract {
     let id: String

@@ -178,6 +178,7 @@ class MarketViewController: ZQViewController {
     }
 
     private func updateVisibleContent() {
+        guard todayHeaderWrap != nil else { return }
         if selectedSegmentIndex == 0 {
             hangqingScrollView.isHidden = false
             subsTableView.isHidden = true
