@@ -378,12 +378,21 @@ class ProfileViewController: ZQViewController {
         btn4.addTarget(self, action: #selector(newRecordTapped), for: .touchUpInside)
         btn5.addTarget(self, action: #selector(placingRecordTapped), for: .touchUpInside)
         btn6.addTarget(self, action: #selector(largeRecordTapped), for: .touchUpInside)
+        // 标记按钮用于开关控制
+        btn5.tag = 1005  // 配售记录
+        btn6.tag = 1006  // 大宗交易
+        // 根据开关初始隐藏
+        btn5.isHidden = !FeatureSwitchManager.shared.isXxpsEnabled
+        btn6.isHidden = !FeatureSwitchManager.shared.isDzjyEnabled
         let btnStack1 = UIStackView(arrangedSubviews: [btn4, btn5, btn6])
         btnStack1.axis = .horizontal
         btnStack1.distribution = .fillEqually
         btnStack1.spacing = 12
+        btnStack1.tag = 2001
         card.addSubview(btnStack1)
         btnStack1.translatesAutoresizingMaskIntoConstraints = false
+        // 监听开关变化
+        NotificationCenter.default.addObserver(self, selector: #selector(updateFeatureSwitchButtons), name: FeatureSwitchManager.didUpdateNotification, object: nil)
 
         NSLayoutConstraint.activate([
             card.topAnchor.constraint(equalTo: quickActionsCard.bottomAnchor, constant: 16),
@@ -514,6 +523,15 @@ class ProfileViewController: ZQViewController {
         let vc = BlockTradingListViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
+    }
+
+    /// 功能开关更新后更新按钮显示状态
+    @objc private func updateFeatureSwitchButtons() {
+        guard let stack = view.viewWithTag(2001) as? UIStackView else { return }
+        for subview in stack.arrangedSubviews {
+            if subview.tag == 1005 { subview.isHidden = !FeatureSwitchManager.shared.isXxpsEnabled }
+            if subview.tag == 1006 { subview.isHidden = !FeatureSwitchManager.shared.isDzjyEnabled }
+        }
     }
 
     // MARK: - 我的功能（8 宫格）
