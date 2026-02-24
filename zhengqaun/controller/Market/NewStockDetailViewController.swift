@@ -40,6 +40,7 @@ class NewStockDetailViewController: ZQViewController {
         gk_navTitleColor = .black
         gk_navBackgroundColor = .white
         gk_navLineHidden = false
+        gk_backStyle = .black
     }
     
     private func setupUI() {
