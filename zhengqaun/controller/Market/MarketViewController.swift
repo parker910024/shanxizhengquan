@@ -155,8 +155,11 @@ class MarketViewController: ZQViewController {
             }
         }
         
-        if selectedSegmentIndex > 0 && todayTitleLabel != nil {
-            todayTitleLabel.text = segTitleFor(selectedSegmentIndex)
+        if selectedSegmentIndex > 0 {
+            if todayTitleLabel != nil {
+                todayTitleLabel.text = segTitleFor(selectedSegmentIndex)
+            }
+            loadSubscriptionData()
         }
     }
 
@@ -1324,60 +1327,34 @@ class MarketViewController: ZQViewController {
         }.resume()
     }
 
-    /// 新股申购 — Api.subscribe_api
-    /// 天玑护航 — /api/dzjy/lst
+    /// 从 FeatureSwitchManager 中读取申购、配售、大宗交易数据
     private func loadSubscriptionData() {
-        let typeParam: String
+        let mgr = FeatureSwitchManager.shared
+        print("[调试] mgr.listSg 数量: \(mgr.listSg.count)")
+        print("[调试] mgr.listPs 数量: \(mgr.listPs.count)")
+        print("[调试] mgr.listDzjy 数量: \(mgr.listDzjy.count)")
+
+        var sourceList: [[String: Any]] = []
+        
         switch selectedSegmentIndex {
-        case 1: typeParam = "0"   // 新股申购
-        case 2: typeParam = "0"   // 战略配售 — 使用线下配售接口
-        case 3: typeParam = "0"   // 天启护盘
+        case 1: sourceList = mgr.listSg     // 新股申购
+        case 2: sourceList = mgr.listPs     // 战略配售(线下配售)
+        case 3: sourceList = mgr.listDzjy   // 天启护盘(大宗交易/场外撮合)
         default: return
         }
 
-        let api: String
-        switch selectedSegmentIndex {
-        case 1: api = Api.subscribe_api
-        case 2: api = "/api/dzjy/lst" // 天玑护航
-        case 3: api = "/api/dzjy/lst"
-        default: return
-        }
-
-        SecureNetworkManager.shared.request(
-            api: api,
-            method: .get,
-            params: ["page": "1", "type": typeParam]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let res):
-                guard res.statusCode == 200,
-                      let dict = res.decrypted,
-                      let data = dict["data"] as? [String: Any] else {
-                    print("[行情] 申购列表解析失败")
-                    return
-                }
-                // 新股和线下配售返回 list -> [flag, sub_info[...]]
-                // 大宗交易返回 list -> [...]
-                var rows: [[String: Any]] = []
-                if let list = data["list"] as? [[String: Any]] {
-                    for item in list {
-                        if let subInfo = item["sub_info"] as? [[String: Any]] {
-                            rows.append(contentsOf: subInfo)
-                        } else {
-                            rows.append(item)
-                        }
-                    }
-                }
-                DispatchQueue.main.async {
-                    self.subscriptionList = rows
-                    self.subsTableView.reloadData()
-                    print("[行情] 申购列表加载成功，共 \(rows.count) 条")
-                }
-            case .failure(let err):
-                print("[行情] 申购列表请求失败: \(err.localizedDescription)")
+        var rows: [[String: Any]] = []
+        for item in sourceList {
+            if let subInfo = item["sub_info"] as? [[String: Any]] {
+                rows.append(contentsOf: subInfo)
+            } else {
+                rows.append(item)
             }
         }
+        
+        self.subscriptionList = rows
+        self.subsTableView.reloadData()
+        print("[行情] 申购/配售/交易 (\(selectedSegmentIndex)) 数据加载完毕，共 \(rows.count) 条")
     }
 }
 

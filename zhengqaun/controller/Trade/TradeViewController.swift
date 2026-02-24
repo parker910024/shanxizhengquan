@@ -523,8 +523,8 @@ class TradeViewController: ZQViewController {
         container.translatesAutoresizingMaskIntoConstraints = false
 
         let items: [(String, String, String, String)] = [
-            ("up_trade_new_stk_apply_icon", "新股新债", "1新股, 0申购", "NEW"),
-            ("up_trade_main_wdzh_icon", "场外撮合交易", "暂无股票", "")
+            ("up_trade_new_stk_apply_icon", "新股新债", "", "NEW"),
+            ("up_trade_main_wdzh_icon", "场外撮合交易", "", "")
 //            ("up_trade_main_gznhg_icon", "国债逆回购", "年化利率 1.585%", ""),
 //            ("up_trade_main_zhbjhg_icon", "智汇现金理财", "年化利率6.88%", "")
         ]
