@@ -226,12 +226,14 @@ class TradeViewController: ZQViewController {
         let accountLabel = UILabel()
         accountLabel.text = "T007975614"
         accountLabel.font = UIFont.systemFont(ofSize: 15)
+        accountLabel.isHidden = true
         accountLabel.textColor = .white
         card.addSubview(accountLabel)
         accountLabel.translatesAutoresizingMaskIntoConstraints = false
         self.accountIdLabel = accountLabel
 
         let stackBtn = UIButton(type: .system)
+        stackBtn.isHidden = true
         stackBtn.setImage(UIImage(named: "jy-icon"), for: .normal)
         stackBtn.tintColor = .white
         card.addSubview(stackBtn)

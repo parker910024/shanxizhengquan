@@ -29,7 +29,7 @@ class HomeViewController: ZQViewController {
         ("银证转出", "icon11"),
         ("新股申购", "icon_home_6"),
         ("场外撮合交易", "icon_home_9"),
-        ("智能选股", "icon12"),
+        ("线下配售", "icon12"),
         ("AI智投", "icon_home_13"),
         ("龙虎榜", "icon4")
     ]
@@ -104,6 +104,9 @@ class HomeViewController: ZQViewController {
             .map { item in
                 if item.0 == "线下配售" {
                     return (mgr.nameXxps, item.1)
+                }
+                if item.0 == "场外撮合交易" {
+                    return (mgr.nameDzjy, item.1)
                 }
                 return item
             }
@@ -601,6 +604,7 @@ extension HomeViewController: UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "MenuGridCell", for: indexPath) as! MenuGridTableViewCell
             cell.configure(with: menuItems)
             cell.onItemTap = { [weak self] index, title in
+                let mgr = FeatureSwitchManager.shared
                 // 龙虎榜是第 10 项（index 9），用索引兜底避免标题字符不一致导致无反应
                 if index == 9 || title == "龙虎榜" {
                     let vc = LongHuBangViewController()
@@ -608,6 +612,14 @@ extension HomeViewController: UITableViewDataSource {
                     self?.navigationController?.pushViewController(vc, animated: true)
                     return
                 }
+                
+                if title == "新股申购" || (!mgr.nameXgsg.isEmpty && title == mgr.nameXgsg) {
+                    let vc = NewStockSubscriptionViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                    return
+                }
+                
                 switch title {
                 case "极速开户":
                     let vc = RegisterViewController()
@@ -634,15 +646,17 @@ extension HomeViewController: UITableViewDataSource {
                     vc.initialTabIndex = 1 // 默认选中银证转出
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
-                case "新股申购":
-                    let vc = NewStockSubscriptionViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
                 case "场外撮合交易":
+                    fallthrough
+                case _ where !mgr.nameDzjy.isEmpty && title == mgr.nameDzjy:
                     let vc = BlockTradingListViewController()
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
-                case "智能选股", "AI智投":
+                case "线下配售":
+                    let vc = AllotmentRecordsViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                case "AI智投":
                     let vc = SmartStockSelectionViewController()
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
