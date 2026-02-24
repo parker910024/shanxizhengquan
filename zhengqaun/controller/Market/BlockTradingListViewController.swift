@@ -234,7 +234,8 @@ class BlockTradingListViewController: ZQViewController {
         let allcode = item["allcode"] as? String ?? ""
         let buyPrice = item["buyprice"] as? Double ?? 0
         let caiBuy = Double("\(item["cai_buy"] ?? 0)") ?? 0
-        let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
+        let numberVal = item["number"] as? Int ?? Int("\(item["number"] ?? "0")") ?? 0
+        let number = "\(numberVal)"
         let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
         let plRate = item["profitLose_rate"] as? String ?? "--"
         let createTime = item["createtime_name"] as? String ?? "--"
@@ -268,7 +269,7 @@ class BlockTradingListViewController: ZQViewController {
             profit: String(format: "%@%.2f", sign, pl),
             profitRate: plRate,
             updateTime: isHistory ? outTime : createTime,
-            quantity: number
+            quantity: "\(qty / 100)"
         )
     }
 }
