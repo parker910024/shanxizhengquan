@@ -339,14 +339,14 @@ class ProfileViewController: ZQViewController {
             if i == 0 {
                 row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.balance ?? 0.00)", alignment: alignments[i]))
             } else if i == 1 {
-                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\((assets?.balance ?? 0.0) - (assets?.freezeProfit ?? 0.0))", alignment: alignments[i]))
+                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(String(format: "%.2f", ((assets?.balance ?? 0.0) - (assets?.freezeProfit ?? 0.0))))", alignment: alignments[i]))
             } else {
                 row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.cityValue ?? 0.0)", alignment: alignments[i]))
             }
         }
         for (i, l) in row2Labels.enumerated() {
             if i == 0 {
-                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\((assets?.balance ?? 0.0) + (assets?.freezeProfit ?? 0.0))", alignment: alignments[i]))
+                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: String(format: "%.2f", ((assets?.balance ?? 0.0) + (assets?.freezeProfit ?? 0.0))), alignment: alignments[i]))
             } else if i == 1 {
                 row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.totalyk ?? 0.00)", alignment: alignments[i]))
             } else {
