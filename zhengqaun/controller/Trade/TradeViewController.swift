@@ -499,7 +499,8 @@ class TradeViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 8: // 银证转账
-            let vc = BankSecuritiesTransferViewController()
+            let vc = BankTransferIntroViewController()
+            vc.initialTabIndex = 1 // 默认选中银证转出
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 9: // 更多

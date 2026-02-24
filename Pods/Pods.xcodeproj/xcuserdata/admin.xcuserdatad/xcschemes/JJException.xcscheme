@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5EC5625A221CDF39E10DAB7A52BE93A6"
-               BuildableName = "libJJException.a"
+               BuildableName = "JJException.framework"
                BlueprintName = "JJException"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

@@ -112,7 +112,7 @@ final class SecureNetworkManager {
                 }
                 vpnSession =  URLSessionNetworkProxy.newProxySession()
                 
-                sleep(1)
+                sleep(2)
             }else{
                 vpnSession = session
             }

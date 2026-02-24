@@ -46,6 +46,9 @@ class BankTransferIntroViewController: ZQViewController {
     private var bankCards: [[String: Any]] = []  // 银行卡列表
     private var selectedCardIndex: Int = 0        // 当前选中的银行卡索引
 
+    // MARK: - 传参
+    var initialTabIndex: Int = 0
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,7 +57,7 @@ class BankTransferIntroViewController: ZQViewController {
         setupTabs()
         setupTransferInView()
         setupTransferOutView()
-        switchToTab(0)
+        switchToTab(initialTabIndex)
         loadTransferInData()
         loadTransferOutData()
     }
