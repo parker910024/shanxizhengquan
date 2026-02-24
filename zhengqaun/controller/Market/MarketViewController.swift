@@ -104,6 +104,7 @@ class MarketViewController: ZQViewController {
 
     struct SectorDataItem {
         let name: String
+        let code: String
         let changePercent: Double
         let topStock: String
         let topStockChange: Double
@@ -657,8 +658,28 @@ class MarketViewController: ZQViewController {
                     sb.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
                 ])
                 rowStack.addArrangedSubview(cell)
+                
+                // 点击跳转详情
+                if idx < items.count {
+                    cell.tag = idx
+                    cell.isUserInteractionEnabled = true
+                    cell.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(sectorItemTapped(_:))))
+                }
             }
         }
+    }
+    
+    @objc private func sectorItemTapped(_ g: UITapGestureRecognizer) {
+        guard let cell = g.view else { return }
+        let idx = cell.tag
+        guard idx < sectorDataItems.count else { return }
+        let item = sectorDataItems[idx]
+        let vc = IndexDetailViewController()
+        vc.indexName = item.name
+        vc.indexCode = item.code
+        vc.indexAllcode = "90.\(item.code)"
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
 
     // ===================================================================
@@ -1160,20 +1181,53 @@ class MarketViewController: ZQViewController {
 
     /// 行业板块 TOP6 — 东方财富 clist API (sectorType=2)
     /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(2)
-    private func loadSectorData() {
+    private func loadSectorData(retryCount: Int = 0) {
         let url = "https://push2.eastmoney.com/api/qt/clist/get"
             + "?pn=1&pz=6&po=1&np=1&fltt=2&invt=2&fid=f3"
             + "&fs=m:90+t:2&fields=f3,f12,f14,f128,f136"
         fetchEastMoneyJSON(url: url) { [weak self] root in
-            guard let self = self,
-                  let data = root?["data"] as? [String: Any],
-                  let diff = data["diff"] as? [[String: Any]] else { return }
-            let items = diff.compactMap { obj -> SectorDataItem? in
+            guard let self = self else { return }
+            
+            // 解析数据
+            guard let root = root,
+                  let data = root["data"] as? [String: Any] else {
+                print("[行情] 行业板块: 解析失败 root=\(root ?? [:])")
+                // 重试（最多 3 次）
+                if retryCount < 3 {
+                    print("[行情] 行业板块: 第 \(retryCount + 1) 次重试...")
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
+                        self.loadSectorData(retryCount: retryCount + 1)
+                    }
+                }
+                return
+            }
+            
+            // diff 可能是数组或字典（按 key 索引）
+            var diffArr: [[String: Any]] = []
+            if let arr = data["diff"] as? [[String: Any]] {
+                diffArr = arr
+            } else if let dict = data["diff"] as? [String: Any] {
+                // 有时返回 {"0": {...}, "1": {...}} 格式
+                diffArr = dict.keys.sorted().compactMap { dict[$0] as? [String: Any] }
+            }
+            
+            guard !diffArr.isEmpty else {
+                print("[行情] 行业板块: diff 为空, data keys=\(data.keys)")
+                if retryCount < 3 {
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
+                        self.loadSectorData(retryCount: retryCount + 1)
+                    }
+                }
+                return
+            }
+            
+            let items = diffArr.compactMap { obj -> SectorDataItem? in
                 guard let name = obj["f14"] as? String, !name.isEmpty else { return nil }
+                let code        = (obj["f12"]  as? String) ?? ""
                 let changePct   = (obj["f3"]   as? Double) ?? 0.0
                 let topStock    = (obj["f128"]  as? String) ?? ""
                 let topChange   = (obj["f136"]  as? Double) ?? 0.0
-                return SectorDataItem(name: name, changePercent: changePct,
+                return SectorDataItem(name: name, code: code, changePercent: changePct,
                                       topStock: topStock, topStockChange: topChange,
                                       isUp: changePct >= 0)
             }
@@ -1188,14 +1242,19 @@ class MarketViewController: ZQViewController {
     /// 通用 JSON GET（东方财富公开 API，支持 JSONP 格式）
     private func fetchEastMoneyJSON(url: String, completion: @escaping ([String: Any]?) -> Void) {
         guard let reqUrl = URL(string: url) else { completion(nil); return }
-        var request = URLRequest(url: reqUrl, timeoutInterval: 10)
+        var request = URLRequest(url: reqUrl, timeoutInterval: 15)
         request.setValue(
             "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
             forHTTPHeaderField: "User-Agent")
         request.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
-        URLSession.shared.dataTask(with: request) { data, _, _ in
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("[行情] EastMoney 请求失败: \(error.localizedDescription), url=\(url.prefix(80))")
+                completion(nil); return
+            }
             guard let data = data,
                   var jsonStr = String(data: data, encoding: .utf8) else {
+                print("[行情] EastMoney 响应为空")
                 completion(nil); return
             }
             // 去掉 JSONP 包装（如 jQuery12345(...)）
@@ -1288,6 +1347,19 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             if indexPath.row < rankingStocks.count {
                 cell.configure(stock: rankingStocks[indexPath.row])
                 cell.onScroll = { [weak self] offset in self?.syncAllRankingRows(to: offset) }
+                cell.onTap = { [weak self] in
+                    guard let self = self else { return }
+                    let s = self.rankingStocks[indexPath.row]
+                    let vc = IndexDetailViewController()
+                    vc.indexName          = s.name
+                    vc.indexCode          = s.code
+                    vc.indexAllcode       = s.symbol
+                    vc.indexPrice         = s.price
+                    vc.indexChange        = s.change
+                    vc.indexChangePercent = s.changePercent
+                    vc.hidesBottomBarWhenPushed = true
+                    self.navigationController?.pushViewController(vc, animated: true)
+                }
             }
             return cell
         }
@@ -1362,6 +1434,13 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             vc.indexChangePercent = s.changePercent
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
+        } else if tableView == subsTableView, indexPath.row < subscriptionList.count {
+            // 跳转新股详情页
+            let item = subscriptionList[indexPath.row]
+            let vc = NewStockDetailViewController()
+            vc.stockId = "\(item["id"] ?? "")"
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
         }
     }
 }
@@ -1396,13 +1475,25 @@ class RankingStockCell: UITableViewCell {
     private let red    = UIColor(red: 230/255, green: 0,     blue: 18/255,  alpha: 1)
     private let green  = UIColor(red: 0.13,   green: 0.73,   blue: 0.33,   alpha: 1)
 
+    // MARK: - 点击回调
+    var onTap: (() -> Void)?
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         backgroundColor = .white
         setupViews()
+        
+        // 整行点击手势
+        let tap = UITapGestureRecognizer(target: self, action: #selector(cellTapped))
+        tap.cancelsTouchesInView = false
+        contentView.addGestureRecognizer(tap)
     }
     required init?(coder: NSCoder) { fatalError() }
+    
+    @objc private func cellTapped() {
+        onTap?()
+    }
 
     private func setupViews() {
         // ── 左侧固定面板 ──

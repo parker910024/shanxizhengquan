@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import SafariServices
 
 /// 自选股数据模型
 struct ZixuanStockItem {
@@ -33,6 +34,9 @@ class ZixuanViewController: ZQViewController {
     
     /// 指数卡片标签引用，用于更新数据
     private var indexCardLabels: [(nameL: UILabel, valueL: UILabel, changeL: UILabel)] = []
+    
+    /// 指数数据（name, code, allcode），用于点击跳转
+    private var indexItems: [(name: String, code: String, allcode: String)] = []
 
     private let bgColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0)
     private let textPrimary = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0)
@@ -94,7 +98,37 @@ class ZixuanViewController: ZQViewController {
         gk_navRightBarButtonItems = [searchItem, serviceItem] // 左 客服，右 搜索
     }
 
-    @objc private func serviceTapped() { }
+    @objc private func serviceTapped() {
+        // 从配置接口获取客服 URL
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                // 补全协议头
+                if !kfUrl.hasPrefix("http") {
+                    kfUrl = "https://" + kfUrl
+                }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    let vc = SFSafariViewController(url: url)
+                    self.present(vc, animated: true)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
+    }
     @objc private func searchTapped() {
         let vc = StockSearchViewController()
         vc.hidesBottomBarWhenPushed = true
@@ -113,8 +147,12 @@ class ZixuanViewController: ZQViewController {
         indexStack.translatesAutoresizingMaskIntoConstraints = false
 
         let defaultIndices = ["上证指数", "深证成指", "北证50"]
-        for name in defaultIndices {
-            indexStack.addArrangedSubview(makeIndexCard(name: name, value: "--", change: "-- --", isRise: true))
+        for (i, name) in defaultIndices.enumerated() {
+            let card = makeIndexCard(name: name, value: "--", change: "-- --", isRise: true)
+            card.tag = i
+            card.isUserInteractionEnabled = true
+            card.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(indexCardTapped(_:))))
+            indexStack.addArrangedSubview(card)
         }
 
         NSLayoutConstraint.activate([
@@ -278,6 +316,19 @@ class ZixuanViewController: ZQViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
+    @objc private func indexCardTapped(_ g: UITapGestureRecognizer) {
+        guard let card = g.view else { return }
+        let idx = card.tag
+        guard idx < indexItems.count else { return }
+        let item = indexItems[idx]
+        let vc = IndexDetailViewController()
+        vc.indexName = item.name
+        vc.indexCode = item.code
+        vc.indexAllcode = item.allcode
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
     // MARK: - 加载指数数据
     private func loadIndexData() {
         SecureNetworkManager.shared.request(
@@ -292,11 +343,15 @@ class ZixuanViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let list = data["list"] as? [[String: Any]] else { return }
                 
+                self.indexItems.removeAll()
                 for (i, obj) in list.prefix(3).enumerated() {
                     guard i < self.indexCardLabels.count,
                           let arr = obj["allcodes_arr"] as? [Any], arr.count >= 7 else { continue }
                     let str = arr.map { "\($0)" }
                     let name = str[1]
+                    let code = str[2]
+                    let allcode = obj["allcode"] as? String ?? ""
+                    self.indexItems.append((name: name, code: code, allcode: allcode))
                     let price = str[3]
                     let change = str[4]
                     let changePct = str[5]

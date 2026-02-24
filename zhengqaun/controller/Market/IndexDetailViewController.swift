@@ -979,6 +979,11 @@ class IndexDetailViewController: ZQViewController {
         let code = indexCode
         let allcode = indexAllcode.lowercased()
 
+        // 已经是 "市场.代码" 格式（如 90.BK0XXX），直接返回
+        if indexAllcode.contains(".") {
+            return indexAllcode
+        }
+
         // 北交所
         if allcode.hasPrefix("bj") { return "0.\(code)" }
 
