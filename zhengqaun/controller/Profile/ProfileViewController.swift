@@ -20,6 +20,7 @@ class ProfileViewController: ZQViewController {
     private var headerView: UIView!
     private var functionsCard: UIView!
     private var channelKeyOverlay: UIView?
+    private let accountLabel = UILabel()
 
     private var assets: AssetsModel?
     private var accountInfo: [String: Any] = [:]
@@ -105,15 +106,14 @@ class ProfileViewController: ZQViewController {
 
         let phoneLabel = UILabel()
         let phone = UserAuthManager.shared.currentPhone ?? "1877777718"
-        phoneLabel.text = maskPhone(phone)
+        phoneLabel.text = phone
         phoneLabel.font = UIFont.boldSystemFont(ofSize: 16)
         phoneLabel.textColor = textPrimary
         header.addSubview(phoneLabel)
         phoneLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let accountLabel = UILabel()
+        
         let uid = UserAuthManager.shared.userID
-        accountLabel.text = uid.isEmpty ? "T007975614" : "T\(uid)"
         accountLabel.font = UIFont.systemFont(ofSize: 13)
         accountLabel.textColor = textPrimary
         header.addSubview(accountLabel)
@@ -918,6 +918,11 @@ extension ProfileViewController {
                 }
                 if let dict = result.decrypted, let list = dict["data"] as? [String: Any], let info = list["list"] as? [String: Any] {
                     self.accountInfo = info
+                    if accountInfo["is_auth"] as? Int == 1 {
+                        accountLabel.text = "已实名"
+                    } else {
+                        accountLabel.text = "未实名"
+                    }
                 }
             } catch {
                 debugPrint("error =", error.localizedDescription)
