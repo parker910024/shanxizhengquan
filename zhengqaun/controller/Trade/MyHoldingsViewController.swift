@@ -109,7 +109,14 @@ class MyHoldingsViewController: ZQViewController {
             self.segmentContainer.layoutIfNeeded()
         }
         tableView.reloadData()
-        let hasData = (idx == 0 && !holdings.isEmpty) || (idx == 1 && !historicalHoldings.isEmpty)
+        let hasData: Bool
+        switch idx {
+        case 0: hasData = !holdings.isEmpty
+        case 1: hasData = !historicalHoldings.isEmpty
+        case 2: hasData = !newStockHoldings.isEmpty
+        case 3: hasData = !subscriptionRecords.isEmpty
+        default: hasData = false
+        }
         emptyLabel.isHidden = hasData
     }
 
@@ -190,76 +197,280 @@ class MyHoldingsViewController: ZQViewController {
     private var holdings: [Holding] = []
     private var historicalHoldings: [HistoricalHolding] = []
     
+    /// 新股持仓 / 申购记录 数据模型
+    struct NewStockItem {
+        let name: String
+        let code: String
+        let price: String      // 申购价/发行价
+        let quantity: String   // 数量(中签数/申购数)
+        let statusText: String // 状态描述
+        let date: String       // 创建时间
+        let statusColor: UIColor
+    }
+    private var newStockHoldings: [NewStockItem] = []
+    private var subscriptionRecords: [NewStockItem] = []
+    
+    /// 缓存 API 原始返回数据，供跳转详情页时传入
+    private var rawHoldingsData: [[String: Any]] = []
+    private var rawHistoricalData: [[String: Any]] = []
+    
     private func setupHoldingsHeader() {
         // 表头作为section header
         // 这里不需要单独设置，会在tableView的viewForHeaderInSection中处理
     }
     
     private func loadHoldingsData() {
-        // 与工程内大宗/股票数据风格一致的模拟持仓
-        holdings = [
-            Holding(
-                name: "科马材料",
-                code: "北 920086",
-                marketValue: "18650",
-                marketValueDetail: "500",
-                currentPrice: "37.30",
-                currentPriceDetail: "11.66",
-                profitLoss: "+12820.00",
-                profitLossPercent: "219.9%"
-            ),
-            Holding(
-                name: "天润科技",
-                code: "京 920564",
-                marketValue: "21880",
-                marketValueDetail: "1000",
-                currentPrice: "21.88",
-                currentPriceDetail: "18.00",
-                profitLoss: "+3880.00",
-                profitLossPercent: "21.56%"
-            ),
-            Holding(
-                name: "中信证券",
-                code: "沪 600030",
-                marketValue: "25500",
-                marketValueDetail: "1500",
-                currentPrice: "17.00",
-                currentPriceDetail: "16.20",
-                profitLoss: "+1200.00",
-                profitLossPercent: "4.94%"
-            ),
-            Holding(
-                name: "健信超导",
-                code: "沪 688805",
-                marketValue: "3716",
-                marketValueDetail: "200",
-                currentPrice: "18.58",
-                currentPriceDetail: "16.50",
-                profitLoss: "+416.00",
-                profitLossPercent: "12.61%"
-            ),
-            Holding(
-                name: "山西证券",
-                code: "深 002500",
-                marketValue: "8820",
-                marketValueDetail: "1200",
-                currentPrice: "7.35",
-                currentPriceDetail: "7.10",
-                profitLoss: "+300.00",
-                profitLossPercent: "3.52%"
-            )
-        ]
+        // 调用后端接口获取当前持仓
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/getNowWarehouse",
+            method: .get,
+            params: ["buytype": "1", "page": "1", "size": "50", "status": "1"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    self.emptyLabel.isHidden = false
+                    return
+                }
+                
+                // 缓存原始数据
+                self.rawHoldingsData = list
+                
+                self.holdings = list.compactMap { item in
+                    let name = item["title"] as? String ?? "--"
+                    let code = item["code"] as? String ?? "--"
+                    let allcode = item["allcode"] as? String ?? ""
+                    
+                    // 根据 type 推导交易所
+                    let typeVal = item["type"] as? Int ?? 0
+                    let exchangeStr: String
+                    switch typeVal {
+                    case 1, 5: exchangeStr = "沪"
+                    case 2, 3: exchangeStr = "深"
+                    case 4:    exchangeStr = "京"
+                    default:
+                        if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
+                        else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
+                        else { exchangeStr = "深" }
+                    }
+                    
+                    let citycc = item["citycc"] as? Double ?? (item["citycc"] as? Int).map { Double($0) } ?? 0
+                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
+                    let caiBuy = item["cai_buy"] as? Double ?? Double("\(item["cai_buy"] ?? 0)") ?? 0
+                    let buyPrice = item["buyprice"] as? Double ?? 0
+                    let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
+                    let plRate = item["profitLose_rate"] as? String ?? String(format: "%.2f%%", buyPrice > 0 ? (pl / (buyPrice * Double(Int(number) ?? 1)) * 100) : 0)
+                    
+                    let sign = pl >= 0 ? "+" : ""
+                    return Holding(
+                        name: name,
+                        code: "\(exchangeStr) \(code)",
+                        marketValue: String(format: "%.0f", citycc),
+                        marketValueDetail: number,
+                        currentPrice: String(format: "%.2f", caiBuy),
+                        currentPriceDetail: String(format: "%.2f", buyPrice),
+                        profitLoss: String(format: "%@%.2f", sign, pl),
+                        profitLossPercent: plRate
+                    )
+                }
+                
+                self.tableView.reloadData()
+                self.emptyLabel.isHidden = !self.holdings.isEmpty
+                
+            case .failure(_):
+                self.emptyLabel.isHidden = false
+            }
+        }
+        
+        // 同时加载历史持仓
         loadHistoricalData()
-        tableView.reloadData()
-        emptyLabel.isHidden = !holdings.isEmpty
+        // 加载新股持仓
+        loadNewStockHoldings()
+        // 加载申购记录
+        loadSubscriptionRecords()
     }
 
     private func loadHistoricalData() {
-        historicalHoldings = [
-            HistoricalHolding(typeLabel: "普通交易", name: "N 至信", marketLine: "沪 8.75", date: "2026-01-15", marketValue: "8.75", quantity: "1800009.039.600.00", currentPrice: "8.75", buyPrice: nil, profitLoss: "8.75", profitLossPercent: "8.75%"),
-            HistoricalHolding(typeLabel: "普通交易", name: "N 至信", marketLine: "沪 8.75", date: "2026-01-15", marketValue: "8.75", quantity: "1800009.039.600.00", currentPrice: "8.75", buyPrice: nil, profitLoss: "8.75", profitLossPercent: "8.75%"),
-            HistoricalHolding(typeLabel: "普通交易", name: "N 至信", marketLine: "沪 8.75", date: "2026-01-15", marketValue: "8.75", quantity: "1800009.039.600.00", currentPrice: "8.75", buyPrice: nil, profitLoss: "8.75", profitLossPercent: "8.75%")
-        ]
+        // 默认查询近一年数据
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let endDate = formatter.string(from: Date())
+        let startDate = formatter.string(from: Calendar.current.date(byAdding: .year, value: -1, to: Date()) ?? Date())
+        
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/getNowWarehouse_lishi",
+            method: .get,
+            params: ["buytype": "1", "page": "1", "size": "50", "status": "2", "s_time": startDate, "e_time": endDate]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else { return }
+                
+                // 缓存原始数据
+                self.rawHistoricalData = list
+                
+                self.historicalHoldings = list.compactMap { item in
+                    let name = item["title"] as? String ?? "--"
+                    let code = item["code"] as? String ?? "--"
+                    let allcode = item["allcode"] as? String ?? ""
+                    
+                    let typeVal = item["type"] as? Int ?? 0
+                    let exchangeStr: String
+                    switch typeVal {
+                    case 1, 5: exchangeStr = "沪"
+                    case 2, 3: exchangeStr = "深"
+                    case 4:    exchangeStr = "京"
+                    default:
+                        if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
+                        else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
+                        else { exchangeStr = "深" }
+                    }
+                    
+                    let buyPrice = item["buyprice"] as? Double ?? 0
+                    let sellPrice = Double("\(item["cai_buy"] ?? 0)") ?? 0
+                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
+                    let money = item["money"] as? String ?? "--"
+                    let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
+                    let createTime = item["createtime_name"] as? String ?? "--"
+                    let outTime = item["outtime_name"] as? String ?? "--"
+                    // 取日期部分
+                    let dateStr = String(outTime.prefix(10))
+                    
+                    let sign = pl >= 0 ? "+" : ""
+                    let plRate = buyPrice > 0 ? String(format: "%.2f%%", pl / (buyPrice * Double(Int(number) ?? 1)) * 100) : "--"
+                    
+                    return HistoricalHolding(
+                        typeLabel: "普通交易",
+                        name: name,
+                        marketLine: "\(exchangeStr) \(String(format: "%.2f", sellPrice))",
+                        date: dateStr,
+                        marketValue: String(format: "%.2f", sellPrice),
+                        quantity: "\(number)股 / 本金\(money)",
+                        currentPrice: String(format: "%.2f", sellPrice),
+                        buyPrice: String(format: "%.2f", buyPrice),
+                        profitLoss: String(format: "%@%.2f", sign, pl),
+                        profitLossPercent: plRate
+                    )
+                }
+                
+                if self.selectedTabIndex == 1 {
+                    self.tableView.reloadData()
+                    self.emptyLabel.isHidden = !self.historicalHoldings.isEmpty
+                }
+                
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 新股持仓（Tab 2）
+    private func loadNewStockHoldings() {
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/getsgnewgu0",
+            method: .get,
+            params: ["page": "1", "size": "50"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["dxlog_list"] as? [[String: Any]] else { return }
+                
+                self.newStockHoldings = list.compactMap { item in
+                    let name = item["name"] as? String ?? "--"
+                    let code = item["code"] as? String ?? "--"
+                    let price = item["sg_fx_price"] as? Double ?? 0
+                    let zqNum = item["zq_num"] as? Int ?? 0
+                    let statusTxt = item["status_txt"] as? String ?? "--"
+                    let date = item["createtime_txt"] as? String ?? "--"
+                    let status = "\(item["status"] ?? "0")"
+                    
+                    let color: UIColor
+                    switch status {
+                    case "1": color = Constants.Color.stockRise  // 中签→红
+                    case "2": color = Constants.Color.stockFall  // 未中签→绿
+                    case "3": color = Constants.Color.textTertiary // 弃购→灰
+                    default:  color = Constants.Color.orange      // 申购中→橙
+                    }
+                    
+                    return NewStockItem(
+                        name: name,
+                        code: code,
+                        price: String(format: "%.2f", price),
+                        quantity: "\(zqNum)股",
+                        statusText: statusTxt,
+                        date: date,
+                        statusColor: color
+                    )
+                }
+                
+                if self.selectedTabIndex == 2 {
+                    self.tableView.reloadData()
+                    self.emptyLabel.isHidden = !self.newStockHoldings.isEmpty
+                }
+                
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 申购记录（Tab 3）
+    private func loadSubscriptionRecords() {
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/getsgnewgu",
+            method: .get,
+            params: ["page": "1", "size": "50"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["dxlog_list"] as? [[String: Any]] else { return }
+                
+                self.subscriptionRecords = list.compactMap { item in
+                    let name = item["name"] as? String ?? "--"
+                    let code = item["code"] as? String ?? "--"
+                    let price = item["sg_fx_price"] as? Double ?? 0
+                    let sgNums = item["sg_nums"] as? Int ?? 0
+                    let statusTxt = item["status_txt"] as? String ?? "--"
+                    let date = item["createtime_txt"] as? String ?? "--"
+                    let status = "\(item["status"] ?? "0")"
+                    
+                    let color: UIColor
+                    switch status {
+                    case "1": color = Constants.Color.stockRise
+                    case "2": color = Constants.Color.stockFall
+                    case "3": color = Constants.Color.textTertiary
+                    default:  color = Constants.Color.orange
+                    }
+                    
+                    return NewStockItem(
+                        name: name,
+                        code: code,
+                        price: String(format: "%.2f", price),
+                        quantity: "\(sgNums)股",
+                        statusText: statusTxt,
+                        date: date,
+                        statusColor: color
+                    )
+                }
+                
+                if self.selectedTabIndex == 3 {
+                    self.tableView.reloadData()
+                    self.emptyLabel.isHidden = !self.subscriptionRecords.isEmpty
+                }
+                
+            case .failure(_): break
+            }
+        }
     }
 }
 
@@ -270,13 +481,20 @@ extension MyHoldingsViewController: UITableViewDataSource {
         switch selectedTabIndex {
         case 0: return 1
         case 1: return historicalHoldings.count
+        case 2: return 1
+        case 3: return 1
         default: return 0
         }
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if selectedTabIndex == 0 { return holdings.count }
-        return 1
+        switch selectedTabIndex {
+        case 0: return holdings.count
+        case 1: return 1
+        case 2: return newStockHoldings.count
+        case 3: return subscriptionRecords.count
+        default: return 0
+        }
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -284,9 +502,13 @@ extension MyHoldingsViewController: UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "MyHoldingsHistoryRowCell", for: indexPath) as! MyHoldingsHistoryRowCell
             cell.configure(with: historicalHoldings[indexPath.section])
             cell.onDetail = { [weak self] in
+                guard let self = self else { return }
                 let vc = HoldingDetailViewController()
+                if indexPath.section < self.rawHistoricalData.count {
+                    vc.holdingData = self.rawHistoricalData[indexPath.section]
+                }
                 vc.hidesBottomBarWhenPushed = true
-                self?.navigationController?.pushViewController(vc, animated: true)
+                self.navigationController?.pushViewController(vc, animated: true)
             }
             cell.onMarket = { [unowned self] in
                 // 行情
@@ -296,6 +518,22 @@ extension MyHoldingsViewController: UITableViewDataSource {
             }
             return cell
         }
+        
+        if selectedTabIndex == 2 || selectedTabIndex == 3 {
+            let items = selectedTabIndex == 2 ? newStockHoldings : subscriptionRecords
+            let item = items[indexPath.row]
+            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "NewStockCell")
+            cell.selectionStyle = .none
+            cell.textLabel?.text = "\(item.name)  \(item.code)"
+            cell.textLabel?.font = UIFont.boldSystemFont(ofSize: 15)
+            cell.textLabel?.textColor = Constants.Color.textPrimary
+            cell.detailTextLabel?.numberOfLines = 2
+            cell.detailTextLabel?.text = "发行价: \(item.price)  数量: \(item.quantity)\n\(item.statusText)  \(item.date)"
+            cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
+            cell.detailTextLabel?.textColor = item.statusColor
+            return cell
+        }
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "HoldingCell", for: indexPath) as! MyHoldingsHoldingCell
         cell.configure(with: holdings[indexPath.row])
         return cell
@@ -395,6 +633,9 @@ extension MyHoldingsViewController: UITableViewDelegate {
         if selectedTabIndex == 1 { return }
         if selectedTabIndex == 0 {
             let vc = HoldingDetailViewController()
+            if indexPath.row < rawHoldingsData.count {
+                vc.holdingData = rawHoldingsData[indexPath.row]
+            }
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         }

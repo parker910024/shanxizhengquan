@@ -20,6 +20,13 @@ class IndexDetailViewController: ZQViewController {
     /// 是否为指数（指数置灰交易按钮，不可交易）。由调用方赋值：指数卡片传 true，股票排行榜传 false（默认）
     var isIndex: Bool = false
 
+    /// 交易类型（从搜索页传入）
+    enum TradeType {
+        case buy
+        case sell
+    }
+    var tradeType: TradeType = .buy
+
     // MARK: - 颜色
     private let bgColor     = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
     private let themeRed    = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1)
@@ -1219,21 +1226,38 @@ class IndexDetailViewController: ZQViewController {
 
     @objc private func tradeTapped() {
         guard !isIndex else { return }   // 指数不可交易，按钮已置灰，双重保险
-        let vc = StockTradeViewController()
-        vc.stockName     = indexName
-        vc.stockCode     = indexCode
-        vc.stockAllcode  = indexAllcode
-        vc.currentPrice  = Double(indexPrice) ?? 0
-        vc.changeAmount  = Double(indexChange) ?? 0
-        vc.changePercent = Double(indexChangePercent) ?? 0
+        
         // 根据 allcode 前缀推断交易所标识
         let prefix = indexAllcode.lowercased()
-        if prefix.hasPrefix("sh") || prefix.hasPrefix("zssh") { vc.exchange = "沪" }
-        else if prefix.hasPrefix("sz") || prefix.hasPrefix("zssz") { vc.exchange = "深" }
-        else if prefix.hasPrefix("bj") { vc.exchange = "北" }
-        else { vc.exchange = "" }
-        vc.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(vc, animated: true)
+        let exchange: String
+        if prefix.hasPrefix("sh") || prefix.hasPrefix("zssh") { exchange = "沪" }
+        else if prefix.hasPrefix("sz") || prefix.hasPrefix("zssz") { exchange = "深" }
+        else if prefix.hasPrefix("bj") { exchange = "北" }
+        else { exchange = "" }
+        
+        if tradeType == .sell {
+            // 卖出流程 → AccountTradeViewController
+            let vc = AccountTradeViewController()
+            vc.stockName = indexName
+            vc.stockCode = indexCode
+            vc.exchange = exchange
+            vc.currentPrice = indexPrice
+            vc.tradeType = .sell
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
+        } else {
+            // 买入流程 → StockTradeViewController（保持原有逻辑）
+            let vc = StockTradeViewController()
+            vc.stockName     = indexName
+            vc.stockCode     = indexCode
+            vc.stockAllcode  = indexAllcode
+            vc.currentPrice  = Double(indexPrice) ?? 0
+            vc.changeAmount  = Double(indexChange) ?? 0
+            vc.changePercent = Double(indexChangePercent) ?? 0
+            vc.exchange = exchange
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
+        }
     }
 
     /// 根据 isIndex 配置交易按钮的样式（对应 Android renderTradeState）

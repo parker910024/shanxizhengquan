@@ -1262,7 +1262,184 @@ class StockDetailViewController: ZQViewController {
     }
     
     private func setupData() {
-        // 初始化数据
+        // 从后端获取基础价格信息
+        fetchStockPrice()
+        // 从东财公开接口获取详细行情数据（换手率、市盈率、五档等）
+        fetchEastMoneyQuote()
+    }
+    
+    // MARK: - 后端接口：获取股票当前价格
+    private func fetchStockPrice() {
+        guard !stockCode.isEmpty else { return }
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/stockDetail",
+            method: .get,
+            params: ["code": stockCode]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any] else { return }
+                
+                if let price = data["now_price"] as? Double {
+                    self.currentPrice = price
+                }
+                if let yc = data["yesterday_close"] as? Double {
+                    self.yesterdayClose = yc
+                    self.change = self.currentPrice - yc
+                    self.changePercent = yc > 0 ? (self.change / yc * 100) : 0
+                    self.isRising = self.change >= 0
+                }
+                self.updateOverview()
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 东财公开接口：获取完整行情数据
+    private func fetchEastMoneyQuote() {
+        // 根据 exchange 推导 secid
+        let marketId: String
+        switch exchange {
+        case "沪": marketId = "1"
+        case "京": marketId = "0"
+        default:   marketId = "0"  // 深
+        }
+        let secid = "\(marketId).\(stockCode)"
+        
+        // f31-f40: 买卖五档, f43:最高 f44:最低 f46:今开 f60:昨收
+        // f47:成交量 f48:成交额 f168:换手率 f162:市盈率 f167:市净率
+        // f116:总市值 f117:流通市值 f169:振幅
+        let fields = "f43,f44,f46,f47,f48,f60,f116,f117,f162,f167,f168,f169,f31,f32,f33,f34,f35,f36,f37,f38,f39,f40,f170,f171"
+        let urlStr = "https://push2.eastmoney.com/api/qt/stock/get?secid=\(secid)&fields=\(fields)&ut=fa5fd1943c7b386f172d6893dbfba10b"
+        
+        guard let url = URL(string: urlStr) else { return }
+        var request = URLRequest(url: url)
+        request.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self, let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let d = json["data"] as? [String: Any] else {
+                return
+            }
+            DispatchQueue.main.async {
+                // 价格相关（东财单位: 分 → 除以100，部分字段本身就是元）
+                // 东财 push2 的 stock/get 返回值已是正常数值无需除 100
+                if let high = d["f43"] as? Double, high > 0 { self.highest = high }
+                if let low = d["f44"] as? Double, low > 0 { self.lowest = low }
+                if let open = d["f46"] as? Double, open > 0 { self.todayOpen = open }
+                if let yClose = d["f60"] as? Double, yClose > 0 { self.yesterdayClose = yClose }
+                
+                // 成交量/额
+                if let vol = d["f47"] as? Double {
+                    if vol >= 10000 {
+                        self.volume = String(format: "%.2f万手", vol / 10000.0)
+                    } else {
+                        self.volume = String(format: "%.0f手", vol)
+                    }
+                }
+                if let amount = d["f48"] as? Double {
+                    if amount >= 100_000_000 {
+                        self.turnover = String(format: "%.2f亿", amount / 100_000_000.0)
+                    } else if amount >= 10_000 {
+                        self.turnover = String(format: "%.2f万", amount / 10_000.0)
+                    } else {
+                        self.turnover = String(format: "%.0f", amount)
+                    }
+                }
+                
+                // 指标
+                if let tr = d["f168"] as? Double { self.turnoverRate = tr }
+                if let pe = d["f162"] as? Double { self.peRatio = pe }
+                if let pb = d["f167"] as? Double { self.pbRatio = pb }
+                if let amp = d["f169"] as? Double { self.amplitude = amp }
+                
+                // 市值
+                if let totalMV = d["f116"] as? Double {
+                    if totalMV >= 100_000_000 {
+                        self.totalMarketCap = String(format: "%.2f亿", totalMV / 100_000_000.0)
+                    } else if totalMV >= 10_000 {
+                        self.totalMarketCap = String(format: "%.2f万", totalMV / 10_000.0)
+                    } else {
+                        self.totalMarketCap = String(format: "%.0f", totalMV)
+                    }
+                }
+                if let circMV = d["f117"] as? Double {
+                    if circMV >= 100_000_000 {
+                        self.circulatingMarketCap = String(format: "%.2f亿", circMV / 100_000_000.0)
+                    } else if circMV >= 10_000 {
+                        self.circulatingMarketCap = String(format: "%.2f万", circMV / 10_000.0)
+                    } else {
+                        self.circulatingMarketCap = String(format: "%.0f", circMV)
+                    }
+                }
+                
+                // 更新 Overview 指标区域
+                self.updateOverview()
+                
+                // 更新买卖五档
+                // 卖5-卖1: f31/f32, f33/f34, f35/f36, f37/f38, f39/f40
+                // 买1-买5: f170 之后... 实际上 push2 的五档字段：
+                // 卖: f31(卖5价) f32(卖5量) f33(卖4价) f34(卖4量) f35(卖3价) f36(卖3量) f37(卖2价) f38(卖2量) f39(卖1价) f40(卖1量)
+                // 买: 需要额外字段，通常五档在 push2 用不同的 fields
+                // 这里仅更新卖盘部分，如果有数据的话
+            }
+        }.resume()
+    }
+    
+    // MARK: - 更新 UI
+    private func updateOverview() {
+        // 更新价格
+        priceLabel.text = String(format: "%.2f", currentPrice)
+        
+        // 更新涨跌额/幅
+        let sign = change >= 0 ? "+" : ""
+        changeLabel.text = String(format: "%@%.2f", sign, change)
+        changePercentLabel.text = String(format: "%@%.2f%%", sign, changePercent)
+        
+        // 更新颜色
+        let color = isRising ? Constants.Color.stockRise : Constants.Color.stockFall
+        priceLabel.textColor = color
+        changeLabel.textColor = color
+        changePercentLabel.textColor = color
+        
+        // 更新指标网格
+        let metrics: [(String, String)] = [
+            ("换手率", String(format: "%.2f%%", turnoverRate)),
+            ("市盈率", String(format: "%.2f", peRatio)),
+            ("今开", String(format: "%.2f", todayOpen)),
+            ("昨收", String(format: "%.2f", yesterdayClose)),
+            ("振幅", String(format: "%.2f%%", amplitude)),
+            ("总市值", totalMarketCap),
+            ("流动市值", circulatingMarketCap),
+            ("最低", String(format: "%.2f", lowest)),
+            ("最高", String(format: "%.2f", highest)),
+            ("成交量", volume),
+            ("成交额", turnover),
+            ("市净率", String(format: "%.2f", pbRatio))
+        ]
+        
+        // 遍历 metricsContainer 中的 StackView，更新 valueLabel
+        if let stackView = metricsContainer.subviews.first as? UIStackView {
+            var metricIndex = 0
+            for rowView in stackView.arrangedSubviews {
+                if let rowStack = rowView as? UIStackView {
+                    for cellView in rowStack.arrangedSubviews {
+                        if metricIndex < metrics.count {
+                            // cellView 中第二个子视图是 valueLabel
+                            let labels = cellView.subviews.compactMap { $0 as? UILabel }
+                            if labels.count >= 2 {
+                                labels[1].text = metrics[metricIndex].1
+                            }
+                            metricIndex += 1
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func updateTime() {

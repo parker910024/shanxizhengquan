@@ -168,125 +168,106 @@ class BlockTradingListViewController: ZQViewController {
     }
     
     private func loadData() {
-        // 当前持仓数据（模拟 5 条）
-        currentHoldings = [
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "4824",
-                buyPrice: "18.58",
-                currentPrice: "18.58",
-                profit: "2966.00",
-                profitRate: "159.63%",
-                updateTime: "2026-01-26 20:09:09"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "3000",
-                buyPrice: "19.20",
-                currentPrice: "20.10",
-                profit: "2700.00",
-                profitRate: "45.00%",
-                updateTime: "2026-01-26 20:10:15"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "1500",
-                buyPrice: "17.80",
-                currentPrice: "18.20",
-                profit: "600.00",
-                profitRate: "18.00%",
-                updateTime: "2026-01-26 20:11:32"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "800",
-                buyPrice: "16.50",
-                currentPrice: "17.00",
-                profit: "400.00",
-                profitRate: "25.00%",
-                updateTime: "2026-01-26 20:12:48"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "600",
-                buyPrice: "18.00",
-                currentPrice: "18.90",
-                profit: "540.00",
-                profitRate: "30.00%",
-                updateTime: "2026-01-26 20:13:59"
-            )
-        ]
+        loadCurrentHoldings()
+        loadHistoryHoldings()
+    }
+    
+    // MARK: - 大宗交易当前持仓
+    private func loadCurrentHoldings() {
+        SecureNetworkManager.shared.request(
+            api: "/api/dzjy/getNowWarehouse",
+            method: .get,
+            params: ["buytype": "7", "page": "1", "size": "50", "status": "1"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else { return }
+                
+                self.currentHoldings = list.compactMap { item in
+                    self.parseItem(item, isHistory: false)
+                }
+                
+                if self.selectedTab == .current {
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 大宗交易历史持仓
+    private func loadHistoryHoldings() {
+        SecureNetworkManager.shared.request(
+            api: "/api/dzjy/getNowWarehouse_lishi",
+            method: .get,
+            params: ["buytype": "1", "page": "1", "size": "50", "status": "2"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else { return }
+                
+                self.historyHoldings = list.compactMap { item in
+                    self.parseItem(item, isHistory: true)
+                }
+                
+                if self.selectedTab == .history {
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 解析单条持仓数据
+    private func parseItem(_ item: [String: Any], isHistory: Bool) -> BlockTradingListItem {
+        let title = item["title"] as? String ?? "--"
+        let code = item["code"] as? String ?? "--"
+        let allcode = item["allcode"] as? String ?? ""
+        let buyPrice = item["buyprice"] as? Double ?? 0
+        let caiBuy = Double("\(item["cai_buy"] ?? 0)") ?? 0
+        let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
+        let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
+        let plRate = item["profitLose_rate"] as? String ?? "--"
+        let createTime = item["createtime_name"] as? String ?? "--"
+        let outTime = item["outtime_name"] as? String ?? createTime
         
-        // 历史持仓数据（模拟 5 条）
-        historyHoldings = [
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "1858",
-                buyPrice: "18.58",
-                currentPrice: "18.58",
-                profit: "2983.00",
-                profitRate: "160.55%",
-                updateTime: "2026-01-26 19:21:37"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "100",
-                buyPrice: "48.41",
-                currentPrice: "48.41",
-                profit: "500.00",
-                profitRate: "25.00%",
-                updateTime: "2026-01-26 19:22:05"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "600",
-                buyPrice: "17.20",
-                currentPrice: "19.80",
-                profit: "1560.00",
-                profitRate: "45.35%",
-                updateTime: "2026-01-26 19:23:18"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "400",
-                buyPrice: "16.00",
-                currentPrice: "18.00",
-                profit: "800.00",
-                profitRate: "50.00%",
-                updateTime: "2026-01-26 19:24:42"
-            ),
-            BlockTradingListItem(
-                stockName: "健信超导",
-                exchange: "沪",
-                stockCode: "688805",
-                principal: "300",
-                buyPrice: "15.50",
-                currentPrice: "17.00",
-                profit: "450.00",
-                profitRate: "30.00%",
-                updateTime: "2026-01-26 19:25:59"
-            )
-        ]
+        // 推导交易所
+        let typeVal = item["type"] as? Int ?? 0
+        let exchangeStr: String
+        switch typeVal {
+        case 1, 5: exchangeStr = "沪"
+        case 2, 3: exchangeStr = "深"
+        case 4:    exchangeStr = "京"
+        default:
+            if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
+            else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
+            else { exchangeStr = "深" }
+        }
         
-        tableView.reloadData()
+        // 本金 = 买入价 * 数量
+        let qty = Int(number) ?? 0
+        let principal = String(format: "%.0f", buyPrice * Double(qty))
+        let sign = pl >= 0 ? "+" : ""
+        
+        return BlockTradingListItem(
+            stockName: title,
+            exchange: exchangeStr,
+            stockCode: code,
+            principal: principal,
+            buyPrice: String(format: "%.2f", buyPrice),
+            currentPrice: String(format: "%.2f", caiBuy),
+            profit: String(format: "%@%.2f", sign, pl),
+            profitRate: plRate,
+            updateTime: isHistory ? outTime : createTime
+        )
     }
 }
 
@@ -302,6 +283,17 @@ extension BlockTradingListViewController: UITableViewDataSource, UITableViewDele
         let item = selectedTab == .current ? currentHoldings[indexPath.row] : historyHoldings[indexPath.row]
         cell.configure(with: item, isCurrent: selectedTab == .current)
         cell.selectionStyle = .none
+        cell.onSell = { [weak self] in
+            guard let self = self else { return }
+            let vc = AccountTradeViewController()
+            vc.stockName = item.stockName
+            vc.stockCode = item.stockCode
+            vc.exchange = item.exchange
+            vc.currentPrice = item.currentPrice ?? item.buyPrice
+            vc.tradeType = .sell
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
         return cell
     }
     
@@ -409,6 +401,9 @@ class BlockTradingListCell: UITableViewCell {
     private let sellButton = UIButton(type: .system)
     private let separatorLine = UIView()
     
+    /// 卖出按钮回调
+    var onSell: (() -> Void)?
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -486,6 +481,7 @@ class BlockTradingListCell: UITableViewCell {
         sellButton.backgroundColor = Constants.Color.stockRise
         sellButton.layer.cornerRadius = 8
         sellButton.contentEdgeInsets = UIEdgeInsets(top: 4, left: 14, bottom: 4, right: 14)
+        sellButton.addTarget(self, action: #selector(sellTapped), for: .touchUpInside)
         contentView.addSubview(sellButton)
         sellButton.translatesAutoresizingMaskIntoConstraints = false
         
@@ -563,5 +559,9 @@ class BlockTradingListCell: UITableViewCell {
         
         // 卖出按钮：当前持仓显示，历史持仓隐藏
         sellButton.isHidden = !isCurrent
+    }
+    
+    @objc private func sellTapped() {
+        onSell?()
     }
 }

@@ -772,38 +772,8 @@ class AccountTradeViewController: ZQViewController {
         stockCode = code
         buyCodeTextField?.text = code
         sellCodeTextField?.text = code
-        refreshRightSideData()
-        Toast.show("已更新")
-    }
-
-    /// 根据代码刷新下方列表右侧全部数据（可接真实接口，此处为模拟）
-    private func refreshRightSideData() {
-        let mock = mockStockData(for: stockCode)
-        stockName = mock.name
-        currentPrice = mock.currentPrice
-
-        buyPriceLabel?.text = currentPrice
-        buyCurrentPriceLabel?.text = currentPrice
-        limitUpDownLabel.attributedText = nil
-        updateLimitUpDown()
-        serviceFeeLabel?.text = mock.serviceFee
-        availableAmountLabel?.text = mock.availableAmount
-        calculateBuyAmount()
-
-        buyPriceSellLabel?.text = mock.buyPrice
-        sellCurrentPriceLabel?.text = currentPrice
-        holdingQuantityLabel?.text = mock.holdingQuantity
-        calculateSellAmount()
-    }
-
-    private func mockStockData(for code: String) -> (name: String, currentPrice: String, buyPrice: String, serviceFee: String, availableAmount: String, holdingQuantity: String) {
-        let defaults: (String, String, String, String, String, String) = ("股票\(code)", "10.00", "10.00", "0.00", "10000", "0")
-        let map: [String: (String, String, String, String, String, String)] = [
-            "300170": ("汉得信息", "22.67", "22.50", "0.02", "50000", "1000"),
-            "000001": ("平安银行", "12.35", "12.30", "0.01", "80000", "500"),
-            "600519": ("贵州茅台", "1680.00", "1675.00", "1.68", "100000", "100")
-        ]
-        return map[code] ?? defaults
+        // 调用真实 API 加载数据
+        loadStockData()
     }
 
     // MARK: - 可编辑信息行（点击右侧数值弹出编辑）
@@ -1637,7 +1607,7 @@ class AccountTradeViewController: ZQViewController {
         guard !code.isEmpty else { return }
         SecureNetworkManager.shared.request(
             api: "/api/stock/stockDetail",
-            method: .post,
+            method: .get,
             params: ["code": code]
         ) { [weak self] result in
             DispatchQueue.main.async {

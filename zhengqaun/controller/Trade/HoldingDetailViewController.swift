@@ -28,6 +28,9 @@ class HoldingDetailViewController: ZQViewController {
     private let closePositionButton = UIButton(type: .system)
     private var detail: HoldingDetail?
     
+    /// 调用方传入的持仓原始数据（来自 API 返回）
+    var holdingData: [String: Any] = [:]
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
@@ -84,18 +87,47 @@ class HoldingDetailViewController: ZQViewController {
     }
     
     private func loadData() {
-        // 模拟数据
+        guard !holdingData.isEmpty else {
+            // 没有传入数据，显示空状态
+            return
+        }
+        
+        let code = holdingData["code"] as? String ?? "--"
+        let title = holdingData["title"] as? String ?? "--"
+        let allcode = holdingData["allcode"] as? String ?? ""
+        let number = holdingData["number"] as? String ?? "\(holdingData["number"] as? Int ?? 0)"
+        let buyPrice = holdingData["buyprice"] as? Double ?? 0
+        let citycc = holdingData["citycc"] as? Double ?? (holdingData["citycc"] as? Int).map { Double($0) } ?? 0
+        let allMoney = holdingData["allMoney"] as? String ?? "0"
+        let profitLose = holdingData["profitLose"] as? Double ?? (holdingData["profitLose"] as? Int).map { Double($0) } ?? 0
+        let plRate = holdingData["profitLose_rate"] as? String ?? "--"
+        let createTime = holdingData["createtime_name"] as? String ?? "--"
+        
+        // 推导交易所
+        let typeVal = holdingData["type"] as? Int ?? 0
+        let exchangeStr: String
+        switch typeVal {
+        case 1, 5: exchangeStr = "沪"
+        case 2, 3: exchangeStr = "深"
+        case 4:    exchangeStr = "京"
+        default:
+            if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
+            else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
+            else { exchangeStr = "深" }
+        }
+        
+        let sign = profitLose >= 0 ? "+" : ""
         detail = HoldingDetail(
-            stockCode: "688108",
-            stockName: "1",
-            exchange: "深",
-            shares: "100",
-            purchasePrice: "1.23",
-            purchaseValue: "1.23",
-            transactionFee: "1.34",
-            profitLoss: "45",
-            profitLossPercent: "22.4%",
-            purchaseTime: "2026-01-02 12:23:23"
+            stockCode: code,
+            stockName: title,
+            exchange: exchangeStr,
+            shares: number,
+            purchasePrice: String(format: "%.2f", buyPrice),
+            purchaseValue: String(format: "%.2f", citycc),
+            transactionFee: allMoney,
+            profitLoss: String(format: "%@%.2f", sign, profitLose),
+            profitLossPercent: plRate,
+            purchaseTime: createTime
         )
         setupDetailContent()
     }
@@ -242,8 +274,15 @@ class HoldingDetailViewController: ZQViewController {
     }
     
     @objc private func closePositionTapped() {
-        // TODO: 实现平仓逻辑
-        Toast.show("平仓功能待实现")
+        guard let detail = detail else { return }
+        let vc = AccountTradeViewController()
+        vc.stockName = detail.stockName
+        vc.stockCode = detail.stockCode
+        vc.exchange = detail.exchange
+        vc.currentPrice = detail.purchasePrice
+        vc.tradeType = .sell
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
 }
 

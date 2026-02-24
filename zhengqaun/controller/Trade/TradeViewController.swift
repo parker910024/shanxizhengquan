@@ -182,17 +182,17 @@ class TradeViewController: ZQViewController {
             grid.topAnchor.constraint(equalTo: assetRow.bottomAnchor, constant: sectionSpacing),
             grid.leadingAnchor.constraint(equalTo: wrap.leadingAnchor),
             grid.trailingAnchor.constraint(equalTo: wrap.trailingAnchor),
-            grid.heightAnchor.constraint(equalToConstant: 168),
+            grid.heightAnchor.constraint(equalToConstant: 188),
 
             products.topAnchor.constraint(equalTo: grid.bottomAnchor, constant: sectionSpacing),
             products.leadingAnchor.constraint(equalTo: wrap.leadingAnchor),
             products.trailingAnchor.constraint(equalTo: wrap.trailingAnchor),
-            products.heightAnchor.constraint(equalToConstant: 204),
+            products.heightAnchor.constraint(equalToConstant: 110),
             products.bottomAnchor.constraint(equalTo: wrap.bottomAnchor, constant: -sectionSpacing)
         ])
 
         let w = UIScreen.main.bounds.width
-        wrap.frame = CGRect(x: 0, y: 0, width: w, height: 118 + sectionSpacing + 88 + sectionSpacing + 168 + sectionSpacing + 204 + sectionSpacing)
+        wrap.frame = CGRect(x: 0, y: 0, width: w, height: 118 + sectionSpacing + 88 + sectionSpacing + 188 + sectionSpacing + 110 + sectionSpacing)
         return wrap
     }
 
@@ -456,12 +456,12 @@ class TradeViewController: ZQViewController {
         switch index {
         case 0: // 买入
             let vc = StockSearchViewController()
-//            vc.tradeType = .buy
+            vc.tradeType = .buy
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 1: // 卖出
             let vc = StockSearchViewController()
-//            vc.tradeType = .sell
+            vc.tradeType = .sell
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 2: // 撤单
@@ -513,14 +513,14 @@ class TradeViewController: ZQViewController {
 
         let items: [(String, String, String, String)] = [
             ("up_trade_new_stk_apply_icon", "新股新债", "1新股, 0申购", "NEW"),
-            ("up_trade_main_wdzh_icon", "场外撮合交易", "暂无股票", ""),
-            ("up_trade_main_gznhg_icon", "国债逆回购", "年化利率 1.585%", ""),
-            ("up_trade_main_zhbjhg_icon", "智汇现金理财", "年化利率6.88%", "")
+            ("up_trade_main_wdzh_icon", "场外撮合交易", "暂无股票", "")
+//            ("up_trade_main_gznhg_icon", "国债逆回购", "年化利率 1.585%", ""),
+//            ("up_trade_main_zhbjhg_icon", "智汇现金理财", "年化利率6.88%", "")
         ]
         let cardW = (UIScreen.main.bounds.width - 16 * 2 - 12) / 2
         let cardH: CGFloat = 82
         let rowGap: CGFloat = 12
-        let contentHeight = cardH * 2 + rowGap
+        let contentHeight = cardH
         for (idx, it) in items.enumerated() {
             let card = makeProductCard(icon: it.0, title: it.1, subtitle: it.2, badge: it.3)
             card.tag = idx
@@ -557,8 +557,8 @@ class TradeViewController: ZQViewController {
             let vc = BlockTradingListViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
-        case 2, 3: // 国债逆回购、智汇现金理财
-            break
+//        case 2, 3: // 国债逆回购、智汇现金理财
+//            break
         default:
             break
         }
