@@ -13,10 +13,10 @@ class AccountTradeViewController: ZQViewController {
     var stockName: String = "汉得信息"
     var stockCode: String = "300170"
     var exchange: String = "深"
-    var currentPrice: String = "22.67"
     var tradeType: TradeType = .buy // 买入或卖出
     var sellBuyPrice: String = "--"   // 卖出时的买入价
     var sellHoldingQty: String = "0"  // 卖出时的持仓手数
+    var useProvidedHoldings: Bool = false // 是否使用外部传入的持仓数据（不被接口覆盖）
     
     enum TradeType {
         case buy  // 买入
@@ -1679,7 +1679,13 @@ class AccountTradeViewController: ZQViewController {
                     guard let dict = res.decrypted,
                           let data = dict["data"] as? [[String: Any]],
                           let holding = data.first else { 
-                        self?.holdingQuantityLabel?.text = "0"
+                        if self?.useProvidedHoldings == true {
+                            self?.holdingQuantityLabel?.text = self?.sellHoldingQty
+                            self?.buyPriceSellLabel?.text = self?.sellBuyPrice
+                        } else {
+                            self?.holdingQuantityLabel?.text = "0"
+                            self?.buyPriceSellLabel?.text = "--"
+                        }
                         return 
                     }
                     let num = holding["number"] as? String ?? "0"
@@ -1689,6 +1695,10 @@ class AccountTradeViewController: ZQViewController {
                     let buyPrice = "\(holding["buyprice"] ?? "--")"
                     self?.buyPriceSellLabel?.text = buyPrice
                 case .failure(_):
+                    if self?.useProvidedHoldings == true {
+                        self?.holdingQuantityLabel?.text = self?.sellHoldingQty
+                        self?.buyPriceSellLabel?.text = self?.sellBuyPrice
+                    }
                     break
                 }
             }

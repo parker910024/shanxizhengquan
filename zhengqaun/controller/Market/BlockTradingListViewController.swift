@@ -295,6 +295,7 @@ extension BlockTradingListViewController: UITableViewDataSource, UITableViewDele
             vc.currentPrice = item.currentPrice ?? item.buyPrice
             vc.sellBuyPrice = item.buyPrice
             vc.sellHoldingQty = item.quantity
+            vc.useProvidedHoldings = true
             vc.tradeType = .sell
             vc.hidesBottomBarWhenPushed = true
             self.navigationController?.pushViewController(vc, animated: true)
