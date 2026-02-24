@@ -23,7 +23,7 @@ class MessageDetailViewController: ZQViewController {
         setupNavigationBar()
         setupUI()
         
-        mainTitleLabel.text = message?.typeLabel
+        mainTitleLabel.text = message?.content
         timeLabel.text = "时间:" + (message?.date ?? "")
         
         loadDetailData()

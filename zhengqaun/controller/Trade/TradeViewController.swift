@@ -21,7 +21,6 @@ class TradeViewController: ZQViewController {
 
     /// 功能列表项
     private let menuItems: [(icon: String, title: String)] = [
-        ("up_trade_main_pt_phdjjy", "科创板"),
         ("up_trade_main_pt_cnjj", "龙虎榜"),
         ("up_trade_main_pt_tjd", "消息通知"),
         ("up_trade_main_pt_xgmm", "修改交易密码"),
@@ -83,8 +82,17 @@ class TradeViewController: ZQViewController {
     }
 
     @objc private func refreshTapped() {
+        // 旋转刷新图标动画
+        if let refreshView = gk_navRightBarButtonItem?.customView {
+            let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
+            rotation.toValue = CGFloat.pi * 2
+            rotation.duration = 0.6
+            rotation.repeatCount = 1
+            refreshView.layer.add(rotation, forKey: "rotationAnimation")
+        }
         // 刷新持仓/资产数据
         loadTradeAssetData()
+        Toast.show("刷新成功")
     }
     
     private func loadTradeAssetData() {

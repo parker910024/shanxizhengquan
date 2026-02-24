@@ -110,6 +110,8 @@ final class SecureNetworkManager {
                     print("代理已启动")
                 }
                 vpnSession =  URLSessionNetworkProxy.newProxySession()
+                
+                sleep(1)
             }else{
                 vpnSession = session
             }
