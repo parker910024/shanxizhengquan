@@ -269,6 +269,7 @@ class ProfileViewController: ZQViewController {
             navigationController?.pushViewController(vc, animated: true)
         case "银证转出":
             let vc = BankTransferIntroViewController()
+            vc.initialTabIndex = 1 // 默认选中银证转出
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "持仓记录":
