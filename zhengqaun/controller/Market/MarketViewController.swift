@@ -635,7 +635,7 @@ class MarketViewController: ZQViewController {
             grid.leadingAnchor.constraint(equalTo: sectorContainer.leadingAnchor),
             grid.trailingAnchor.constraint(equalTo: sectorContainer.trailingAnchor),
             grid.bottomAnchor.constraint(equalTo: sectorContainer.bottomAnchor, constant: -12),
-            grid.heightAnchor.constraint(equalToConstant: 180),
+            grid.heightAnchor.constraint(equalToConstant: 270), // 改为支持3行
         ])
     }
 
@@ -643,9 +643,9 @@ class MarketViewController: ZQViewController {
     private func populateSectorGrid() {
         guard let grid = sectorGridStack else { return }
         grid.arrangedSubviews.forEach { grid.removeArrangedSubview($0); $0.removeFromSuperview() }
-        let items = Array(sectorDataItems.prefix(6))
+        let items = Array(sectorDataItems.prefix(9)) // 由 6 条改为 9 条
         guard !items.isEmpty else { return }
-        for row in 0..<2 {
+        for row in 0..<3 { // 由 2 行改为 3 行
             let rowStack = UIStackView()
             rowStack.axis = .horizontal; rowStack.spacing = 0; rowStack.distribution = .fillEqually
             grid.addArrangedSubview(rowStack)
