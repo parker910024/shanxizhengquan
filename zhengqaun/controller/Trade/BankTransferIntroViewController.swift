@@ -500,6 +500,11 @@ class BankTransferIntroViewController: ZQViewController {
         guard let row = g.view, row.tag >= 0, row.tag < channelList.count else { return }
         let channel = channelList[row.tag]
         let vc = BankTransferInViewController()
+        // 传入通道信息
+        vc.sysbankId = channel["id"] as? Int
+        vc.minLimit = Double("\(channel["minlow"] ?? 100)") ?? 100
+        vc.maxLimit = Double("\(channel["maxhigh"] ?? 0)") ?? 0
+        vc.channelName = channel["tdname"] as? String ?? "银证转入"
         navigationController?.pushViewController(vc, animated: true)
     }
 

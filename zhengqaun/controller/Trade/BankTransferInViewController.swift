@@ -14,15 +14,23 @@ class BankTransferInViewController: ZQViewController {
     private let amountTextField = UITextField()
     private let transferButton = UIButton(type: .system)
     
-    private var sysbankId: Int?
-    private var minLimit: Double = 100
+    // 外部传入的通道信息（由银证转账列表页传入）
+    var sysbankId: Int?
+    var minLimit: Double = 100
+    var maxLimit: Double = 0
+    var channelName: String = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupNavigationBar()
         setupUI()
-        loadConfig()
+        // 如果外部已传入 sysbankId 则直接使用，否则自行加载
+        if sysbankId != nil {
+            amountHintLabel.text = "最小转入金额为\(Int(minLimit))元"
+        } else {
+            loadConfig()
+        }
     }
     
     private func setupNavigationBar() {
