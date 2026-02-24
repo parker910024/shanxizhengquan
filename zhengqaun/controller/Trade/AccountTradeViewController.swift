@@ -15,6 +15,8 @@ class AccountTradeViewController: ZQViewController {
     var exchange: String = "深"
     var currentPrice: String = "22.67"
     var tradeType: TradeType = .buy // 买入或卖出
+    var sellBuyPrice: String = "--"   // 卖出时的买入价
+    var sellHoldingQty: String = "0"  // 卖出时的持仓手数
     
     enum TradeType {
         case buy  // 买入
@@ -568,39 +570,29 @@ class AccountTradeViewController: ZQViewController {
         // 代码（可输入 + 查询）
         lastView = addCodeInputRow(to: sellView, after: nil, isBuy: false)
         
-        // 买入价（可点击编辑）
+        // 买入价（只读）
         buyPriceSellLabel = UILabel()
-        buyPriceSellLabel.text = "--"
+        buyPriceSellLabel.text = sellBuyPrice
         buyPriceSellLabel.textColor = .black
         buyPriceSellLabel.font = UIFont.systemFont(ofSize: 15)
         buyPriceSellLabel.textAlignment = .right
-        buyPriceSellLabel.isUserInteractionEnabled = true
-        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "买入价", valueView: buyPriceSellLabel) { [weak self] newValue in
-            self?.buyPriceSellLabel.text = newValue
-        }
+        lastView = addInfoRow(to: sellView, after: lastView, title: "买入价", valueView: buyPriceSellLabel)
         
-        // 现价（可点击编辑）
+        // 现价（只读）
         sellCurrentPriceLabel = UILabel()
         sellCurrentPriceLabel.text = currentPrice
         sellCurrentPriceLabel.textColor = .red
         sellCurrentPriceLabel.font = UIFont.systemFont(ofSize: 15)
         sellCurrentPriceLabel.textAlignment = .right
-        sellCurrentPriceLabel.isUserInteractionEnabled = true
-        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "现价", valueView: sellCurrentPriceLabel) { [weak self] newValue in
-            self?.currentPrice = newValue
-            self?.calculateSellAmount()
-        }
+        lastView = addInfoRow(to: sellView, after: lastView, title: "现价", valueView: sellCurrentPriceLabel)
         
-        // 持仓手数（可点击编辑）
+        // 持仓手数（只读）
         holdingQuantityLabel = UILabel()
-        holdingQuantityLabel.text = "0"
+        holdingQuantityLabel.text = sellHoldingQty
         holdingQuantityLabel.textColor = .black
         holdingQuantityLabel.font = UIFont.systemFont(ofSize: 15)
         holdingQuantityLabel.textAlignment = .right
-        holdingQuantityLabel.isUserInteractionEnabled = true
-        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "持仓手数", valueView: holdingQuantityLabel) { [weak self] newValue in
-            self?.holdingQuantityLabel.text = newValue
-        }
+        lastView = addInfoRow(to: sellView, after: lastView, title: "持仓手数", valueView: holdingQuantityLabel)
         
         // 仓位
         lastView = addPositionRow(to: sellView, after: lastView, isBuy: false)
@@ -608,16 +600,13 @@ class AccountTradeViewController: ZQViewController {
         // 卖出手数
         lastView = addQuantityRow(to: sellView, after: lastView, isBuy: false)
         
-        // 总额(元)（可点击编辑）
+        // 总额(元)（只读）
         totalAmountLabel = UILabel()
         totalAmountLabel.text = "0.00"
         totalAmountLabel.textColor = .black
         totalAmountLabel.font = UIFont.systemFont(ofSize: 15)
         totalAmountLabel.textAlignment = .right
-        totalAmountLabel.isUserInteractionEnabled = true
-        lastView = addEditableInfoRow(to: sellView, after: lastView, title: "总额(元)", valueView: totalAmountLabel) { [weak self] newValue in
-            self?.totalAmountLabel.text = newValue
-        }
+        lastView = addInfoRow(to: sellView, after: lastView, title: "总额(元)", valueView: totalAmountLabel)
         
         // 顶部约束
         let navH = Constants.Navigation.totalNavigationHeight
