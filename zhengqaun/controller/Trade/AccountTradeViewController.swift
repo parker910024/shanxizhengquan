@@ -15,6 +15,8 @@ class AccountTradeViewController: ZQViewController {
     var exchange: String = "深"
     var currentPrice: String = "22.67"
     var tradeType: TradeType = .buy // 买入或卖出
+    var sellBuyPrice: String = "--"   // 卖出时的买入价
+    var sellHoldingQty: String = "0"  // 卖出时的持仓手数
     
     enum TradeType {
         case buy  // 买入
@@ -570,7 +572,7 @@ class AccountTradeViewController: ZQViewController {
         
         // 买入价（只读）
         buyPriceSellLabel = UILabel()
-        buyPriceSellLabel.text = "--"
+        buyPriceSellLabel.text = sellBuyPrice
         buyPriceSellLabel.textColor = .black
         buyPriceSellLabel.font = UIFont.systemFont(ofSize: 15)
         buyPriceSellLabel.textAlignment = .right
@@ -586,7 +588,7 @@ class AccountTradeViewController: ZQViewController {
         
         // 持仓手数（只读）
         holdingQuantityLabel = UILabel()
-        holdingQuantityLabel.text = "0"
+        holdingQuantityLabel.text = sellHoldingQty
         holdingQuantityLabel.textColor = .black
         holdingQuantityLabel.font = UIFont.systemFont(ofSize: 15)
         holdingQuantityLabel.textAlignment = .right

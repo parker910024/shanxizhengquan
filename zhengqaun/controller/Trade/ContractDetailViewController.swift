@@ -327,7 +327,8 @@ class ContractDetailViewController: ZQViewController {
             do {
                 SVProgressHUD.show()
                 if let path = await SecureNetworkManager.shared.upload(image: signatureImage) {
-                    let result = try await SecureNetworkManager.shared.request(api: Api.dosignContract_api, method: .post, params: ["id": contract.id, "img": path])
+                    let result = try await SecureNetworkManager.shared.request(api: Api.dosignContract_api, method: .post, params: ["id": "\(contract.id)", "img": path])
+                    await SVProgressHUD.dismiss()
                     let dict = result.decrypted
                     if dict?["code"] as? NSNumber != 1 {
                         DispatchQueue.main.async {
@@ -339,8 +340,11 @@ class ContractDetailViewController: ZQViewController {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                         self?.navigationController?.popViewController(animated: true)
                     }
+                } else {
+                    await SVProgressHUD.dismiss()
                 }
             } catch {
+                await SVProgressHUD.dismiss()
                 debugPrint("error =", error.localizedDescription, #function)
                 Toast.showError(error.localizedDescription)
             }
