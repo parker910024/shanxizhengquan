@@ -18,6 +18,24 @@ class Api: NSObject {
     //立即开户
     static let create_account_api = "/api/user/register"
     
+    //资产(个人中心)
+    static let getUserPrice_all_api = "/api/user/getUserPrice_all"
+    
+    //验证支付密码
+    static let checkOldpay_api = "/api/user/checkOldpay"
+    
+    //修改支付密码
+    static let editPass_api = "/api/user/editPass"
+    
+    //本地上传
+    static let upload_api = "/api/upload/file"
+    
+    //提交实名认证
+    static let authentication_api = "/api/user/authentication"
+    
+    //实名认证详情
+    static let authenticationDetail_api = "/api/user/authenticationDetail"
+
     //消息列表
     static let message_list_api = "/api/news/index"
     
@@ -26,5 +44,16 @@ class Api: NSObject {
     
     // 新股申购列表
     static let subscribe_api = "/api/subscribe/lst"
+
+    //银行卡列表
+    static let accountLst_api = "/api/user/accountLst"
     
+    //绑定银行卡
+    static let bindaccount_api = "/api/user/bindaccount"
+    
+    //合同列表
+    static let contracts_api = "/api/stock/contracts"
+    
+    //合同签约
+    static let dosignContract_api = "/api/user/dosignContract"
 }

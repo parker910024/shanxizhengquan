@@ -4,14 +4,21 @@
 //
 //  Created by admin on 2026/1/6.
 //
-
+import SVProgressHUD
 import UIKit
 
 /// 银行卡数据模型
-struct BankCard {
-    let cardName: String
-    let branchName: String
-    let cardNumber: String
+struct BankCard: Codable {
+    let id: Int
+    let name: String
+    let account: String
+    let depositBank: String
+    let khzhihang: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, khzhihang, account
+        case depositBank = "deposit_bank"
+    }
 }
 
 class BankCardViewController: ZQViewController {
@@ -48,6 +55,10 @@ class BankCardViewController: ZQViewController {
         super.viewDidLoad()
         setupNavigationBar()
         setupUI()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         loadData()
     }
     
@@ -261,8 +272,35 @@ class BankCardViewController: ZQViewController {
     // MARK: - Data
     private func loadData() {
         // 无卡时显示空态；有卡时从接口或缓存读取后赋值 bankCard
-        bankCard = nil
-        updateUI()
+        Task {
+            do {
+                SVProgressHUD.show()
+                let result = try await SecureNetworkManager.shared.request(api: Api.accountLst_api, method: .post, params: [:])
+                debugPrint("raw =", result.raw) // 原始响应
+                debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                await SVProgressHUD.dismiss()
+                if let dict = result.decrypted, let data = dict["data"] as? [String: Any], let list = data["list"] as? [String: Any], let cards = list["data"] {
+                    if dict["msg"] as? String != "success" {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict["msg"] as? String ?? "")
+                        }
+                        return
+                    } else {
+                        let jsonData = try JSONSerialization.data(withJSONObject: cards, options: [])
+                        let model = try JSONDecoder().decode([BankCard].self, from: jsonData)
+                        debugPrint(model)
+                        self.bankCard = model.first
+                        
+                        updateUI()
+                    }
+                }
+            } catch {
+                await SVProgressHUD.dismiss()
+                debugPrint("error =", error.localizedDescription, #function)
+                Toast.showError(error.localizedDescription)
+            }
+        }
+        
     }
     
     private func updateUI() {
@@ -279,9 +317,9 @@ class BankCardViewController: ZQViewController {
             emptyStateBottomConstraint?.isActive = false
             bindCardBottomConstraint?.isActive = true
             let card = bankCard!
-            cardNameLabel.text = card.cardName
-            branchLabel.text = "开户支行:\(card.branchName)"
-            cardNumberLabel.text = card.cardNumber
+            cardNameLabel.text = card.name
+            branchLabel.text = "开户支行:\(card.khzhihang)"
+            cardNumberLabel.text = card.account
         }
     }
     

@@ -180,9 +180,11 @@ extension SettingsViewController: UITableViewDelegate {
         let item = settingsItems[indexPath.row]
         switch item.title {
         case "个人信息":
+            // TODO: 跳转到个人信息页面
             let vc = PersonalProfileViewController()
             vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
+            self.navigationController?.pushViewController(vc, animated: true)
+            break
         case "版本更新":
             // TODO: 检查版本更新
             Toast.show("当前已是最新版本")

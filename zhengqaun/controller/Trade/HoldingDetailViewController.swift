@@ -28,6 +28,8 @@ class HoldingDetailViewController: ZQViewController {
     private let closePositionButton = UIButton(type: .system)
     private var detail: HoldingDetail?
     
+    var hiddingButton: Bool = false
+    
     /// 调用方传入的持仓原始数据（来自 API 返回）
     var holdingData: [String: Any] = [:]
     
@@ -64,6 +66,7 @@ class HoldingDetailViewController: ZQViewController {
         closePositionButton.backgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
         closePositionButton.layer.cornerRadius = 8
         closePositionButton.addTarget(self, action: #selector(closePositionTapped), for: .touchUpInside)
+        closePositionButton.isHidden = hiddingButton
         view.addSubview(closePositionButton)
         closePositionButton.translatesAutoresizingMaskIntoConstraints = false
         
@@ -275,14 +278,34 @@ class HoldingDetailViewController: ZQViewController {
     
     @objc private func closePositionTapped() {
         guard let detail = detail else { return }
-        let vc = AccountTradeViewController()
-        vc.stockName = detail.stockName
-        vc.stockCode = detail.stockCode
-        vc.exchange = detail.exchange
-        vc.currentPrice = detail.purchasePrice
-        vc.tradeType = .sell
-        vc.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(vc, animated: true)
+        guard let p = Double(detail.purchasePrice), p > 0 else {
+            Toast.show("卖出价格无效")
+            return
+        }
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/sell", // 接口文档未明示卖出接口，凭经验猜使用卖出/sell
+            method: .post,
+            params: [
+                "allcode": detail.stockCode,
+                "sellprice": "\(detail.purchasePrice)",
+                "canSell": detail.shares
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                        Toast.show("卖出委托已提交")
+                        self?.navigationController?.popViewController(animated: true)
+                    } else {
+                        let msg = res.decrypted?["msg"] as? String ?? "提交失败"
+                        Toast.show(msg)
+                    }
+                case .failure(let err):
+                    Toast.show("卖出失败: \\(err.localizedDescription)")
+                }
+            }
+        }
     }
 }
 

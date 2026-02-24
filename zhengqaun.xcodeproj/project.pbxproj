@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		028A37BAD5A36AE8DD24C7C5 /* Pods_zhengqaun.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 903AB0766D8B62700734379D /* Pods_zhengqaun.framework */; };
 		1779D18E2F4C1B8500FDC873 /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 1779D18D2F4C1B8200FDC873 /* libresolv.9.tbd */; };
-		8891F9852D2418ACEEED0E4B /* libPods-zhengqaun.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,10 +30,11 @@
 
 /* Begin PBXFileReference section */
 		1779D18D2F4C1B8200FDC873 /* libresolv.9.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.9.tbd; path = usr/lib/libresolv.9.tbd; sourceTree = SDKROOT; };
-		18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-zhengqaun.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		19E914C62F4C6F3F002BF7B8 /* libSVProgressHUD.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libSVProgressHUD.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		84D1544F2F0D59F1001FC841 /* zhengqaun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zhengqaun.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84D154652F0D59F3001FC841 /* zhengqaunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = zhengqaunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		84D1546F2F0D59F3001FC841 /* zhengqaunUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = zhengqaunUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		903AB0766D8B62700734379D /* Pods_zhengqaun.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_zhengqaun.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A808119E5BC8C3F3294D0439 /* Pods-zhengqaun.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zhengqaun.debug.xcconfig"; path = "Target Support Files/Pods-zhengqaun/Pods-zhengqaun.debug.xcconfig"; sourceTree = "<group>"; };
 		AACA38A6624976C6B5D7E45E /* Pods-zhengqaun.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zhengqaun.release.xcconfig"; path = "Target Support Files/Pods-zhengqaun/Pods-zhengqaun.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -59,11 +60,15 @@
 		};
 		84D154682F0D59F3001FC841 /* zhengqaunTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = zhengqaunTests;
 			sourceTree = "<group>";
 		};
 		84D154722F0D59F3001FC841 /* zhengqaunUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = zhengqaunUITests;
 			sourceTree = "<group>";
 		};
@@ -75,7 +80,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1779D18E2F4C1B8500FDC873 /* libresolv.9.tbd in Frameworks */,
-				8891F9852D2418ACEEED0E4B /* libPods-zhengqaun.a in Frameworks */,
+				028A37BAD5A36AE8DD24C7C5 /* Pods_zhengqaun.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,8 +104,9 @@
 		3C270F0E75DAA61F2BAD4C9B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				19E914C62F4C6F3F002BF7B8 /* libSVProgressHUD.a */,
 				1779D18D2F4C1B8200FDC873 /* libresolv.9.tbd */,
-				18202EF1C83F5A270D381BF6 /* libPods-zhengqaun.a */,
+				903AB0766D8B62700734379D /* Pods_zhengqaun.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -147,7 +153,7 @@
 				84D1544B2F0D59F1001FC841 /* Sources */,
 				84D1544C2F0D59F1001FC841 /* Frameworks */,
 				84D1544D2F0D59F1001FC841 /* Resources */,
-				7AA0EAFB03C5CB62C6745D74 /* [CP] Copy Pods Resources */,
+				637446D8CD8BDDBDF622D48E /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -273,25 +279,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		7AA0EAFB03C5CB62C6745D74 /* [CP] Copy Pods Resources */ = {
+		637446D8CD8BDDBDF622D48E /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
+			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		DF2FBC585E7EFECD8E9BA071 /* [CP] Check Pods Manifest.lock */ = {
