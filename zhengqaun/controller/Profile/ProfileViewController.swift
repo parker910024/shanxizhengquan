@@ -264,7 +264,7 @@ class ProfileViewController: ZQViewController {
         let title = titles[v.tag]
         switch title {
         case "银证转入":
-            let vc = BankTransferInViewController()
+            let vc = BankTransferIntroViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "银证转出":
