@@ -9,7 +9,7 @@ import UIKit
 
 class ContractSignInfoViewController: UIViewController {
 
-    var contract: Contract?
+    var contract: ContractModel?
     var onConfirm: ((String, String, String) -> Void)?
 
     private let container = UIView()

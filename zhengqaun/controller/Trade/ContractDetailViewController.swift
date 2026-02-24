@@ -5,11 +5,12 @@
 //  Created by admin on 2026/1/6.
 //
 
+import SVProgressHUD
 import UIKit
 
 class ContractDetailViewController: ZQViewController {
-    
     var contract: Contract?
+    var model: ContractModel?
     private var signatureImage: UIImage?
     
     private let scrollView = UIScrollView()
@@ -219,7 +220,8 @@ class ContractDetailViewController: ZQViewController {
             
             // 加载已保存的签名图片（从UserDefaults或文件系统）
             if let savedSignatureData = UserDefaults.standard.data(forKey: "contract_signature_\(contract.id)"),
-               let savedSignature = UIImage(data: savedSignatureData) {
+               let savedSignature = UIImage(data: savedSignatureData)
+            {
                 signatureImage = savedSignature
                 signatureImageView.image = savedSignature
             } else {
@@ -262,7 +264,7 @@ class ContractDetailViewController: ZQViewController {
         UserDefaults.standard.removeObject(forKey: "contract_signature_\(contract.id)")
         
         vc.onSignatureComplete = { [weak self] image in
-            guard let self = self, let contract = self.contract else { return }
+            guard let self = self, let _ = self.contract else { return }
             self.signatureImage = image
             self.signatureImageView.image = image
             self.signatureImageView.isHidden = false
@@ -283,7 +285,7 @@ class ContractDetailViewController: ZQViewController {
     private func restorePortraitIfNeeded() {
         // 检查当前方向，如果不是竖屏则恢复
         let currentOrientation = UIApplication.shared.statusBarOrientation
-        if currentOrientation != .portrait && currentOrientation != .unknown {
+        if currentOrientation != .portrait, currentOrientation != .unknown {
             if #available(iOS 16.0, *) {
                 guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
                 let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: .portrait)
@@ -302,7 +304,7 @@ class ContractDetailViewController: ZQViewController {
     }
     
     @objc private func submitTapped() {
-        guard let signatureImage = signatureImage, let contract = contract else {
+        guard let signatureImage = signatureImage, let _ = contract, let model = model else {
             Toast.show("请先进行签名")
             return
         }
@@ -310,22 +312,38 @@ class ContractDetailViewController: ZQViewController {
         let alert = UIAlertController(title: "确认提交", message: "确定要提交合同吗？", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
-            self?.performSubmit(signatureImage: signatureImage, contract: contract)
+            self?.performSubmit(signatureImage: signatureImage, contract: model)
         })
         present(alert, animated: true)
     }
     
-    private func performSubmit(signatureImage: UIImage, contract: Contract) {
+    private func performSubmit(signatureImage: UIImage, contract: ContractModel) {
         // 保存签名图片到UserDefaults（只有确认提交后才保存）
         if let imageData = signatureImage.pngData() {
             UserDefaults.standard.set(imageData, forKey: "contract_signature_\(contract.id)")
         }
         
-        // TODO: 提交合同到服务器
-        Toast.show("合同提交成功")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.navigationController?.popViewController(animated: true)
+        Task {
+            do {
+                SVProgressHUD.show()
+                if let path = await SecureNetworkManager.shared.upload(image: signatureImage) {
+                    let result = try await SecureNetworkManager.shared.request(api: Api.dosignContract_api, method: .post, params: ["id": contract.id, "img": path])
+                    let dict = result.decrypted
+                    if dict?["code"] as? NSNumber != 1 {
+                        DispatchQueue.main.async {
+                            Toast.showInfo(dict?["msg"] as? String ?? "")
+                        }
+                        return
+                    }
+                    Toast.show("合同提交成功")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                        self?.navigationController?.popViewController(animated: true)
+                    }
+                }
+            } catch {
+                debugPrint("error =", error.localizedDescription, #function)
+                Toast.showError(error.localizedDescription)
+            }
         }
-    }
+     }
 }
-

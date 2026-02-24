@@ -50,4 +50,10 @@ class Api: NSObject {
     
     //绑定银行卡
     static let bindaccount_api = "/api/user/bindaccount"
+    
+    //合同列表
+    static let contracts_api = "/api/stock/contracts"
+    
+    //合同签约
+    static let dosignContract_api = "/api/user/dosignContract"
 }
