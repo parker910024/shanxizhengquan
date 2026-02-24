@@ -19,6 +19,9 @@ class AccountTradeViewController: ZQViewController {
     var sellHoldingQty: String = "0"  // 卖出时的持仓手数
     var useProvidedHoldings: Bool = false // 是否使用外部传入的持仓数据（不被接口覆盖）
     
+    var limitUpPrice: String = ""
+    var limitDownPrice: String = ""
+    
     enum TradeType {
         case buy  // 买入
         case sell // 卖出
