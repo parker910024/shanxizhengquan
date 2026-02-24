@@ -261,10 +261,10 @@ class MyHoldingsViewController: ZQViewController {
                     let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
                     let caiBuy = item["cai_buy"] as? Double ?? Double("\(item["cai_buy"] ?? 0)") ?? 0
                     let buyPrice = item["buyprice"] as? Double ?? 0
-                    let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
-                    let plRate = item["profitLose_rate"] as? String ?? String(format: "%.2f%%", buyPrice > 0 ? (pl / (buyPrice * Double(Int(number) ?? 1)) * 100) : 0)
+                    let pl = item["profitLose"] as? String ?? "0"
+                    let plRate = item["profitLose_rate"] as? String ?? "0"
                     
-                    let sign = pl >= 0 ? "+" : ""
+//                    let sign = pl >= 0 ? "+" : ""
                     return Holding(
                         name: name,
                         code: "\(exchangeStr) \(code)",
@@ -272,7 +272,7 @@ class MyHoldingsViewController: ZQViewController {
                         marketValueDetail: number,
                         currentPrice: String(format: "%.2f", caiBuy),
                         currentPriceDetail: String(format: "%.2f", buyPrice),
-                        profitLoss: String(format: "%@%.2f", sign, pl),
+                        profitLoss: pl,//String(format: "%@%.2f", sign, pl),
                         profitLossPercent: plRate
                     )
                 }
