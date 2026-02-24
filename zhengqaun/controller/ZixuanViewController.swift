@@ -5,6 +5,17 @@
 
 import UIKit
 
+/// 自选股数据模型
+struct ZixuanStockItem {
+    let name: String
+    let code: String
+    let symbol: String      // 如 sh688108
+    let trade: String       // 当前价
+    let changePct: String   // 涨跌幅
+    let changeAmt: String   // 涨跌额
+    let isRise: Bool
+}
+
 /// 自选页：顶部指数卡片 + 表头(名称/最新/涨跌幅/涨跌额) + 空态「添加自选」或列表
 class ZixuanViewController: ZQViewController {
 
@@ -17,8 +28,11 @@ class ZixuanViewController: ZQViewController {
     private let addButton = UIButton(type: .custom)
     private let addLabel = UILabel()
 
-    /// 自选行数据：名称, 最新价, 涨跌幅, 涨跌额, 是否上涨
-    private var listData: [(String, String, String, String, Bool)] = []
+    /// 自选行数据
+    private var listData: [ZixuanStockItem] = []
+    
+    /// 指数卡片标签引用，用于更新数据
+    private var indexCardLabels: [(nameL: UILabel, valueL: UILabel, changeL: UILabel)] = []
 
     private let bgColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0)
     private let textPrimary = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0)
@@ -29,6 +43,14 @@ class ZixuanViewController: ZQViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        loadIndexData()
+        loadZixuanList()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 每次回到此页刷新自选列表
+        loadZixuanList()
     }
 
     private func setupUI() {
@@ -90,13 +112,9 @@ class ZixuanViewController: ZQViewController {
         contentView.addSubview(indexStack)
         indexStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let indices: [(String, String, String, Bool)] = [
-            ("上证指数", "3968.84", "+3.72 0.09%", true),
-            ("深证成指", "3968.84", "+3.72 0.09%", true),
-            ("北证50", "10015.86", "-15.97 0.16%", false)
-        ]
-        for item in indices {
-            indexStack.addArrangedSubview(makeIndexCard(name: item.0, value: item.1, change: item.2, isRise: item.3))
+        let defaultIndices = ["上证指数", "深证成指", "北证50"]
+        for name in defaultIndices {
+            indexStack.addArrangedSubview(makeIndexCard(name: name, value: "--", change: "-- --", isRise: true))
         }
 
         NSLayoutConstraint.activate([
@@ -139,6 +157,8 @@ class ZixuanViewController: ZQViewController {
             changeL.topAnchor.constraint(equalTo: valueL.bottomAnchor, constant: 4),
             changeL.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 10)
         ])
+        // 保存标签引用
+        indexCardLabels.append((nameL: nameL, valueL: valueL, changeL: changeL))
         return card
     }
 
@@ -252,13 +272,97 @@ class ZixuanViewController: ZQViewController {
     }
 
     @objc private func addZixuanTapped() {
-        listData = [
-            ("舒泰神", "27.32", "-0.98%", "-0.26", false),
-            ("中钢天源", "8.65", "-0.92%", "-0.08", false),
-            ("芭薇股份", "6.28", "-0.63%", "-0.04", false),
-            ("兴图新科", "18.52", "+1.61%", "+0.29", true)
-        ]
-        updateListVisibility()
+        // 跳转到搜索页添加自选
+        let vc = StockSearchViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    // MARK: - 加载指数数据
+    private func loadIndexData() {
+        SecureNetworkManager.shared.request(
+            api: "/api/Indexnew/sandahangqing_new",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else { return }
+                
+                for (i, obj) in list.prefix(3).enumerated() {
+                    guard i < self.indexCardLabels.count,
+                          let arr = obj["allcodes_arr"] as? [Any], arr.count >= 7 else { continue }
+                    let str = arr.map { "\($0)" }
+                    let name = str[1]
+                    let price = str[3]
+                    let change = str[4]
+                    let changePct = str[5]
+                    let changeVal = Double(change) ?? 0
+                    let isRise = changeVal >= 0
+                    let color = isRise ? self.riseColor : self.fallColor
+                    let sign = isRise ? "+" : ""
+                    
+                    self.indexCardLabels[i].nameL.text = name
+                    self.indexCardLabels[i].valueL.text = price
+                    self.indexCardLabels[i].valueL.textColor = color
+                    self.indexCardLabels[i].changeL.text = "\(sign)\(change) \(changePct)%"
+                    self.indexCardLabels[i].changeL.textColor = color
+                }
+                
+            case .failure(_): break
+            }
+        }
+    }
+    
+    // MARK: - 加载自选列表
+    private func loadZixuanList() {
+        SecureNetworkManager.shared.request(
+            api: "/api/elect/getZixuanNew",
+            method: .get,
+            params: ["page": "1", "size": "50"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    self.listData = []
+                    self.updateListVisibility()
+                    return
+                }
+                
+                self.listData = list.compactMap { item in
+                    let name = item["name"] as? String ?? "--"
+                    let code = item["code"] as? String ?? ""
+                    let symbol = item["symbol"] as? String ?? ""
+                    let trade = item["trade"] as? String ?? "0.00"
+                    let changePct = item["changepercent"] as? String ?? "0.00"
+                    let priceChange = item["pricechange"] as? String ?? "0.00"
+                    
+                    let changeVal = Double(priceChange) ?? 0
+                    let isRise = changeVal >= 0
+                    let sign = isRise ? "+" : ""
+                    
+                    return ZixuanStockItem(
+                        name: name,
+                        code: code,
+                        symbol: symbol,
+                        trade: trade,
+                        changePct: "\(sign)\(changePct)%",
+                        changeAmt: "\(sign)\(priceChange)",
+                        isRise: isRise
+                    )
+                }
+                
+                self.updateListVisibility()
+                
+            case .failure(_): break
+            }
+        }
     }
 }
 
@@ -271,7 +375,7 @@ extension ZixuanViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ZixuanRow", for: indexPath) as! ZixuanRowCell
         let row = listData[indexPath.row]
-        cell.configure(name: row.0, latest: row.1, changePct: row.2, changeAmt: row.3, isRise: row.4)
+        cell.configure(name: row.name, latest: row.trade, changePct: row.changePct, changeAmt: row.changeAmt, isRise: row.isRise)
         return cell
     }
 }
@@ -285,10 +389,10 @@ extension ZixuanViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let row = listData[indexPath.row]
-        let vc = StockDetailViewController()
-        vc.stockName = row.0
-        vc.stockCode = ""
-        vc.exchange = ""
+        let vc = IndexDetailViewController()
+        vc.indexName = row.name
+        vc.indexCode = row.code
+        vc.indexAllcode = row.symbol
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
