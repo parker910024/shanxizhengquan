@@ -373,9 +373,9 @@ class ProfileViewController: ZQViewController {
         btnStack.translatesAutoresizingMaskIntoConstraints = false
         
         
-        let btn4 = makePillButton(title: "打新记录", imageName: "打新记录", color: UIColor(red: 1.0, green: 50/255, blue: 126/255, alpha: 1.0))
-        let btn5 = makePillButton(title: "配售记录", imageName: "配售记录", color: UIColor(red: 1.0, green: 156/255, blue: 17/255, alpha: 1.0))
-        let btn6 = makePillButton(title: "大宗交易", imageName: "大宗交易", color: UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1.0))
+        let btn4 = makePillButton(title: FeatureSwitchManager.shared.nameXgsg, imageName: "打新记录", color: UIColor(red: 1.0, green: 50/255, blue: 126/255, alpha: 1.0))
+        let btn5 = makePillButton(title: FeatureSwitchManager.shared.nameXxps, imageName: "配售记录", color: UIColor(red: 1.0, green: 156/255, blue: 17/255, alpha: 1.0))
+        let btn6 = makePillButton(title: FeatureSwitchManager.shared.nameDzjy, imageName: "大宗交易", color: UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1.0))
         btn4.addTarget(self, action: #selector(newRecordTapped), for: .touchUpInside)
         btn5.addTarget(self, action: #selector(placingRecordTapped), for: .touchUpInside)
         btn6.addTarget(self, action: #selector(largeRecordTapped), for: .touchUpInside)
