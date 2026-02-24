@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SafariServices
 
 class StockDetailViewController: ZQViewController {
     
@@ -151,6 +152,14 @@ class StockDetailViewController: ZQViewController {
         customNavBar.addSubview(searchButton)
         searchButton.translatesAutoresizingMaskIntoConstraints = false
         
+        // 客服按钮
+        let serviceButton = UIButton(type: .system)
+        serviceButton.setImage(UIImage(systemName: "headphones"), for: .normal)
+        serviceButton.tintColor = .black
+        serviceButton.addTarget(self, action: #selector(serviceTapped), for: .touchUpInside)
+        customNavBar.addSubview(serviceButton)
+        serviceButton.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             customNavBar.topAnchor.constraint(equalTo: view.topAnchor),
             customNavBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -174,7 +183,12 @@ class StockDetailViewController: ZQViewController {
             searchButton.trailingAnchor.constraint(equalTo: customNavBar.trailingAnchor, constant: -16),
             searchButton.centerYAnchor.constraint(equalTo: customNavBar.centerYAnchor, constant: Constants.Navigation.statusBarHeight / 2),
             searchButton.widthAnchor.constraint(equalToConstant: 44),
-            searchButton.heightAnchor.constraint(equalToConstant: 44)
+            searchButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            serviceButton.trailingAnchor.constraint(equalTo: searchButton.leadingAnchor, constant: -4),
+            serviceButton.centerYAnchor.constraint(equalTo: searchButton.centerYAnchor),
+            serviceButton.widthAnchor.constraint(equalToConstant: 44),
+            serviceButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
     
@@ -1504,6 +1518,34 @@ class StockDetailViewController: ZQViewController {
     // MARK: - Actions
     @objc private func backTapped() {
         navigationController?.popViewController(animated: true)
+    }
+    
+    @objc private func serviceTapped() {
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    let vc = SFSafariViewController(url: url)
+                    self.present(vc, animated: true)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
     }
     
     @objc private func searchTapped() {

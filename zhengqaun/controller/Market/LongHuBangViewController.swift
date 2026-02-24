@@ -365,9 +365,19 @@ extension LongHuBangViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let item = listData[indexPath.section]
-        let vc = StockDetailViewController()
-        vc.stockCode = item.code
-        vc.stockName = item.name
+        let vc = IndexDetailViewController()
+        vc.indexName = item.name
+        vc.indexCode = item.code
+        // 根据代码前缀推导 allcode
+        let code = item.code
+        if code.hasPrefix("6") || code.hasPrefix("5") || code.hasPrefix("9") {
+            vc.indexAllcode = "sh\(code)"
+        } else if code.hasPrefix("8") || code.hasPrefix("43") {
+            vc.indexAllcode = "bj\(code)"
+        } else {
+            // 000/001/002/003/300/301 等均为深交所
+            vc.indexAllcode = "sz\(code)"
+        }
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

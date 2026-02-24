@@ -765,15 +765,15 @@ class StockTradeViewController: ZQViewController {
 
     private func applyRatio(_ ratio: Double) {
         guard currentPrice > 0 && userBalance > 0 else { return }
-        let shares = Int(floor(userBalance * ratio / currentPrice / 100)) * 100
-        quantity = shares / 100   // 转手数
+        let shares = Int(floor(userBalance * ratio / currentPrice))
+        quantity = shares
         syncQuantityField()
         recalculate()
     }
 
     // MARK: - 计算（与 Android recalculate 对齐）
     private func recalculate() {
-        let shares = quantity * 100
+        let shares = quantity
         let price  = currentPrice > 0 ? currentPrice : 0
         let amount = Double(shares) * price
         let fee    = amount * Self.FEE_RATE
@@ -785,7 +785,7 @@ class StockTradeViewController: ZQViewController {
 
         if userBalance > 0 {
             availableLabel?.text = "￥\(formatMoney(userBalance))"
-            let maxShares = price > 0 ? Int(floor(userBalance / price / 100)) * 100 : 0
+            let maxShares = price > 0 ? Int(floor(userBalance / price)) : 0
             canBuySharesLabel?.text = "\(maxShares)股"
         }
     }
@@ -829,7 +829,7 @@ class StockTradeViewController: ZQViewController {
     }
 
     private func showOrderConfirmDialog() {
-        let shares = quantity * 100
+        let shares = quantity
         let amount = Double(shares) * currentPrice
         let fee    = amount * Self.FEE_RATE
 
