@@ -1616,18 +1616,32 @@ class AccountTradeViewController: ZQViewController {
                 switch result {
                 case .success(let res):
                     guard let dict = res.decrypted,
-                          let data = dict["data"] as? [String: Any],
-                          let list = data["list"] as? [[String: Any]],
-                          let first = list.first else { return }
+                          let data = dict["data"] as? [String: Any] else {
+                        print("[账户交易] stockDetail 解析失败")
+                        return
+                    }
                     
-                    let price = first["current_price"] as? String ?? "0.00"
+                    // list 可能是数组或字典
+                    var first: [String: Any]?
+                    if let arr = data["list"] as? [[String: Any]] {
+                        first = arr.first
+                    } else if let obj = data["list"] as? [String: Any] {
+                        first = obj
+                    }
+                    guard let stockInfo = first else {
+                        print("[账户交易] stockDetail list 为空, data keys=\(data.keys)")
+                        return
+                    }
+                    
+                    let price = "\(stockInfo["current_price"] ?? "0.00")"
                     self?.currentPrice = price
                     
                     self?.buyPriceLabel?.text = price
                     self?.buyCurrentPriceLabel?.text = price
                     self?.sellCurrentPriceLabel?.text = price
                     self?.buyPriceSellLabel?.text = price
-                    self?.stockName = first["title"] as? String ?? ""
+                    self?.stockName = stockInfo["title"] as? String ?? ""
+                    print("[账户交易] stockDetail 成功: price=\(price), buyPriceSellLabel=\(self?.buyPriceSellLabel?.text ?? "nil")")
                     
                     self?.updateLimitUpDown()
                     if self?.selectedIndex == 0 {
@@ -1681,6 +1695,10 @@ class AccountTradeViewController: ZQViewController {
                     }
                     let num = holding["number"] as? String ?? "0"
                     self?.holdingQuantityLabel?.text = num
+                    
+                    // 设置买入价（持仓成本价）
+                    let buyPrice = "\(holding["buyprice"] ?? "--")"
+                    self?.buyPriceSellLabel?.text = buyPrice
                 case .failure(_):
                     break
                 }

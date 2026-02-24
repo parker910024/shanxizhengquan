@@ -990,16 +990,18 @@ class IndexDetailViewController: ZQViewController {
         // 上交所 sh prefix
         if allcode.hasPrefix("sh") { return "1.\(code)" }
 
+        // 深交所 sz prefix
+        if allcode.hasPrefix("sz") { return "0.\(code)" }
+
         // 指数：特定代码归属上交所
         let shIndexCodes = Set(["000001","000016","000300","000905","000852","000688"])
         if shIndexCodes.contains(code) { return "1.\(code)" }
         if code.hasPrefix("399") || code.hasPrefix("899") { return "0.\(code)" }
-        if code.hasPrefix("000") { return "1.\(code)" }
 
         // 普通股票
         if code.hasPrefix("6") || code.hasPrefix("5") || code.hasPrefix("9") { return "1.\(code)" }
 
-        // 深交所默认
+        // 深交所默认（000/001/002/003/300 等）
         return "0.\(code)"
     }
 
