@@ -21,7 +21,7 @@ class MarketViewController: ZQViewController {
     private let cardBg      = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0)
 
     // MARK: - 顶部分段
-    private let segmentTitles = ["行情", "新股申购", "战略配售", "天启护盘"]
+    private var segmentTitles = ["行情", "新股申购", "战略配售", "天启护盘"]
     private var selectedSegmentIndex = 0
     private var segmentWrap: UIView!
     private var segmentButtons: [UIButton] = []
@@ -133,15 +133,30 @@ class MarketViewController: ZQViewController {
         updateFeatureSegments()
     }
 
-    /// 根据功能开关隐藏/显示分段 tab
+    /// 根据功能开关隐藏/显示分段 tab 并更新标题
     @objc private func updateFeatureSegments() {
         let mgr = FeatureSwitchManager.shared
+        if !mgr.nameXgsg.isEmpty { segmentTitles[1] = mgr.nameXgsg }
+        if !mgr.nameXxps.isEmpty { segmentTitles[2] = mgr.nameXxps }
+        if !mgr.nameDzjy.isEmpty { segmentTitles[3] = mgr.nameDzjy }
+        
         for btn in segmentButtons {
             switch btn.tag {
-            case 1: btn.isHidden = !mgr.isXgsgEnabled  // 新股申购
-            case 2: btn.isHidden = !mgr.isXxpsEnabled   // 战略配售
+            case 1:
+                btn.isHidden = !mgr.isXgsgEnabled  // 新股申购
+                btn.setTitle(segmentTitles[1], for: .normal)
+            case 2:
+                btn.isHidden = !mgr.isXxpsEnabled   // 战略配售
+                btn.setTitle(segmentTitles[2], for: .normal)
+            case 3:
+                btn.isHidden = !mgr.isDzjyEnabled   // 天启护盘(大宗交易)
+                btn.setTitle(segmentTitles[3], for: .normal)
             default: break
             }
+        }
+        
+        if selectedSegmentIndex > 0 && todayTitleLabel != nil {
+            todayTitleLabel.text = segTitleFor(selectedSegmentIndex)
         }
     }
 
@@ -215,12 +230,8 @@ class MarketViewController: ZQViewController {
     }
 
     private func segTitleFor(_ idx: Int) -> String {
-        switch idx {
-        case 1:  return "今日申购"
-        case 2:  return "今日战略配售"
-        case 3:  return "今日天启护盘"
-        default: return ""
-        }
+        guard idx > 0, idx < segmentTitles.count else { return "" }
+        return "今日\(segmentTitles[idx])"
     }
 
     // ===================================================================
