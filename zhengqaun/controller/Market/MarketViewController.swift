@@ -1398,14 +1398,26 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "SubsRow", for: indexPath) as! SubscriptionRowCell
         if indexPath.row < subscriptionList.count {
             let item = subscriptionList[indexPath.row]
-            
             // 名称：多种可能的 key
-            let name = (item["name"] as? String) ?? (item["title"] as? String) ?? (item["stock_name"] as? String) ?? "--"
+            var name = "--"
+            for key in ["name", "title", "stock_name"] {
+                if let val = item[key] as? String, !val.isEmpty {
+                    name = val
+                    break
+                }
+            }
             
-            // 代码：多种可能的 key，需要考虑数字类型
-            let codeAny = item["sgcode"] ?? item["code"] ?? item["symbol"] ?? item["stock_code"] ?? ""
-            var code = "\(codeAny)"
-            if code.isEmpty { code = "--" }
+            // 代码：多种可能的 key，需要过滤空字符串
+            var code = "--"
+            for key in ["sgcode", "code", "symbol", "stock_code", "allcode"] {
+                if let valAny = item[key] {
+                    let valStr = "\(valAny)"
+                    if !valStr.isEmpty {
+                        code = valStr
+                        break
+                    }
+                }
+            }
             
             // 价格
             let fx_price = item["fx_price"]
