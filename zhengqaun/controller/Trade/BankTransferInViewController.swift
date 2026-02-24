@@ -158,24 +158,18 @@ class BankTransferInViewController: ZQViewController {
         }
     }
 
-    /// 弹出支付密码输入框
+    /// 弹出支付密码输入（6位数字 + 自定义键盘）
     private func showPasswordInput(completion: @escaping (String) -> Void) {
-        let alert = UIAlertController(title: "请输入银证密码", message: nil, preferredStyle: .alert)
-        alert.addTextField { tf in
-            tf.placeholder = "请输入密码"
-            tf.isSecureTextEntry = true
-            tf.keyboardType = .numberPad
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "确认", style: .default) { _ in
-            let pwd = alert.textFields?.first?.text ?? ""
-            if pwd.isEmpty {
-                Toast.show("请输入密码")
-                return
-            }
-            completion(pwd)
-        })
-        present(alert, animated: true)
+        let passwordView = PaymentPasswordInputView()
+        passwordView.onComplete = completion
+        passwordView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(passwordView)
+        NSLayoutConstraint.activate([
+            passwordView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            passwordView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            passwordView.topAnchor.constraint(equalTo: view.topAnchor),
+            passwordView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
     }
 
     /// 提交银证转入请求

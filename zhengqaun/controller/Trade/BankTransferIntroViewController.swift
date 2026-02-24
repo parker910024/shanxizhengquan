@@ -775,7 +775,7 @@ class BankTransferIntroViewController: ZQViewController {
 }
 
 // MARK: - 支付密码输入视图
-private class PaymentPasswordInputView: UIView {
+class PaymentPasswordInputView: UIView {
 
     private let dimView = UIView()
     private let containerView = UIView()
