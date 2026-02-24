@@ -236,11 +236,11 @@ class StockTradeViewController: ZQViewController {
         // 8dp 间距
         last = addSep(after: last)
 
-        // 五档盘口
-        last = addOrderBoard(after: last)
+        // 五档盘口（已隐藏）
+        // last = addOrderBoard(after: last)
 
         // 8dp 间距
-        last = addSep(after: last)
+        // last = addSep(after: last)
 
         // 底部信息卡片
         let infoCard = UIView()
@@ -654,6 +654,8 @@ class StockTradeViewController: ZQViewController {
 
     /// 刷新五档盘口
     private func refreshOrderBook(asks: [(price: Double, vol: Int)], bids: [(price: Double, vol: Int)]) {
+        // 盘口隐藏时 label 数组为空，直接跳过
+        guard askVolLabels.count == 5, bidVolLabels.count == 5 else { return }
         // asks[0]=卖1 ... asks[4]=卖5，UI 卖5(index0) → 卖1(index4)
         for i in 0..<5 {
             let askIdx = 4 - i  // UI row i shows ask level (4-i)
