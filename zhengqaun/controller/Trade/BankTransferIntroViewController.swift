@@ -59,6 +59,12 @@ class BankTransferIntroViewController: ZQViewController {
         loadTransferOutData()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 每次页面显示时刷新转出数据（余额 + 历史记录）
+        loadTransferOutData()
+    }
+
     // MARK: - 导航栏（蓝色）
     private func setupNavBar() {
         gk_navBackgroundColor = themeBlue
@@ -328,7 +334,7 @@ class BankTransferIntroViewController: ZQViewController {
             historyStack.topAnchor.constraint(equalTo: submitBtn.bottomAnchor, constant: 24),
             historyStack.leadingAnchor.constraint(equalTo: transferOutContent.leadingAnchor, constant: pad),
             historyStack.trailingAnchor.constraint(equalTo: transferOutContent.trailingAnchor, constant: -pad),
-            historyStack.bottomAnchor.constraint(lessThanOrEqualTo: transferOutContent.bottomAnchor, constant: -20)
+            historyStack.bottomAnchor.constraint(equalTo: transferOutContent.bottomAnchor, constant: -20)
         ])
     }
 
@@ -726,8 +732,24 @@ class BankTransferIntroViewController: ZQViewController {
         for item in list {
             let typeName = item["pay_type_name"] as? String ?? "银证转出"
             let statusName = item["is_pay_name"] as? String ?? ""
-            let money = item["money"] as? Double ?? 0
-            let timestamp = item["createtime"] as? Int ?? 0
+            // 兼容 money 可能是 Double 或 String
+            let money: Double
+            if let m = item["money"] as? Double {
+                money = m
+            } else if let s = item["money"] as? String, let m = Double(s) {
+                money = m
+            } else {
+                money = Double("\(item["money"] ?? 0)") ?? 0
+            }
+            // 兼容 createtime 可能是 Int 或 String
+            let timestamp: Int
+            if let t = item["createtime"] as? Int {
+                timestamp = t
+            } else if let s = item["createtime"] as? String, let t = Int(s) {
+                timestamp = t
+            } else {
+                timestamp = Int("\(item["createtime"] ?? 0)") ?? 0
+            }
             let txtColor = item["txtcolor"] as? String ?? "blue"
             let reject = item["reject"] as? String ?? ""
 
