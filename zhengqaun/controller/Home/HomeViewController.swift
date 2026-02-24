@@ -557,7 +557,9 @@ extension HomeViewController: UITableViewDataSource {
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
                 case "场外撮合交易":
-                    break
+                    let vc = BlockTradingListViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
                 case "智能选股", "AI智投":
                     let vc = SmartStockSelectionViewController()
                     vc.hidesBottomBarWhenPushed = true
