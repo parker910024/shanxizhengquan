@@ -18,6 +18,7 @@ struct BlockTradingListItem {
     let profit: String         // 收益，如"2966.00"
     let profitRate: String     // 收益率，如"159.63%"
     let updateTime: String     // 更新时间，如"2026-01-26 20:09:09"
+    let quantity: String       // 数量
 }
 
 class BlockTradingListViewController: ZQViewController {
@@ -266,7 +267,8 @@ class BlockTradingListViewController: ZQViewController {
             currentPrice: String(format: "%.2f", caiBuy),
             profit: String(format: "%@%.2f", sign, pl),
             profitRate: plRate,
-            updateTime: isHistory ? outTime : createTime
+            updateTime: isHistory ? outTime : createTime,
+            quantity: number
         )
     }
 }
@@ -290,6 +292,8 @@ extension BlockTradingListViewController: UITableViewDataSource, UITableViewDele
             vc.stockCode = item.stockCode
             vc.exchange = item.exchange
             vc.currentPrice = item.currentPrice ?? item.buyPrice
+            vc.sellBuyPrice = item.buyPrice
+            vc.sellHoldingQty = item.quantity
             vc.tradeType = .sell
             vc.hidesBottomBarWhenPushed = true
             self.navigationController?.pushViewController(vc, animated: true)
