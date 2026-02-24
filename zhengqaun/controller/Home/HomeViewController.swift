@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SafariServices
 
 class HomeViewController: ZQViewController {
     
@@ -18,6 +19,8 @@ class HomeViewController: ZQViewController {
     
     // 数据源（与 new UI 一致：2 行 x 5 列）
     private var bannerImages: [UIImage] = []
+    /// Banner 图片链接（接口返回，可能多张）
+    private var bannerUrls: [String] = []
     private var menuItems: [(String, String)] = [
         ("极速开户", "icon_home_1"),
         ("市场行情", "icon_home_7"),
@@ -26,7 +29,7 @@ class HomeViewController: ZQViewController {
         ("银证转出", "icon11"),
         ("新股申购", "icon_home_6"),
         ("场外撮合交易", "icon_home_9"),
-        ("智能选股", "icon12"),
+        ("线下配售", "icon12"),
         ("AI智投", "icon_home_13"),
         ("龙虎榜", "icon4")
     ]
@@ -39,7 +42,7 @@ class HomeViewController: ZQViewController {
         ("银证转出", "icon11"),
         ("新股申购", "icon_home_6"),
         ("场外撮合交易", "icon_home_9"),
-        ("智能选股", "icon12"),
+        ("线下配售", "icon12"),
         ("AI智投", "icon_home_13"),
         ("龙虎榜", "icon4")
     ]
@@ -56,22 +59,57 @@ class HomeViewController: ZQViewController {
         // 加载功能开关配置
         FeatureSwitchManager.shared.loadConfig()
         NotificationCenter.default.addObserver(self, selector: #selector(featureSwitchDidUpdate), name: FeatureSwitchManager.didUpdateNotification, object: nil)
+        
+        SecureNetworkManager.shared.request(api: "/api/index/banner", method: .get, params: [:]) { res in
+            switch res {
+            case .success(let res):
+                print("status =", res.statusCode)
+                print("raw =", res.raw)          // 原始响应
+                print("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
+                let dict = res.decrypted
+                print(dict ?? "nil")
+                if dict?["code"] as? NSNumber != 1 {
+
+                    DispatchQueue.main.async {
+                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                    }
+                    return
+                }
+                let dataArray = (dict?["data"] as? [String: Any])?["list"] as? [[String: Any]]
+                guard let arr = dataArray else { return }
+                let base = vpnDataModel.shared.selectAddress ?? ""
+                let urls = arr.compactMap { dict -> String? in
+                    guard let path = dict["image"] as? String, !path.isEmpty else { return nil }
+                    return base + path
+                }
+                DispatchQueue.main.async { [weak self] in
+                    self?.bannerUrls = urls
+                    self?.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+                }
+            case .failure(let error):
+                print("error =", error.localizedDescription)
+                Toast.showError(error.localizedDescription)
+            }
+        }
     }
 
     /// 功能开关更新后刷新菜单
     @objc private func featureSwitchDidUpdate() {
         let mgr = FeatureSwitchManager.shared
-        menuItems = allMenuItems.compactMap { item in
-            var title = item.0
-            if title == "新股申购" {
-                if !mgr.isXgsgEnabled { return nil }
-                if !mgr.nameXgsg.isEmpty { title = mgr.nameXgsg }
+        menuItems = allMenuItems
+            .filter { item in
+                if item.0 == "新股申购" && !mgr.isXgsgEnabled { return false }
+                return true
             }
-            if title == "场外撮合交易" {
-                if !mgr.nameDzjy.isEmpty { title = mgr.nameDzjy }
+            .map { item in
+                if item.0 == "线下配售" {
+                    return (mgr.nameXxps, item.1)
+                }
+                if item.0 == "场外撮合交易" {
+                    return (mgr.nameDzjy, item.1)
+                }
+                return item
             }
-            return (title, item.1)
-        }
         tableView.reloadData()
     }
 
@@ -337,7 +375,7 @@ class HomeViewController: ZQViewController {
         view.addSubview(topBarView)
         topBarView.translatesAutoresizingMaskIntoConstraints = false
         // 与 Banner 图 logo 区域深蓝一致，适配白字/图标
-        topBarView.backgroundColor = UIColor(red: 28/255, green: 59/255, blue: 92/255, alpha: 1.0) // #1C3B5C
+        topBarView.backgroundColor = .red // #1C3B5C
         
         // 搜索栏
         searchBar.backgroundColor = .white
@@ -368,6 +406,7 @@ class HomeViewController: ZQViewController {
         let headphoneIcon = UIButton(type: .system)
         headphoneIcon.setImage(UIImage(systemName: "headphones"), for: .normal)
         headphoneIcon.tintColor = .white
+        headphoneIcon.addTarget(self, action: #selector(openCustomerService), for: .touchUpInside)
         topBarView.addSubview(headphoneIcon)
         headphoneIcon.translatesAutoresizingMaskIntoConstraints = false
         
@@ -408,6 +447,41 @@ class HomeViewController: ZQViewController {
             messageIcon.widthAnchor.constraint(equalToConstant: 25),
             messageIcon.heightAnchor.constraint(equalToConstant: 20)
         ])
+    }
+    
+    @objc private func openCustomerService() {
+//        guard let url = URL(string: "https://www.htsc.com.cn") else { return }
+//        let vc = SFSafariViewController(url: url)
+//        present(vc, animated: true)
+        // 从配置接口获取客服 URL
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                // 补全协议头
+                if !kfUrl.hasPrefix("http") {
+                    kfUrl = "https://" + kfUrl
+                }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                   let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
     }
     
     private func setupTableView() {
@@ -511,9 +585,13 @@ extension HomeViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch indexPath.row {
         case 0:
-            // Banner轮播图
+            // Banner轮播图（优先用接口返回的 URL，否则用本地图）
             let cell = tableView.dequeueReusableCell(withIdentifier: "BannerCell", for: indexPath) as! BannerTableViewCell
-            cell.configure(with: bannerImages)
+            if !bannerUrls.isEmpty {
+                cell.configure(with: bannerUrls)
+            } else {
+                cell.configure(with: bannerImages)
+            }
             cell.onBannerTap = { [weak self] _ in
 //                let vc = RegisterViewController()
 //                let nav = UINavigationController(rootViewController: vc)
@@ -574,7 +652,11 @@ extension HomeViewController: UITableViewDataSource {
                     let vc = BlockTradingListViewController()
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
-                case "智能选股", "AI智投":
+                case "线下配售":
+                    let vc = AllotmentRecordsViewController()
+                    vc.hidesBottomBarWhenPushed = true
+                    self?.navigationController?.pushViewController(vc, animated: true)
+                case "AI智投":
                     let vc = SmartStockSelectionViewController()
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
@@ -746,6 +828,55 @@ class BannerTableViewCell: UITableViewCell {
         
         // 如果有多张图片，启动自动滚动
         if self.images.count > 1 {
+            startAutoScroll()
+        }
+    }
+
+    /// 从 URL 加载 Banner（支持多张）
+    func configure(with imageUrls: [String]) {
+        stopAutoScroll()
+        bannerViews.forEach { $0.removeFromSuperview() }
+        bannerViews.removeAll()
+        self.images = []
+
+        guard !imageUrls.isEmpty else {
+            configure(with: [UIImage]())
+            return
+        }
+
+        let screenWidth = UIScreen.main.bounds.width
+        let placeholder = createDefaultBannerImage()
+
+        for (index, urlString) in imageUrls.enumerated() {
+            let imageView = UIImageView(image: placeholder)
+            imageView.contentMode = .scaleAspectFill
+            imageView.clipsToBounds = true
+            imageView.isUserInteractionEnabled = true
+            scrollView.addSubview(imageView)
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+
+            NSLayoutConstraint.activate([
+                imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+                imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: CGFloat(index) * screenWidth),
+                imageView.widthAnchor.constraint(equalToConstant: screenWidth),
+                imageView.heightAnchor.constraint(equalToConstant: 140),
+                imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
+            ])
+            bannerViews.append(imageView)
+
+            guard let url = URL(string: urlString) else { continue }
+            URLSession.shared.dataTask(with: url) { [weak imageView] data, _, _ in
+                guard let data = data, let img = UIImage(data: data) else { return }
+                DispatchQueue.main.async {
+                    imageView?.image = img
+                }
+            }.resume()
+        }
+
+        self.images = [UIImage](repeating: placeholder, count: imageUrls.count)
+        scrollView.contentSize = CGSize(width: screenWidth * CGFloat(imageUrls.count), height: 140)
+        currentPage = 0
+        if imageUrls.count > 1 {
             startAutoScroll()
         }
     }
@@ -1455,7 +1586,7 @@ class NewsTableViewCell: UITableViewCell {
         newsTypeModels.forEach {
             group.enter()
             let type: String = $0["type"] ?? ""
-            SecureNetworkManager.shared.request(api: "/api/Indexnew/getGuoneinews", method: .get, params: ["page": "1", "size":"3", "type": type]) { res in
+            SecureNetworkManager.shared.request(api: "/api/Indexnew/getGuoneinews", method: .get, params: ["page": "1", "size":"50", "type": type]) { res in
                 switch res {
                 case .success(let success):
                     guard let root = success.decrypted?["data"] as? [String: Any] else { return }
