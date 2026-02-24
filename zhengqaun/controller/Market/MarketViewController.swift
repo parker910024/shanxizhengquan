@@ -1457,10 +1457,22 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         return 0
     }
 
-    /// 列标题横向滚 → 同步所有行
+    /// 列标题横向滚 → 同步所有行；整体 ScrollView 滚 → 下拉加载更多
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        guard scrollView === rankingColumnHeaderScroll else { return }
-        syncAllRankingRows(to: scrollView.contentOffset.x)
+        if scrollView === rankingColumnHeaderScroll {
+            syncAllRankingRows(to: scrollView.contentOffset.x)
+        } else if scrollView === hangqingScrollView {
+            // 监听行情整个 ScrollView 是否滚到底部，触发加载更多排行榜
+            let offsetY = scrollView.contentOffset.y
+            let contentHeight = scrollView.contentSize.height
+            let boundsHeight = scrollView.bounds.size.height
+            if offsetY > 0 && offsetY + boundsHeight >= contentHeight - 50 {
+                // 距离底部 50px 时加载更多
+                if !rankingIsLoading && rankingHasMore && selectedSegmentIndex == 0 {
+                    loadRankingData(isLoadMore: true)
+                }
+            }
+        }
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
