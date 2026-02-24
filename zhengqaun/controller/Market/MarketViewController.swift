@@ -60,6 +60,14 @@ class MarketViewController: ZQViewController {
     private var rankingColumnHeaderScroll: UIScrollView?
     private var rankingColumnIndicator: UIView?
 
+    // MARK: - Layout Tracking
+    private var barChartRendered = false
+    
+    // MARK: - 分页加载
+    private var rankingCurrentPage: Int = 1
+    private var rankingIsLoading: Bool = false
+    private var rankingHasMore: Bool = true
+
     // MARK: - 市场概括
     private var barChartContainer: UIView!
     private var riseCountLabel: UILabel!
@@ -69,7 +77,6 @@ class MarketViewController: ZQViewController {
     private var marketOverviewContainer: UIView!
     private var sectorContainer: UIView!
     private var rankingContainer: UIView!
-    private var barChartRendered = false
     private weak var capFundValueLabel: UILabel?
     // MARK: - 行业板块数据
     private var sectorDataItems: [SectorDataItem] = []
@@ -224,6 +231,7 @@ class MarketViewController: ZQViewController {
         hangqingScrollView.translatesAutoresizingMaskIntoConstraints = false
         hangqingScrollView.backgroundColor = bgColor
         hangqingScrollView.showsVerticalScrollIndicator = false
+        hangqingScrollView.delegate = self
 
         hangqingScrollView.addSubview(hangqingContent)
         hangqingContent.translatesAutoresizingMaskIntoConstraints = false
@@ -843,6 +851,10 @@ class MarketViewController: ZQViewController {
             btn.titleLabel?.font = i == idx ? .boldSystemFont(ofSize: 15) : .systemFont(ofSize: 15)
         }
         moveTabIndicator(animated: true)
+        
+        // 切换 Tab 时重置分页
+        rankingCurrentPage = 1
+        rankingHasMore = true
         loadRankingData()
     }
 
@@ -1036,14 +1048,20 @@ class MarketViewController: ZQViewController {
     }
 
     /// 股票排行榜 — 根据当前 tab 请求对应接口
-    private func loadRankingData() {
+    private func loadRankingData(isLoadMore: Bool = false) {
+        guard !rankingIsLoading && rankingHasMore else { return }
+        rankingIsLoading = true
+        
         let api = marketAPIs[selectedMarketTab]
+        let page = isLoadMore ? rankingCurrentPage + 1 : 1
+        
         SecureNetworkManager.shared.request(
             api: api,
             method: .get,
-            params: ["page": "1", "size": "20"]
+            params: ["page": "\(page)", "size": "20"]
         ) { [weak self] result in
             guard let self = self else { return }
+            self.rankingIsLoading = false
             switch result {
             case .success(let res):
                 guard res.statusCode == 200,
@@ -1051,6 +1069,7 @@ class MarketViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let list = data["list"] as? [[String: Any]] else {
                     print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab])): 解析失败, raw=\(res.raw.prefix(200))")
+                    if isLoadMore { self.rankingHasMore = false }
                     return
                 }
                 var stocks: [StockRankItem] = []
@@ -1070,10 +1089,18 @@ class MarketViewController: ZQViewController {
                                                prevClose: prevClose, open: openVal, high: "--"))
                 }
                 DispatchQueue.main.async {
-                    self.rankingStocks = stocks
+                    if isLoadMore {
+                        self.rankingStocks.append(contentsOf: stocks)
+                        self.rankingCurrentPage += 1
+                        if stocks.count < 20 { self.rankingHasMore = false }
+                    } else {
+                        self.rankingStocks = stocks
+                        self.rankingCurrentPage = 1
+                        self.rankingHasMore = stocks.count >= 20
+                    }
                     self.rankingTableView.reloadData()
                     self.updateRankingHeight()
-                    print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab]))加载成功，共 \(stocks.count) 条")
+                    print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab]))加载成功，共 \(self.rankingStocks.count) 条, 当前页: \(self.rankingCurrentPage)")
                 }
             case .failure(let err):
                 print("[行情] 排行榜请求失败: \(err.localizedDescription)")
