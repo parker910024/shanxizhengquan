@@ -341,7 +341,7 @@ class ProfileViewController: ZQViewController {
             } else if i == 1 {
                 row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(String(format: "%.2f", ((assets?.balance ?? 0.0) - (assets?.freezeProfit ?? 0.0))))", alignment: alignments[i]))
             } else {
-                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.cityValue ?? 0.0)", alignment: alignments[i]))
+                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.xinguTotal ?? 0.0)", alignment: alignments[i]))
             }
         }
         for (i, l) in row2Labels.enumerated() {
