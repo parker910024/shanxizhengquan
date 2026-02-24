@@ -43,6 +43,8 @@ class BankTransferIntroViewController: ZQViewController {
     private var availableBalance: Double = 0
     private var freezeProfit: Double = 0
     private let historyStack     = UIStackView()
+    private var bankCards: [[String: Any]] = []  // 银行卡列表
+    private var selectedCardIndex: Int = 0        // 当前选中的银行卡索引
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -130,6 +132,9 @@ class BankTransferIntroViewController: ZQViewController {
         let contentTop = navH + 48
         for sv in [transferInView, transferOutView] {
             sv.showsVerticalScrollIndicator = false
+            sv.delaysContentTouches = false
+            sv.canCancelContentTouches = false
+            sv.keyboardDismissMode = .onDrag
             view.addSubview(sv)
             sv.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
@@ -378,6 +383,11 @@ class BankTransferIntroViewController: ZQViewController {
         row.addSubview(arrow)
         arrow.translatesAutoresizingMaskIntoConstraints = false
 
+        // 点击选择银行卡
+        let tap = UITapGestureRecognizer(target: self, action: #selector(bankCardRowTapped))
+        row.addGestureRecognizer(tap)
+        row.isUserInteractionEnabled = true
+
         transferOutContent.addSubview(row)
         row.translatesAutoresizingMaskIntoConstraints = false
 
@@ -394,6 +404,27 @@ class BankTransferIntroViewController: ZQViewController {
         return row
     }
 
+    /// 点击银行卡行弹出 ActionSheet 选择
+    @objc private func bankCardRowTapped() {
+        guard !bankCards.isEmpty else {
+            Toast.show("暂无可用银行卡")
+            return
+        }
+
+        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        for (i, card) in bankCards.enumerated() {
+            let name = card["name"] as? String ?? ""
+            let account = card["account"] as? String ?? ""
+            let title = name.isEmpty ? account : "\(name)(\(account))"
+            sheet.addAction(UIAlertAction(title: title, style: .default) { [weak self] _ in
+                self?.selectedCardIndex = i
+                self?.bankCardLabel.text = account
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        present(sheet, animated: true)
+    }
+
     private func makeAmountInputRow() -> UIView {
         let row = UIView()
         let titleLbl = UILabel()
@@ -403,13 +434,13 @@ class BankTransferIntroViewController: ZQViewController {
         row.addSubview(titleLbl)
         titleLbl.translatesAutoresizingMaskIntoConstraints = false
 
-        amountField.placeholder = "转出金额"
+        amountField.placeholder = "请输入转出金额"
         amountField.font = UIFont.systemFont(ofSize: 15)
         amountField.textColor = textPri
         amountField.textAlignment = .right
         amountField.keyboardType = .decimalPad
         amountField.attributedPlaceholder = NSAttributedString(
-            string: "转出金额",
+            string: "请输入转出金额",
             attributes: [.foregroundColor: textTer]
         )
         row.addSubview(amountField)
@@ -656,7 +687,7 @@ class BankTransferIntroViewController: ZQViewController {
             }
         }
 
-        // 加载银行卡
+        // 加载银行卡列表
         SecureNetworkManager.shared.request(
             api: "/api/user/accountLst",
             method: .post,
@@ -669,15 +700,17 @@ class BankTransferIntroViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let listObj = data["list"] as? [String: Any],
                       let cards = listObj["data"] as? [[String: Any]],
-                      let first = cards.first,
-                      let account = first["account"] as? String else {
+                      !cards.isEmpty else {
                     DispatchQueue.main.async {
                         self.bankCardLabel.text = "未绑定"
                     }
                     return
                 }
+                self.bankCards = cards
+                self.selectedCardIndex = 0
+                let firstAccount = cards.first?["account"] as? String ?? "未绑定"
                 DispatchQueue.main.async {
-                    self.bankCardLabel.text = account
+                    self.bankCardLabel.text = firstAccount
                 }
             case .failure(_):
                 DispatchQueue.main.async {
@@ -749,10 +782,12 @@ class BankTransferIntroViewController: ZQViewController {
     }
 
     private func submitWithdraw(amount: Double, password: String) {
+        // 使用选中的银行卡 id
+        let cardId = bankCards.isEmpty ? "1" : "\(bankCards[selectedCardIndex]["id"] ?? 1)"
         SecureNetworkManager.shared.request(
             api: "/api/user/sendCode",
             method: .post,
-            params: ["account_id": "1", "money": "\(amount)", "pass": password]
+            params: ["account_id": cardId, "money": "\(amount)", "pass": password]
         ) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
