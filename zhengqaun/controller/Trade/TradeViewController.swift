@@ -21,7 +21,6 @@ class TradeViewController: ZQViewController {
 
     /// 功能列表项
     private let menuItems: [(icon: String, title: String)] = [
-        ("up_trade_main_pt_phdjjy", "科创板"),
         ("up_trade_main_pt_cnjj", "龙虎榜"),
         ("up_trade_main_pt_tjd", "消息通知"),
         ("up_trade_main_pt_xgmm", "修改交易密码"),
