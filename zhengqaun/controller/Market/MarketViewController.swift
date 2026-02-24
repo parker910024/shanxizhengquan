@@ -642,7 +642,7 @@ class MarketViewController: ZQViewController {
     private func populateSectorGrid() {
         guard let grid = sectorGridStack else { return }
         grid.arrangedSubviews.forEach { grid.removeArrangedSubview($0); $0.removeFromSuperview() }
-        let items = sectorDataItems // 展示全部板块数据
+        let items = Array(sectorDataItems.prefix(20)) // 展示最多 20 个板块数据
         guard !items.isEmpty else { return }
         let rowCount = Int(ceil(Double(items.count) / 3.0))
         for row in 0..<rowCount {
@@ -1226,7 +1226,7 @@ class MarketViewController: ZQViewController {
     /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(2)
     private func loadSectorData(retryCount: Int = 0) {
         let url = "https://push2.eastmoney.com/api/qt/clist/get"
-            + "?pn=1&pz=100&po=1&np=1&fltt=2&invt=2&fid=f3"
+            + "?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f3"
             + "&fs=m:90+t:2&fields=f3,f12,f14,f128,f136"
         fetchEastMoneyJSON(url: url) { [weak self] root in
             guard let self = self else { return }
