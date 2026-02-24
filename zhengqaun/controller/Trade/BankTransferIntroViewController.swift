@@ -505,6 +505,7 @@ class BankTransferIntroViewController: ZQViewController {
         vc.minLimit = Double("\(channel["minlow"] ?? 100)") ?? 100
         vc.maxLimit = Double("\(channel["maxhigh"] ?? 0)") ?? 0
         vc.channelName = channel["tdname"] as? String ?? "银证转入"
+        vc.yzmima = channel["yzmima"] as? String ?? ""
         navigationController?.pushViewController(vc, animated: true)
     }
 
