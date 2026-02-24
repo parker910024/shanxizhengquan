@@ -11,6 +11,7 @@
 //
 
 import UIKit
+import SafariServices
 
 class StockTradeViewController: ZQViewController {
 
@@ -130,7 +131,33 @@ class StockTradeViewController: ZQViewController {
         return btn
     }
 
-    @objc private func kfTapped()     { Toast.show("客服功能开发中") }
+    @objc private func kfTapped() {
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    let vc = SFSafariViewController(url: url)
+                    self.present(vc, animated: true)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
+    }
     @objc private func searchTapped() {
         let vc = StockSearchViewController()
         navigationController?.pushViewController(vc, animated: true)
@@ -336,7 +363,7 @@ class StockTradeViewController: ZQViewController {
     private func addQuantityRow(in container: UIView, after prev: UIView?) -> UIView {
         let row = makeRow(height: 56, in: container, after: prev, padH: 16)
 
-        let titleLbl = makeLabel("数量", font: .systemFont(ofSize: 14), color: textSec)
+        let titleLbl = makeLabel("数量（手）", font: .systemFont(ofSize: 14), color: textSec)
         titleLbl.setContentHuggingPriority(.required, for: .horizontal)
 
         let minusBtn = makeStepButton(title: "−")
@@ -766,15 +793,15 @@ class StockTradeViewController: ZQViewController {
 
     private func applyRatio(_ ratio: Double) {
         guard currentPrice > 0 && userBalance > 0 else { return }
-        let shares = Int(floor(userBalance * ratio / currentPrice))
-        quantity = shares
+        let shares = Int(floor(userBalance * ratio / currentPrice / 100)) * 100
+        quantity = shares / 100   // 转手数
         syncQuantityField()
         recalculate()
     }
 
     // MARK: - 计算（与 Android recalculate 对齐）
     private func recalculate() {
-        let shares = quantity
+        let shares = quantity * 100
         let price  = currentPrice > 0 ? currentPrice : 0
         let amount = Double(shares) * price
         let fee    = amount * Self.FEE_RATE
@@ -786,7 +813,7 @@ class StockTradeViewController: ZQViewController {
 
         if userBalance > 0 {
             availableLabel?.text = "￥\(formatMoney(userBalance))"
-            let maxShares = price > 0 ? Int(floor(userBalance / price)) : 0
+            let maxShares = price > 0 ? Int(floor(userBalance / price / 100)) * 100 : 0
             canBuySharesLabel?.text = "\(maxShares)股"
         }
     }
@@ -830,7 +857,7 @@ class StockTradeViewController: ZQViewController {
     }
 
     private func showOrderConfirmDialog() {
-        let shares = quantity
+        let shares = quantity * 100
         let amount = Double(shares) * currentPrice
         let fee    = amount * Self.FEE_RATE
 
