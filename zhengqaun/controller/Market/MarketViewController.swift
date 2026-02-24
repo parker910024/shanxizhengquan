@@ -623,7 +623,7 @@ class MarketViewController: ZQViewController {
         title.translatesAutoresizingMaskIntoConstraints = false
 
         let grid = UIStackView()
-        grid.axis = .vertical; grid.spacing = 0; grid.distribution = .fillEqually
+        grid.axis = .vertical; grid.spacing = 0; grid.distribution = .fill
         sectorContainer.addSubview(grid)
         grid.translatesAutoresizingMaskIntoConstraints = false
         sectorGridStack = grid
@@ -635,7 +635,6 @@ class MarketViewController: ZQViewController {
             grid.leadingAnchor.constraint(equalTo: sectorContainer.leadingAnchor),
             grid.trailingAnchor.constraint(equalTo: sectorContainer.trailingAnchor),
             grid.bottomAnchor.constraint(equalTo: sectorContainer.bottomAnchor, constant: -12),
-            grid.heightAnchor.constraint(equalToConstant: 270), // 改为支持3行
         ])
     }
 
@@ -643,11 +642,13 @@ class MarketViewController: ZQViewController {
     private func populateSectorGrid() {
         guard let grid = sectorGridStack else { return }
         grid.arrangedSubviews.forEach { grid.removeArrangedSubview($0); $0.removeFromSuperview() }
-        let items = Array(sectorDataItems.prefix(9)) // 由 6 条改为 9 条
+        let items = sectorDataItems // 展示全部板块数据
         guard !items.isEmpty else { return }
-        for row in 0..<3 { // 由 2 行改为 3 行
+        let rowCount = Int(ceil(Double(items.count) / 3.0))
+        for row in 0..<rowCount {
             let rowStack = UIStackView()
             rowStack.axis = .horizontal; rowStack.spacing = 0; rowStack.distribution = .fillEqually
+            rowStack.heightAnchor.constraint(equalToConstant: 90).isActive = true
             grid.addArrangedSubview(rowStack)
             for col in 0..<3 {
                 let idx = row * 3 + col
@@ -1225,7 +1226,7 @@ class MarketViewController: ZQViewController {
     /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(2)
     private func loadSectorData(retryCount: Int = 0) {
         let url = "https://push2.eastmoney.com/api/qt/clist/get"
-            + "?pn=1&pz=6&po=1&np=1&fltt=2&invt=2&fid=f3"
+            + "?pn=1&pz=100&po=1&np=1&fltt=2&invt=2&fid=f3"
             + "&fs=m:90+t:2&fields=f3,f12,f14,f128,f136"
         fetchEastMoneyJSON(url: url) { [weak self] root in
             guard let self = self else { return }
