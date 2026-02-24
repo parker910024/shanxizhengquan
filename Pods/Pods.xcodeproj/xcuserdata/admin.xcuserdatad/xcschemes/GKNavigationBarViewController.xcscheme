@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C921F96150B62CC49CBC3AC767EB543F"
-               BuildableName = "libGKNavigationBarViewController.a"
+               BuildableName = "GKNavigationBarViewController.framework"
                BlueprintName = "GKNavigationBarViewController"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>
