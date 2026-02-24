@@ -79,8 +79,8 @@ class AccountTradeViewController: ZQViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         
-        // 根据传入的tradeType设置初始选中状态
-        selectedIndex = tradeType == .buy ? 0 : 1
+        // 买入 tab 已隐藏，始终使用卖出
+        selectedIndex = 1
         
         setupNavigationBar()
         setupSegment()
@@ -131,12 +131,13 @@ class AccountTradeViewController: ZQViewController {
         buyButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 15)
         buyButton.addTarget(self, action: #selector(segmentTapped(_:)), for: .touchUpInside)
         buyButton.tag = 0
+        buyButton.isHidden = true    // 隐藏买入 tab
         wrap.addSubview(buyButton)
         buyButton.translatesAutoresizingMaskIntoConstraints = false
         
         sellButton = UIButton(type: .system)
         sellButton.setTitle("卖出", for: .normal)
-        sellButton.titleLabel?.font = UIFont.systemFont(ofSize: 15)
+        sellButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 15)
         sellButton.addTarget(self, action: #selector(segmentTapped(_:)), for: .touchUpInside)
         sellButton.tag = 1
         wrap.addSubview(sellButton)
@@ -161,12 +162,12 @@ class AccountTradeViewController: ZQViewController {
             buyButton.leadingAnchor.constraint(equalTo: wrap.leadingAnchor),
             buyButton.topAnchor.constraint(equalTo: wrap.topAnchor),
             buyButton.bottomAnchor.constraint(equalTo: wrap.bottomAnchor),
-            buyButton.widthAnchor.constraint(equalTo: wrap.widthAnchor, multiplier: 0.5),
+            buyButton.widthAnchor.constraint(equalToConstant: 0),
             
-            sellButton.leadingAnchor.constraint(equalTo: buyButton.trailingAnchor),
+            sellButton.leadingAnchor.constraint(equalTo: wrap.leadingAnchor),
             sellButton.topAnchor.constraint(equalTo: wrap.topAnchor),
             sellButton.bottomAnchor.constraint(equalTo: wrap.bottomAnchor),
-            sellButton.widthAnchor.constraint(equalTo: wrap.widthAnchor, multiplier: 0.5),
+            sellButton.trailingAnchor.constraint(equalTo: wrap.trailingAnchor),
             
             underline.heightAnchor.constraint(equalToConstant: 3),
             underline.bottomAnchor.constraint(equalTo: wrap.bottomAnchor),
@@ -177,9 +178,10 @@ class AccountTradeViewController: ZQViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let tabW = segmentContainer.bounds.width * 0.5
+        let fullW = segmentContainer.bounds.width
         let lineW: CGFloat = 20
-        underlineLeading?.constant = (tabW - lineW) / 2 + CGFloat(selectedIndex) * tabW
+        // 买入已隐藏，卖出占满全宽，下划线居中
+        underlineLeading?.constant = (fullW - lineW) / 2
         
         // 验证按钮 frame 和可点击区域
         verifyButtonFrames()
@@ -345,10 +347,10 @@ class AccountTradeViewController: ZQViewController {
         
         updateBottomButtons()
         
-        let tabW = segmentContainer.bounds.width * 0.5
+        let fullW = segmentContainer.bounds.width
         let lineW: CGFloat = 20
         UIView.animate(withDuration: 0.25) {
-            self.underlineLeading?.constant = (tabW - lineW) / 2 + CGFloat(idx) * tabW
+            self.underlineLeading?.constant = (fullW - lineW) / 2
             self.segmentContainer.layoutIfNeeded()
         }
         
