@@ -507,6 +507,7 @@ extension MyHoldingsViewController: UITableViewDataSource {
                 if indexPath.section < self.rawHistoricalData.count {
                     vc.holdingData = self.rawHistoricalData[indexPath.section]
                 }
+                vc.hiddingButton = true
                 vc.hidesBottomBarWhenPushed = true
                 self.navigationController?.pushViewController(vc, animated: true)
             }
