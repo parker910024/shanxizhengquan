@@ -1590,7 +1590,7 @@ class AccountTradeViewController: ZQViewController {
     
     private func calculateSellAmount() {
         let price = Double(currentPrice) ?? 0.0
-        let total = Double(sellQuantity) * price
+        let total = Double(sellQuantity) * 100.0 * price
         
         totalAmountLabel.text = String(format: "%.2f", total)
     }
