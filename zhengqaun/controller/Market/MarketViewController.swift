@@ -1398,29 +1398,46 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "SubsRow", for: indexPath) as! SubscriptionRowCell
         if indexPath.row < subscriptionList.count {
             let item = subscriptionList[indexPath.row]
-            let name   = item["name"] as? String ?? (item["title"] as? String ?? "")
-            let code   = item["sgcode"] as? String ?? (item["code"] as? String ?? "")
             
+            // 名称：多种可能的 key
+            let name = (item["name"] as? String) ?? (item["title"] as? String) ?? (item["stock_name"] as? String) ?? "--"
+            
+            // 代码：多种可能的 key
+            var code = (item["sgcode"] as? String) ?? (item["code"] as? String) ?? (item["symbol"] as? String) ?? (item["stock_code"] as? String) ?? ""
+            if code.isEmpty { code = "--" }
+            
+            // 价格
             let fx_price = item["fx_price"]
             let cai_buy  = item["cai_buy"]
-            let priceVal = fx_price != nil ? "\(fx_price!)" : (cai_buy != nil ? "\(cai_buy!)" : "0")
+            let priceAny = item["price"] ?? item["current_price"] ?? item["issue_price"]
+            var priceVal = "0.00"
+            if let f = fx_price { priceVal = "\(f)" }
+            else if let c = cai_buy { priceVal = "\(c)" }
+            else if let p = priceAny { priceVal = "\(p)" }
+            if priceVal == "0.00" || priceVal == "0" { priceVal = "--" }
             
+            // 市场类型
             let sgTypeStr: String
             if let typeInt = item["sg_type"] as? Int {
                 sgTypeStr = "\(typeInt)"
             } else if let typeStr = item["sg_type"] as? String {
                 sgTypeStr = typeStr
+            } else if let typeAny = item["type"], let str = typeAny as? String {
+                sgTypeStr = str
             } else {
-                sgTypeStr = "\(item["type"] ?? "")"
+                sgTypeStr = ""
             }
             
-            let rateVal = item["fx_rate"] ?? item["rate"] ?? "0"
+            // 比例/市盈率
+            let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? "0"
+            let rateVal = "\(rateValAny)"
+            let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : "\(rateVal)%"
             
             let market: String = {
                 switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
             }()
 
-            cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: "\(rateVal)%")
+            cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: peStr)
         }
         return cell
     }
