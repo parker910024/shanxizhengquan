@@ -1590,7 +1590,7 @@ class AccountTradeViewController: ZQViewController {
     
     private func calculateSellAmount() {
         let price = Double(currentPrice) ?? 0.0
-        let total = Double(sellQuantity) * price
+        let total = Double(sellQuantity) * 100.0 * price
         
         totalAmountLabel.text = String(format: "%.2f", total)
     }
@@ -1650,7 +1650,7 @@ class AccountTradeViewController: ZQViewController {
                         self?.calculateSellAmount()
                     }
                 case .failure(let err):
-                    print("行情获取失败: \\(err)")
+                    print("行情获取失败: \(err)")
                 }
             }
         }
@@ -1821,7 +1821,7 @@ class AccountTradeViewController: ZQViewController {
                         Toast.show(msg)
                     }
                 case .failure(let err):
-                    Toast.show("买入失败: \\(err.localizedDescription)")
+                    Toast.show("买入失败: \(err.localizedDescription)")
                 }
             }
         }
@@ -1839,11 +1839,10 @@ class AccountTradeViewController: ZQViewController {
         sellConfirmButton.isEnabled = false
         SecureNetworkManager.shared.request(
             api: "/api/deal/sell", // 接口文档未明示卖出接口，凭经验猜使用卖出/sell
-            method: .post,
+            method: .get,
             params: [
-                "allcode": stockCode,
-                "sellprice": "\(p)",
-                "canSell": sellQuantity
+                "id": "",
+                "canBuy": sellQuantity
             ]
         ) { [weak self] result in
             DispatchQueue.main.async {
@@ -1861,7 +1860,7 @@ class AccountTradeViewController: ZQViewController {
                         Toast.show(msg)
                     }
                 case .failure(let err):
-                    Toast.show("卖出失败: \\(err.localizedDescription)")
+                    Toast.show("卖出失败: \(err.localizedDescription)")
                 }
             }
         }

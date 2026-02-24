@@ -14,15 +14,24 @@ class BankTransferInViewController: ZQViewController {
     private let amountTextField = UITextField()
     private let transferButton = UIButton(type: .system)
     
-    private var sysbankId: Int?
-    private var minLimit: Double = 100
+    // 外部传入的通道信息（由银证转账列表页传入）
+    var sysbankId: Int?
+    var minLimit: Double = 100
+    var maxLimit: Double = 0
+    var channelName: String = ""
+    var yzmima: String = ""  // 银证密码，非空时需要输入密码
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupNavigationBar()
         setupUI()
-        loadConfig()
+        // 如果外部已传入 sysbankId 则直接使用，否则自行加载
+        if sysbankId != nil {
+            amountHintLabel.text = "最小转入金额为\(Int(minLimit))元"
+        } else {
+            loadConfig()
+        }
     }
     
     private func setupNavigationBar() {
@@ -110,6 +119,7 @@ class BankTransferInViewController: ZQViewController {
                 self.sysbankId = firstBank["id"] as? Int
                 let minLow = Double("\(firstBank["minlow"] ?? "100")") ?? 100.0
                 self.minLimit = minLow
+                self.yzmima = firstBank["yzmima"] as? String ?? ""
                 
                 DispatchQueue.main.async {
                     self.amountHintLabel.text = "最小转入金额为\(Int(minLow))元"
@@ -135,12 +145,44 @@ class BankTransferInViewController: ZQViewController {
             Toast.show("暂无可用的银证转入通道")
             return
         }
-        
+
+        // 根据 yzmima 字段判断是否需要密码
+        if !yzmima.isEmpty {
+            // 需要密码：弹出密码输入
+            showPasswordInput { [weak self] password in
+                self?.submitTransfer(amount: value, bankId: bankId, password: password)
+            }
+        } else {
+            // 不需要密码：直接提交
+            submitTransfer(amount: value, bankId: bankId, password: nil)
+        }
+    }
+
+    /// 弹出支付密码输入（6位数字 + 自定义键盘）
+    private func showPasswordInput(completion: @escaping (String) -> Void) {
+        let passwordView = PaymentPasswordInputView()
+        passwordView.onComplete = completion
+        passwordView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(passwordView)
+        NSLayoutConstraint.activate([
+            passwordView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            passwordView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            passwordView.topAnchor.constraint(equalTo: view.topAnchor),
+            passwordView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+
+    /// 提交银证转入请求
+    private func submitTransfer(amount: Double, bankId: Int, password: String?) {
         transferButton.isEnabled = false
+        var params: [String: Any] = ["money": "\(amount)", "sysbankid": bankId]
+        if let pwd = password {
+            params["pass"] = pwd
+        }
         SecureNetworkManager.shared.request(
             api: "/api/user/recharge",
             method: .post,
-            params: ["money": "\(value)", "sysbankid": bankId]
+            params: params
         ) { [weak self] result in
             DispatchQueue.main.async {
                 self?.transferButton.isEnabled = true

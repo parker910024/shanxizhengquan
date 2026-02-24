@@ -102,7 +102,7 @@ class HoldingDetailViewController: ZQViewController {
         let buyPrice = holdingData["buyprice"] as? Double ?? 0
         let citycc = holdingData["citycc"] as? Double ?? (holdingData["citycc"] as? Int).map { Double($0) } ?? 0
         let allMoney = holdingData["allMoney"] as? String ?? "0"
-        let profitLose = holdingData["profitLose"] as? Double ?? (holdingData["profitLose"] as? Int).map { Double($0) } ?? 0
+        let profitLose = holdingData["profitLose"] as? String ?? "0"
         let plRate = holdingData["profitLose_rate"] as? String ?? "--"
         let createTime = holdingData["createtime_name"] as? String ?? "--"
         
@@ -119,7 +119,7 @@ class HoldingDetailViewController: ZQViewController {
             else { exchangeStr = "深" }
         }
         
-        let sign = profitLose >= 0 ? "+" : ""
+        
         detail = HoldingDetail(
             stockCode: code,
             stockName: title,
@@ -128,7 +128,7 @@ class HoldingDetailViewController: ZQViewController {
             purchasePrice: String(format: "%.2f", buyPrice),
             purchaseValue: String(format: "%.2f", citycc),
             transactionFee: allMoney,
-            profitLoss: String(format: "%@%.2f", sign, profitLose),
+            profitLoss: profitLose,
             profitLossPercent: plRate,
             purchaseTime: createTime
         )
@@ -278,32 +278,37 @@ class HoldingDetailViewController: ZQViewController {
     
     @objc private func closePositionTapped() {
         guard let detail = detail else { return }
-        guard let p = Double(detail.purchasePrice), p > 0 else {
-            Toast.show("卖出价格无效")
-            return
-        }
-        SecureNetworkManager.shared.request(
-            api: "/api/deal/sell", // 接口文档未明示卖出接口，凭经验猜使用卖出/sell
-            method: .post,
-            params: [
-                "allcode": detail.stockCode,
-                "sellprice": "\(detail.purchasePrice)",
-                "canSell": detail.shares
-            ]
-        ) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let res):
-                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
-                        Toast.show("卖出委托已提交")
-                        self?.navigationController?.popViewController(animated: true)
-                    } else {
-                        let msg = res.decrypted?["msg"] as? String ?? "提交失败"
-                        Toast.show(msg)
-                    }
-                case .failure(let err):
-                    Toast.show("卖出失败: \\(err.localizedDescription)")
+        Task {
+            do {
+                let result = try await SecureNetworkManager.shared.request(api: "/api/deal/mrSellLst", method: .get, params: ["keyword": detail.stockCode])
+                guard let dict = result.decrypted,
+                      let data = dict["data"] as? [[String: Any]],
+                      let holding = data.first else { return }
+                guard let id = holding["id"] else {
+                    Toast.show("获取信息失败")
+                    return
                 }
+                
+                guard let canBuy = Int(detail.shares) else {
+                    Toast.show("持股数错误")
+                    return
+                }
+                
+                let res = try await SecureNetworkManager.shared.request(api: "/api/deal/sell", method: .post, params: [
+                    "id": id,
+                    "canBuy": canBuy
+                ])
+                if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                    Toast.show("卖出委托已提交")
+                    self.navigationController?.popViewController(animated: true)
+                } else {
+                    let msg = res.decrypted?["msg"] as? String ?? "提交失败"
+                    Toast.show(msg)
+                }
+                
+            } catch {
+                debugPrint(error.localizedDescription)
+                Toast.show("卖出失败: \(error.localizedDescription)")
             }
         }
     }

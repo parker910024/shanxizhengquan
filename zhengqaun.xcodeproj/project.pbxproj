@@ -60,15 +60,11 @@
 		};
 		84D154682F0D59F3001FC841 /* zhengqaunTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = zhengqaunTests;
 			sourceTree = "<group>";
 		};
 		84D154722F0D59F3001FC841 /* zhengqaunUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = zhengqaunUITests;
 			sourceTree = "<group>";
 		};
@@ -287,9 +283,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zhengqaun/Pods-zhengqaun-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

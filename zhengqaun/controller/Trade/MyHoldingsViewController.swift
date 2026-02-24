@@ -336,14 +336,14 @@ class MyHoldingsViewController: ZQViewController {
                     let sellPrice = Double("\(item["cai_buy"] ?? 0)") ?? 0
                     let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
                     let money = item["money"] as? String ?? "--"
-                    let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
+                    let pl = item["profitLose"] as? String ?? "0"
                     let createTime = item["createtime_name"] as? String ?? "--"
                     let outTime = item["outtime_name"] as? String ?? "--"
                     // 取日期部分
                     let dateStr = String(outTime.prefix(10))
                     
-                    let sign = pl >= 0 ? "+" : ""
-                    let plRate = buyPrice > 0 ? String(format: "%.2f%%", pl / (buyPrice * Double(Int(number) ?? 1)) * 100) : "--"
+                    let pl_double = Double(pl) ?? 0
+                    let plRate = buyPrice > 0 ? String(format: "%.2f%%", pl_double / (buyPrice * Double(Int(number) ?? 1)) * 100) : "--"
                     
                     return HistoricalHolding(
                         typeLabel: "普通交易",
@@ -354,7 +354,7 @@ class MyHoldingsViewController: ZQViewController {
                         quantity: "\(number)股 / 本金\(money)",
                         currentPrice: String(format: "%.2f", sellPrice),
                         buyPrice: String(format: "%.2f", buyPrice),
-                        profitLoss: String(format: "%@%.2f", sign, pl),
+                        profitLoss: pl,
                         profitLossPercent: plRate
                     )
                 }
@@ -793,6 +793,10 @@ class MyHoldingsHoldingCell: UITableViewCell {
         let plColor = isRise ? Constants.Color.stockRise : Constants.Color.stockFall
         profitLossLabel.textColor = plColor
         profitLossPercentLabel.textColor = plColor
+        if holding.profitLossPercent == "0%" {
+            profitLossLabel.textColor = .gray
+            profitLossPercentLabel.textColor = .gray
+        }
     }
 }
 
@@ -1053,6 +1057,14 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         buyPriceLabel.text = item.buyPrice ?? ""
         profitLossLabel.text = item.profitLoss
         profitLossPercentLabel.text = item.profitLossPercent
+        let isRise = item.profitLoss.hasPrefix("+") || (!item.profitLoss.hasPrefix("-") && Double(item.profitLoss.replacingOccurrences(of: ",", with: "")) ?? 0 >= 0)
+        let plColor = isRise ? Constants.Color.stockRise : Constants.Color.stockFall
+        profitLossLabel.textColor = plColor
+        profitLossPercentLabel.textColor = plColor
+        if item.profitLossPercent == "0.00%" {
+            profitLossLabel.textColor = .gray
+            profitLossPercentLabel.textColor = .gray
+        }
     }
 }
 
