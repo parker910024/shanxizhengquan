@@ -5,20 +5,20 @@
 //  交易记录：买卖记录列表，卖出绿色、买入红色，股票名/代码、金额、股数、时间
 //
 
+import SafariServices
 import UIKit
 
 /// 单条交易记录
 struct TradeRecordItem {
-    let isSell: Bool   // true=卖出(绿), false=买入(红)
+    let isSell: Bool // true=卖出(绿), false=买入(红)
     let stockName: String
     let stockCode: String
-    let amount: String   // 如 "142,120.00"
-    let shares: String   // 如 "15200"
+    let amount: String // 如 "142,120.00"
+    let shares: String // 如 "15200"
     let dateTime: String // 如 "2026-01-20 14:01:23"
 }
 
 class TradeRecordViewController: ZQViewController {
-
     private let tableView = UITableView(frame: .zero, style: .plain)
     private var records: [TradeRecordItem] = []
 
@@ -43,7 +43,36 @@ class TradeRecordViewController: ZQViewController {
         gk_navRightBarButtonItem = serviceBtn
     }
 
-    @objc private func serviceTapped() {}
+    @objc private func serviceTapped() {
+        // 从配置接口获取客服 URL
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                // 补全协议头
+                if !kfUrl.hasPrefix("http") {
+                    kfUrl = "https://" + kfUrl
+                }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    UIApplication.shared.open(url)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
+    }
 
     private func setupTableView() {
         view.backgroundColor = .white
@@ -76,8 +105,8 @@ class TradeRecordViewController: ZQViewController {
 }
 
 // MARK: - UITableViewDataSource & UITableViewDelegate
-extension TradeRecordViewController: UITableViewDataSource, UITableViewDelegate {
 
+extension TradeRecordViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return records.count
     }
@@ -94,8 +123,8 @@ extension TradeRecordViewController: UITableViewDataSource, UITableViewDelegate 
 }
 
 // MARK: - TradeRecordCell
-class TradeRecordCell: UITableViewCell {
 
+class TradeRecordCell: UITableViewCell {
     private let typeLabel = UILabel()
     private let stockLabel = UILabel()
     private let dateLabel = UILabel()
@@ -108,7 +137,10 @@ class TradeRecordCell: UITableViewCell {
         setupUI()
     }
 
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     private func setupUI() {
         selectionStyle = .none

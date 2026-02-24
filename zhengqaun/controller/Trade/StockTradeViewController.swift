@@ -150,8 +150,7 @@ class StockTradeViewController: ZQViewController {
                 if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    let vc = SFSafariViewController(url: url)
-                    self.present(vc, animated: true)
+                    UIApplication.shared.open(url)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }

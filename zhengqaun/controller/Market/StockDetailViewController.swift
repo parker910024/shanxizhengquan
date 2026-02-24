@@ -1525,8 +1525,7 @@ class StockDetailViewController: ZQViewController {
             api: "/api/stock/getconfig",
             method: .get,
             params: [:]
-        ) { [weak self] result in
-            guard let self = self else { return }
+        ) { result in
             switch result {
             case .success(let res):
                 guard let dict = res.decrypted,
@@ -1539,8 +1538,7 @@ class StockDetailViewController: ZQViewController {
                 if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    let vc = SFSafariViewController(url: url)
-                    self.present(vc, animated: true)
+                    UIApplication.shared.open(url)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }
