@@ -102,7 +102,7 @@ class HoldingDetailViewController: ZQViewController {
         let buyPrice = holdingData["buyprice"] as? Double ?? 0
         let citycc = holdingData["citycc"] as? Double ?? (holdingData["citycc"] as? Int).map { Double($0) } ?? 0
         let allMoney = holdingData["allMoney"] as? String ?? "0"
-        let profitLose = holdingData["profitLose"] as? Double ?? (holdingData["profitLose"] as? Int).map { Double($0) } ?? 0
+        let profitLose = holdingData["profitLose"] as? String ?? "0"
         let plRate = holdingData["profitLose_rate"] as? String ?? "--"
         let createTime = holdingData["createtime_name"] as? String ?? "--"
         
@@ -119,7 +119,7 @@ class HoldingDetailViewController: ZQViewController {
             else { exchangeStr = "深" }
         }
         
-        let sign = profitLose >= 0 ? "+" : ""
+        
         detail = HoldingDetail(
             stockCode: code,
             stockName: title,
@@ -128,7 +128,7 @@ class HoldingDetailViewController: ZQViewController {
             purchasePrice: String(format: "%.2f", buyPrice),
             purchaseValue: String(format: "%.2f", citycc),
             transactionFee: allMoney,
-            profitLoss: String(format: "%@%.2f", sign, profitLose),
+            profitLoss: profitLose,
             profitLossPercent: plRate,
             purchaseTime: createTime
         )
@@ -302,7 +302,7 @@ class HoldingDetailViewController: ZQViewController {
                         Toast.show(msg)
                     }
                 case .failure(let err):
-                    Toast.show("卖出失败: \\(err.localizedDescription)")
+                    Toast.show("卖出失败: \(err.localizedDescription)")
                 }
             }
         }

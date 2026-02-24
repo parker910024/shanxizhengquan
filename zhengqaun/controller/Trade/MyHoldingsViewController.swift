@@ -336,14 +336,14 @@ class MyHoldingsViewController: ZQViewController {
                     let sellPrice = Double("\(item["cai_buy"] ?? 0)") ?? 0
                     let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
                     let money = item["money"] as? String ?? "--"
-                    let pl = item["profitLose"] as? Double ?? (item["profitLose"] as? Int).map { Double($0) } ?? 0
+                    let pl = item["profitLose"] as? String ?? "0"
                     let createTime = item["createtime_name"] as? String ?? "--"
                     let outTime = item["outtime_name"] as? String ?? "--"
                     // 取日期部分
                     let dateStr = String(outTime.prefix(10))
+                    let plRate = item["profitLose_rate"] as? String ?? "0"
                     
-                    let sign = pl >= 0 ? "+" : ""
-                    let plRate = buyPrice > 0 ? String(format: "%.2f%%", pl / (buyPrice * Double(Int(number) ?? 1)) * 100) : "--"
+//                    let plRate = buyPrice > 0 ? String(format: "%.2f%%", pl / (buyPrice * Double(Int(number) ?? 1)) * 100) : "--"
                     
                     return HistoricalHolding(
                         typeLabel: "普通交易",
@@ -354,7 +354,7 @@ class MyHoldingsViewController: ZQViewController {
                         quantity: "\(number)股 / 本金\(money)",
                         currentPrice: String(format: "%.2f", sellPrice),
                         buyPrice: String(format: "%.2f", buyPrice),
-                        profitLoss: String(format: "%@%.2f", sign, pl),
+                        profitLoss: pl,
                         profitLossPercent: plRate
                     )
                 }
