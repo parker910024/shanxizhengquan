@@ -1409,12 +1409,12 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             // 价格
             let fx_price = item["fx_price"]
             let cai_buy  = item["cai_buy"]
-            let priceAny = item["price"] ?? item["current_price"] ?? item["issue_price"]
-            var priceVal = "0.00"
-            if let f = fx_price { priceVal = "\(f)" }
-            else if let c = cai_buy { priceVal = "\(c)" }
-            else if let p = priceAny { priceVal = "\(p)" }
-            if priceVal == "0.00" || priceVal == "0" { priceVal = "--" }
+            let priceAny = item["price"] ?? item["current_price"] ?? item["issue_price"] ?? item["p"]
+            var priceVal = ""
+            if let f = fx_price, String(describing: f) != "" { priceVal = "\(f)" }
+            else if let c = cai_buy, String(describing: c) != "" { priceVal = "\(c)" }
+            else if let p = priceAny, String(describing: p) != "" { priceVal = "\(p)" }
+            if priceVal.isEmpty || priceVal == "0.00" || priceVal == "0" { priceVal = "--" }
             
             // 市场类型
             let sgTypeStr: String
@@ -1429,9 +1429,9 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             }
             
             // 比例/市盈率
-            let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? "0"
+            let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? item["zfanum"] ?? ""
             let rateVal = "\(rateValAny)"
-            let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : "\(rateVal)%"
+            let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : (rateVal.hasSuffix("%") ? rateVal : "\(rateVal)%")
             
             let market: String = {
                 switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
