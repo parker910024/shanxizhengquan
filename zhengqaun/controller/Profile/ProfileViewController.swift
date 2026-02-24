@@ -370,6 +370,20 @@ class ProfileViewController: ZQViewController {
         btnStack.spacing = 12
         card.addSubview(btnStack)
         btnStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        
+        let btn4 = makePillButton(title: "打新记录", imageName: "打新记录", color: UIColor(red: 1.0, green: 50/255, blue: 126/255, alpha: 1.0))
+        let btn5 = makePillButton(title: "配售记录", imageName: "配售记录", color: UIColor(red: 1.0, green: 156/255, blue: 17/255, alpha: 1.0))
+        let btn6 = makePillButton(title: "大宗交易", imageName: "大宗交易", color: UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1.0))
+        btn4.addTarget(self, action: #selector(newRecordTapped), for: .touchUpInside)
+        btn5.addTarget(self, action: #selector(placingRecordTapped), for: .touchUpInside)
+        btn6.addTarget(self, action: #selector(largeRecordTapped), for: .touchUpInside)
+        let btnStack1 = UIStackView(arrangedSubviews: [btn4, btn5, btn6])
+        btnStack1.axis = .horizontal
+        btnStack1.distribution = .fillEqually
+        btnStack1.spacing = 12
+        card.addSubview(btnStack1)
+        btnStack1.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             card.topAnchor.constraint(equalTo: quickActionsCard.bottomAnchor, constant: 16),
@@ -398,7 +412,13 @@ class ProfileViewController: ZQViewController {
             btnStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
             btnStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
             btnStack.heightAnchor.constraint(equalToConstant: 40),
-            btnStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -20)
+            btnStack.bottomAnchor.constraint(equalTo: btnStack1.topAnchor, constant: -10),
+            
+            btnStack1.topAnchor.constraint(equalTo: btnStack.bottomAnchor, constant: 10),
+            btnStack1.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            btnStack1.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            btnStack1.heightAnchor.constraint(equalToConstant: 40),
+            btnStack1.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -20)
         ])
     }
 
@@ -474,6 +494,24 @@ class ProfileViewController: ZQViewController {
 
     @objc private func holdingRecordTapped() {
         let vc = MyHoldingsViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    @objc private func newRecordTapped() {
+        let vc = MyNewStocksViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+    @objc private func placingRecordTapped() {
+        let vc = AllotmentRecordsViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+    @objc private func largeRecordTapped() {
+        let vc = BlockTradingListViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
