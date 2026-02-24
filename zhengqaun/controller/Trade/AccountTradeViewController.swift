@@ -17,6 +17,10 @@ class AccountTradeViewController: ZQViewController {
     var tradeType: TradeType = .buy // 买入或卖出
     var sellBuyPrice: String = "--"   // 卖出时的买入价
     var sellHoldingQty: String = "0"  // 卖出时的持仓手数
+    var useProvidedHoldings: Bool = false // 是否使用外部传入的持仓数据（不被接口覆盖）
+    
+    var limitUpPrice: String = ""
+    var limitDownPrice: String = ""
     
     enum TradeType {
         case buy  // 买入
@@ -1593,56 +1597,70 @@ class AccountTradeViewController: ZQViewController {
         }
     }
     
-    // MARK: - API calls
     private func fetchStockDetail(for code: String) {
         guard !code.isEmpty else { return }
-        SecureNetworkManager.shared.request(
-            api: "/api/stock/stockDetail",
-            method: .get,
-            params: ["code": code]
-        ) { [weak self] result in
+        
+        let marketId: String
+        switch exchange {
+        case "沪": marketId = "1"
+        case "深": marketId = "0"
+        case "京": marketId = "0"
+        default:   marketId = code.hasPrefix("6") ? "1" : "0"
+        }
+        let secid = "\(marketId).\(code)"
+        let fields = "f43,f44,f46,f60"
+        let urlStr = "https://push2.eastmoney.com/api/qt/stock/get?secid=\(secid)&fields=\(fields)&ut=fa5fd1943c7b386f172d6893dbfba10b"
+        
+        guard let url = URL(string: urlStr) else { return }
+        var request = URLRequest(url: url)
+        request.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+        request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self, let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let d = json["data"] as? [String: Any] else {
+                return
+            }
             DispatchQueue.main.async {
-                switch result {
-                case .success(let res):
-                    guard let dict = res.decrypted,
-                          let data = dict["data"] as? [String: Any] else {
-                        print("[账户交易] stockDetail 解析失败")
-                        return
-                    }
-                    
-                    // list 可能是数组或字典
-                    var first: [String: Any]?
-                    if let arr = data["list"] as? [[String: Any]] {
-                        first = arr.first
-                    } else if let obj = data["list"] as? [String: Any] {
-                        first = obj
-                    }
-                    guard let stockInfo = first else {
-                        print("[账户交易] stockDetail list 为空, data keys=\(data.keys)")
-                        return
-                    }
-                    
-                    let price = "\(stockInfo["current_price"] ?? "0.00")"
-                    self?.currentPrice = price
-                    
-                    self?.buyPriceLabel?.text = price
-                    self?.buyCurrentPriceLabel?.text = price
-                    self?.sellCurrentPriceLabel?.text = price
-                    self?.buyPriceSellLabel?.text = price
-                    self?.stockName = stockInfo["title"] as? String ?? ""
-                    print("[账户交易] stockDetail 成功: price=\(price), buyPriceSellLabel=\(self?.buyPriceSellLabel?.text ?? "nil")")
-                    
-                    self?.updateLimitUpDown()
-                    if self?.selectedIndex == 0 {
-                        self?.calculateBuyAmount()
+                // 东财返回的分时最新价并不在上述 fields 中，如果有传过来的 currentPrice 先继续使用
+                let price = self.currentPrice
+                
+                self.buyPriceLabel?.text = price
+                self.buyCurrentPriceLabel?.text = price
+                self.sellCurrentPriceLabel?.text = price
+                
+                // 仅在非外部指定持仓时才去使用最新价作为买入价显示
+                if !self.useProvidedHoldings {
+                    self.buyPriceSellLabel?.text = price
+                }
+                
+                self.stockName = d["f58"] as? String ?? self.stockName
+                
+                if let yClose = d["f60"] as? Double, yClose > 0 {
+                    let limitPercent: Double
+                    if code.hasPrefix("30") || code.hasPrefix("68") {
+                        limitPercent = 0.20
+                    } else if ["43", "83", "87", "92"].contains(where: { code.hasPrefix($0) }) {
+                        limitPercent = 0.30
+                    } else if (self.stockName.contains("ST")) {
+                        limitPercent = 0.05
                     } else {
-                        self?.calculateSellAmount()
+                        limitPercent = 0.10
                     }
-                case .failure(let err):
-                    print("行情获取失败: \(err)")
+                    
+                    self.limitUpPrice = String(format: "%.2f", yClose * (1 + limitPercent))
+                    self.limitDownPrice = String(format: "%.2f", yClose * (1 - limitPercent))
+                }
+                
+                self.updateLimitUpDown()
+                if self.selectedIndex == 0 {
+                    self.calculateBuyAmount()
+                } else {
+                    self.calculateSellAmount()
                 }
             }
-        }
+        }.resume()
     }
     
     private func fetchUserAssets() {
@@ -1679,7 +1697,13 @@ class AccountTradeViewController: ZQViewController {
                     guard let dict = res.decrypted,
                           let data = dict["data"] as? [[String: Any]],
                           let holding = data.first else { 
-                        self?.holdingQuantityLabel?.text = "0"
+                        if self?.useProvidedHoldings == true {
+                            self?.holdingQuantityLabel?.text = self?.sellHoldingQty
+                            self?.buyPriceSellLabel?.text = self?.sellBuyPrice
+                        } else {
+                            self?.holdingQuantityLabel?.text = "0"
+                            self?.buyPriceSellLabel?.text = "--"
+                        }
                         return 
                     }
                     let num = holding["number"] as? String ?? "0"
@@ -1689,6 +1713,10 @@ class AccountTradeViewController: ZQViewController {
                     let buyPrice = "\(holding["buyprice"] ?? "--")"
                     self?.buyPriceSellLabel?.text = buyPrice
                 case .failure(_):
+                    if self?.useProvidedHoldings == true {
+                        self?.holdingQuantityLabel?.text = self?.sellHoldingQty
+                        self?.buyPriceSellLabel?.text = self?.sellBuyPrice
+                    }
                     break
                 }
             }
@@ -1696,12 +1724,25 @@ class AccountTradeViewController: ZQViewController {
     }
     
     private func updateLimitUpDown() {
-        let price = Double(currentPrice) ?? 0.0
-        let limitUp = price * 1.1
-        let limitDown = price * 0.9
+        if limitUpPrice.isEmpty || limitUpPrice == "0.00" || limitUpPrice == "--" {
+            let price = Double(currentPrice) ?? 0.0
+            
+            let limitPercent: Double
+            if stockCode.hasPrefix("30") || stockCode.hasPrefix("68") {
+                limitPercent = 0.20
+            } else if ["43", "83", "87", "92"].contains(where: { stockCode.hasPrefix($0) }) {
+                limitPercent = 0.30
+            } else if (stockName.contains("ST")) {
+                limitPercent = 0.05
+            } else {
+                limitPercent = 0.10
+            }
+            limitUpPrice = String(format: "%.2f", price * (1 + limitPercent))
+            limitDownPrice = String(format: "%.2f", price * (1 - limitPercent))
+        }
         
-        let limitUpText = String(format: "%.2f", limitUp)
-        let limitDownText = String(format: "%.2f", limitDown)
+        let limitUpText = limitUpPrice
+        let limitDownText = limitDownPrice
         let fullText = "跌停: \(limitDownText)  涨停: \(limitUpText)"
         
         let attributedText = NSMutableAttributedString(string: fullText)
