@@ -322,7 +322,7 @@ class ProfileViewController: ZQViewController {
         card.addSubview(balanceLabel)
         balanceLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let row1Labels = ["可用", "可取", "股质余额"]
+        let row1Labels = ["可用", "可取", "新股申购"]
         let row2Labels = ["总市值", "总盈亏", "浮动盈亏"]
         let alignments: [NSTextAlignment] = [.left, .center, .right]
         let row1Stack = UIStackView()

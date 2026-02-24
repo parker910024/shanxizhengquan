@@ -237,7 +237,7 @@ class BankSecuritiesTransferViewController: ZQViewController {
     private func submitWithdraw(amount: Double, password: String) {
         SecureNetworkManager.shared.request(
             api: "/api/user/sendCode",
-            method: .get,
+            method: .post,
             params: ["account_id": "1", "money": "\(amount)", "pass": password]
         ) { [weak self] result in
             guard let self = self else { return }
