@@ -72,7 +72,31 @@ class SecuritiesTransferRecordViewController: ZQViewController {
         gk_navRightBarButtonItem = serviceBtn
     }
 
-    @objc private func serviceTapped() {}
+    @objc private func serviceTapped() {
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { result in
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    UIApplication.shared.open(url)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
+    }
 
     private func setupUI() {
         view.backgroundColor = .white
