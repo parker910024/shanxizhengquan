@@ -1402,8 +1402,9 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             // 名称：多种可能的 key
             let name = (item["name"] as? String) ?? (item["title"] as? String) ?? (item["stock_name"] as? String) ?? "--"
             
-            // 代码：多种可能的 key
-            var code = (item["sgcode"] as? String) ?? (item["code"] as? String) ?? (item["symbol"] as? String) ?? (item["stock_code"] as? String) ?? ""
+            // 代码：多种可能的 key，需要考虑数字类型
+            let codeAny = item["sgcode"] ?? item["code"] ?? item["symbol"] ?? item["stock_code"] ?? ""
+            var code = "\(codeAny)"
             if code.isEmpty { code = "--" }
             
             // 价格
