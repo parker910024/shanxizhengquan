@@ -18,253 +18,237 @@ struct AllotmentRecord {
 }
 
 class AllotmentRecordsViewController: ZQViewController {
-    
     private let tableView = UITableView(frame: .zero, style: .plain)
-    private let navBlue = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0)
-    
-    // 数据源（后续可动态加载）
-    private var records: [AllotmentRecord] = []
+    private let tabContainer = UIView()
+    private var tabButtons: [UIButton] = []
+    private let indicatorView = UIView()
+    private var selectedTabIndex: Int = 1 // 默认选中"中签"
+    private var stocks: [NewStock] = []
+    private var indicatorCenterXConstraint: NSLayoutConstraint!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
         setupNavigationBar()
-        setupTableView()
+        setupUI()
         loadData()
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = navBlue
-        gk_navTintColor = .white
-        gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
         gk_navTitle = "配售记录"
-        gk_navLineHidden = true
-        gk_navItemLeftSpace = 15
-        gk_navItemRightSpace = 15
+        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
+        gk_navTitleColor = .white
+        gk_statusBarStyle = .lightContent
     }
     
     private func setupUI() {
-        view.backgroundColor = .white
-    }
-    
-    private func setupTableView() {
-        let navH = Constants.Navigation.totalNavigationHeight
-        view.addSubview(tableView)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.backgroundColor = .white
-        tableView.separatorStyle = .none
-        tableView.showsVerticalScrollIndicator = false
+        view.backgroundColor = Constants.Color.backgroundMain
+        
+        // Tab栏
+        tabContainer.backgroundColor = .white
+        view.addSubview(tabContainer)
+        tabContainer.translatesAutoresizingMaskIntoConstraints = false
+        
+        let tabs = ["申购中", "中签", "未中签"]
+        let tabStackView = UIStackView()
+        tabStackView.axis = .horizontal
+        tabStackView.distribution = .fillEqually
+        tabStackView.spacing = 0
+        tabContainer.addSubview(tabStackView)
+        tabStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        for (index, tabTitle) in tabs.enumerated() {
+            let button = UIButton(type: .system)
+            button.setTitle(tabTitle, for: .normal)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 15)
+            button.tag = index
+            button.addTarget(self, action: #selector(tabButtonTapped(_:)), for: .touchUpInside)
+            tabStackView.addArrangedSubview(button)
+            tabButtons.append(button)
+        }
+        
+        // 指示器
+        indicatorView.backgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // 蓝色
+        tabContainer.addSubview(indicatorView)
+        indicatorView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // TableView
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(AllotmentRecordCell.self, forCellReuseIdentifier: "AllotmentRecordCell")
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = Constants.Color.backgroundMain
+        tableView.register(NewStockCell.self, forCellReuseIdentifier: "NewStockCell")
+        view.addSubview(tableView)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor, constant: navH),
+            tabContainer.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
+            tabContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tabContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tabContainer.heightAnchor.constraint(equalToConstant: 44),
+            
+            tabStackView.topAnchor.constraint(equalTo: tabContainer.topAnchor),
+            tabStackView.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
+            tabStackView.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
+            tabStackView.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
+            
+            indicatorView.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
+            indicatorView.heightAnchor.constraint(equalToConstant: 2),
+            indicatorView.widthAnchor.constraint(equalToConstant: 20),
+            
+            tableView.topAnchor.constraint(equalTo: tabContainer.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
+        
+        // 设置指示器初始位置（确保tabButtons已经填充）
+        guard !tabButtons.isEmpty && selectedTabIndex < tabButtons.count else {
+            return
+        }
+        indicatorCenterXConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
+        indicatorCenterXConstraint.isActive = true
+        
+        updateTabSelection()
     }
     
     private func loadData() {
-        // TODO: 从网络或本地加载数据
-        // 示例数据
-//        records = [
-//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
-//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
-//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
-//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股")
-//        ]
+        let statusParam: String
+        switch selectedTabIndex {
+        case 0: statusParam = "0"
+        case 1: statusParam = "1"
+        case 2: statusParam = "2"
+        default: statusParam = "1"
+        }
         
-        tableView.reloadData()
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/getsgnewgu",
+            method: .get,
+            params: ["status": statusParam,"page": "1", "size": "50"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["dxlog_list"] as? [[String: Any]] else {
+                    if let dict = res.decrypted {
+                        print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
+                    }
+                    DispatchQueue.main.async {
+                        self.stocks = []
+                        self.tableView.reloadData()
+                    }
+                    return
+                }
+                
+                print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
+                
+                var newStocks: [NewStock] = []
+                for item in list {
+                    let idVal = "\(item["id"] ?? "")"
+                    let name = item["name"] as? String ?? ""
+                    let code = item["code"] as? String ?? ""
+                    let statusStr = "\(item["status"] ?? "")"
+                    let statusText = item["status_txt"] as? String ?? ""
+                    let issuePrice = "\(item["sg_fx_price"] ?? "0")"
+                    let quantity = "\(item["zq_num"] ?? "0")"
+                    let lots = "\(item["zq_nums"] ?? "0")"
+                    var listingTime = item["sg_ss_date"] as? String ?? "未公布"
+                    if listingTime.isEmpty { listingTime = "未公布" }
+                    let zqMoney = "\(item["zq_money"] ?? "0")"
+                    let dateStr = item["createtime_txt"] as? String ?? ""
+                    
+                    let model = NewStock(
+                        id: idVal,
+                        name: name,
+                        code: code,
+                        status: NewStockStatus(rawValue: statusStr) ?? .successful,
+                        statusText: statusText,
+                        issuePrice: issuePrice,
+                        quantity: quantity,
+                        lots: lots,
+                        listingTime: listingTime,
+                        paidAmount: zqMoney,
+                        date: dateStr
+                    )
+                    newStocks.append(model)
+                }
+                
+                DispatchQueue.main.async {
+                    self.stocks = newStocks
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(let err):
+                DispatchQueue.main.async {
+                    Toast.show("获取记录失败: \(err.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    @objc private func tabButtonTapped(_ sender: UIButton) {
+        let newIndex = sender.tag
+        guard newIndex != selectedTabIndex else { return }
+        
+        selectedTabIndex = newIndex
+        updateTabSelection()
+        
+        // 重新调用接口拉取数据
+        loadData()
+    }
+    
+    private func updateTabSelection() {
+        // 安全检查
+        guard !tabButtons.isEmpty && selectedTabIndex < tabButtons.count else {
+            return
+        }
+        
+        for (index, button) in tabButtons.enumerated() {
+            if index == selectedTabIndex {
+                button.setTitleColor(UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0), for: .normal)
+                // 去掉边框
+                button.layer.borderWidth = 0
+            } else {
+                button.setTitleColor(Constants.Color.textSecondary, for: .normal)
+                button.layer.borderWidth = 0
+            }
+        }
+        
+        // 更新指示器位置
+        if indicatorCenterXConstraint != nil {
+            indicatorCenterXConstraint.isActive = false
+        }
+        indicatorCenterXConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
+        indicatorCenterXConstraint.isActive = true
+        
+        UIView.animate(withDuration: 0.2) {
+            self.view.layoutIfNeeded()
+        }
     }
 }
 
-// MARK: - UITableViewDataSource & UITableViewDelegate
-extension AllotmentRecordsViewController: UITableViewDataSource, UITableViewDelegate {
-    
+// MARK: - UITableViewDataSource
+extension AllotmentRecordsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return records.count
+        return stocks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "AllotmentRecordCell", for: indexPath) as! AllotmentRecordCell
-        cell.configure(with: records[indexPath.row])
-        cell.selectionStyle = .none
+        let cell = tableView.dequeueReusableCell(withIdentifier: "NewStockCell", for: indexPath) as! NewStockCell
+        cell.configure(with: stocks[indexPath.row])
         return cell
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 120 // 根据卡片内容计算：16 + 32 + 12 + 24 + 4 + 20 + 16 = 124，取 120
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        // TODO: 处理点击事件
     }
 }
 
-// MARK: - AllotmentRecordCell
-class AllotmentRecordCell: UITableViewCell {
-    
-    private let cardView = UIView()
-    private let exchangeLbl = UILabel()
-    private let nameLbl = UILabel()
-    private let codeLbl = UILabel()
-    private let detailBtn = UIButton(type: .system)
-    private let priceLbl = UILabel()
-    private let rateLbl = UILabel()
-    private let totalLbl = UILabel()
-    private let priceTag = UILabel()
-    private let rateTag = UILabel()
-    private let totalTag = UILabel()
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
+// MARK: - UITableViewDelegate
+extension AllotmentRecordsViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func setupUI() {
-        contentView.backgroundColor = .white
-        contentView.addSubview(cardView)
-        cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.backgroundColor = .white
-        cardView.layer.cornerRadius = 8
-        cardView.layer.shadowColor = UIColor.black.cgColor
-        cardView.layer.shadowOffset = CGSize(width: 0, height: 1)
-        cardView.layer.shadowRadius = 4
-        cardView.layer.shadowOpacity = 0.08
-        
-        let pad: CGFloat = 16
-        
-        // 第一行：交易所标签（图标样式）
-        exchangeLbl.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        exchangeLbl.textColor = .white
-        exchangeLbl.textAlignment = .center
-        exchangeLbl.backgroundColor = UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0) // 浅蓝色背景
-        exchangeLbl.layer.cornerRadius = 4
-        exchangeLbl.layer.masksToBounds = true
-        cardView.addSubview(exchangeLbl)
-        exchangeLbl.translatesAutoresizingMaskIntoConstraints = false
-        
-        nameLbl.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        nameLbl.textColor = Constants.Color.textPrimary
-        cardView.addSubview(nameLbl)
-        nameLbl.translatesAutoresizingMaskIntoConstraints = false
-        
-        codeLbl.font = UIFont.systemFont(ofSize: 14)
-        codeLbl.textColor = Constants.Color.textSecondary
-        cardView.addSubview(codeLbl)
-        codeLbl.translatesAutoresizingMaskIntoConstraints = false
-        
-        detailBtn.setTitle("详情+", for: .normal)
-        detailBtn.setTitleColor(.systemRed, for: .normal)
-        detailBtn.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-        cardView.addSubview(detailBtn)
-        detailBtn.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 第二行
-        priceLbl.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        priceLbl.textColor = Constants.Color.textPrimary
-        priceLbl.textAlignment = .left
-        cardView.addSubview(priceLbl)
-        priceLbl.translatesAutoresizingMaskIntoConstraints = false
-        
-        rateLbl.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        rateLbl.textColor = Constants.Color.textPrimary
-        rateLbl.textAlignment = .center
-        cardView.addSubview(rateLbl)
-        rateLbl.translatesAutoresizingMaskIntoConstraints = false
-        
-        totalLbl.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        totalLbl.textColor = Constants.Color.textPrimary
-        totalLbl.textAlignment = .right
-        cardView.addSubview(totalLbl)
-        totalLbl.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 第三行
-        priceTag.text = "发行价格"
-        priceTag.font = UIFont.systemFont(ofSize: 12)
-        priceTag.textColor = Constants.Color.textTertiary
-        priceTag.textAlignment = .left
-        cardView.addSubview(priceTag)
-        priceTag.translatesAutoresizingMaskIntoConstraints = false
-        
-        rateTag.text = "中签率"
-        rateTag.font = UIFont.systemFont(ofSize: 12)
-        rateTag.textColor = Constants.Color.textTertiary
-        rateTag.textAlignment = .center
-        cardView.addSubview(rateTag)
-        rateTag.translatesAutoresizingMaskIntoConstraints = false
-        
-        totalTag.text = "发行总数"
-        totalTag.font = UIFont.systemFont(ofSize: 12)
-        totalTag.textColor = Constants.Color.textTertiary
-        totalTag.textAlignment = .right
-        cardView.addSubview(totalTag)
-        totalTag.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: pad),
-            cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
-            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
-            
-            // 第一行
-            exchangeLbl.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: pad),
-            exchangeLbl.topAnchor.constraint(equalTo: cardView.topAnchor, constant: pad),
-            exchangeLbl.widthAnchor.constraint(equalToConstant: 24),
-            exchangeLbl.heightAnchor.constraint(equalToConstant: 24),
-            
-            nameLbl.leadingAnchor.constraint(equalTo: exchangeLbl.trailingAnchor, constant: 8),
-            nameLbl.centerYAnchor.constraint(equalTo: exchangeLbl.centerYAnchor),
-            
-            codeLbl.leadingAnchor.constraint(equalTo: nameLbl.trailingAnchor, constant: 6),
-            codeLbl.centerYAnchor.constraint(equalTo: exchangeLbl.centerYAnchor),
-            
-            detailBtn.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -pad),
-            detailBtn.centerYAnchor.constraint(equalTo: exchangeLbl.centerYAnchor),
-            
-            // 第二行
-            priceLbl.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: pad),
-            priceLbl.topAnchor.constraint(equalTo: exchangeLbl.bottomAnchor, constant: 12),
-            priceLbl.widthAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 1.0/3.0, constant: -pad * 2),
-            
-            rateLbl.centerXAnchor.constraint(equalTo: cardView.centerXAnchor),
-            rateLbl.centerYAnchor.constraint(equalTo: priceLbl.centerYAnchor),
-            rateLbl.widthAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 1.0/3.0, constant: -pad * 2),
-            
-            totalLbl.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -pad),
-            totalLbl.centerYAnchor.constraint(equalTo: priceLbl.centerYAnchor),
-            totalLbl.widthAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 1.0/3.0, constant: -pad * 2),
-            
-            // 第三行
-            priceTag.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: pad),
-            priceTag.topAnchor.constraint(equalTo: priceLbl.bottomAnchor, constant: 4),
-            priceTag.widthAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 1.0/3.0, constant: -pad * 2),
-            
-            rateTag.centerXAnchor.constraint(equalTo: cardView.centerXAnchor),
-            rateTag.centerYAnchor.constraint(equalTo: priceTag.centerYAnchor),
-            rateTag.widthAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 1.0/3.0, constant: -pad * 2),
-            
-            totalTag.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -pad),
-            totalTag.centerYAnchor.constraint(equalTo: priceTag.centerYAnchor),
-            totalTag.widthAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 1.0/3.0, constant: -pad * 2),
-            totalTag.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -pad)
-        ])
-    }
-    
-    func configure(with record: AllotmentRecord) {
-        exchangeLbl.text = record.exchange
-        nameLbl.text = record.stockName
-        codeLbl.text = record.stockCode
-        priceLbl.text = record.issuePrice
-        rateLbl.text = record.allotmentRate
-        totalLbl.text = record.totalIssued
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 150
     }
 }

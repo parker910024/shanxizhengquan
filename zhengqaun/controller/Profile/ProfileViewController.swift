@@ -515,7 +515,7 @@ class ProfileViewController: ZQViewController {
     }
 
     @objc private func placingRecordTapped() {
-        let vc = MyNewStocksViewController()
+        let vc = AllotmentRecordsViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

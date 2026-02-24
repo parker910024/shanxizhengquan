@@ -136,7 +136,7 @@ class MyNewStocksViewController: ZQViewController {
         SecureNetworkManager.shared.request(
             api: "/api/subscribe/getsgnewgu0",
             method: .get,
-            params: ["status": statusParam]
+            params: ["status": statusParam, "page": "1", "size": "50"]
         ) { [weak self] result in
             guard let self = self else { return }
             
