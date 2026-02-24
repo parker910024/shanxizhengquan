@@ -39,11 +39,12 @@ class HomeViewController: ZQViewController {
         setupUI()
         // 南向/北向资金
         capitalInflow()
+        showNewStockReminderPopupIfNeeded()
+
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        showNewStockReminderPopupIfNeeded()
     }
 
     /// 每次进入首页请求新股申购提醒接口，有数据则弹框
@@ -481,9 +482,11 @@ extension HomeViewController: UITableViewDataSource {
             // Banner轮播图
             let cell = tableView.dequeueReusableCell(withIdentifier: "BannerCell", for: indexPath) as! BannerTableViewCell
             cell.configure(with: bannerImages)
-            cell.onBannerTap = {  index in
-                // 处理banner点击事件
-                print("Banner tapped at index: \(index)")
+            cell.onBannerTap = { [weak self] _ in
+//                let vc = RegisterViewController()
+//                let nav = UINavigationController(rootViewController: vc)
+//                nav.modalPresentationStyle = .fullScreen
+//                self?.present(nav, animated: true)
             }
             return cell
         case 1:
@@ -500,13 +503,16 @@ extension HomeViewController: UITableViewDataSource {
                 }
                 switch title {
                 case "极速开户":
-                    break
+                    let vc = RegisterViewController()
+                    let nav = UINavigationController(rootViewController: vc)
+                    nav.modalPresentationStyle = .fullScreen
+                    self?.present(nav, animated: true)
                 case "市场行情":
                     if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
                        let marketNav = vcs[1] as? UINavigationController,
                        let marketVC = marketNav.viewControllers.first as? MarketViewController {
                         tabBar.selectedIndex = 1
-                        marketVC.switchToTab(index: 1)
+                        marketVC.switchToTab(index: 0)
                     }
                 case "持仓记录":
                     let vc = MyHoldingsViewController()
@@ -538,7 +544,12 @@ extension HomeViewController: UITableViewDataSource {
         case 2:
             let cell = tableView.dequeueReusableCell(withIdentifier: "ImageBannerCell", for: indexPath) as! ImageBannerTableViewCell
             cell.configure(with: [])
-            cell.onBannerTap = { _ in }
+            cell.onBannerTap = { [weak self] _ in
+                let vc = RegisterViewController()
+                let nav = UINavigationController(rootViewController: vc)
+                nav.modalPresentationStyle = .fullScreen
+                self?.present(nav, animated: true)
+            }
             return cell
         case 3:
             let cell = tableView.dequeueReusableCell(withIdentifier: "FundFlowCell", for: indexPath) as! FundFlowTableViewCell
