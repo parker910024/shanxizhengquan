@@ -70,12 +70,13 @@ class AllotmentRecordsViewController: ZQViewController {
     private func loadData() {
         // TODO: 从网络或本地加载数据
         // 示例数据
-        records = [
-            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
-            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
-            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
-            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股")
-        ]
+//        records = [
+//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
+//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
+//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股"),
+//            AllotmentRecord(exchange: "深", stockName: "舒泰神", stockCode: "300204", issuePrice: "¥ 21.93", allotmentRate: "0.00%", totalIssued: "3671.6万股")
+//        ]
+        
         tableView.reloadData()
     }
 }

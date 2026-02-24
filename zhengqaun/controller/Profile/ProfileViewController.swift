@@ -268,7 +268,8 @@ class ProfileViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "银证转出":
-            let vc = BankSecuritiesTransferViewController()
+            let vc = BankTransferIntroViewController()
+            vc.initialTabIndex = 1 // 默认选中银证转出
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "持仓记录":
@@ -693,9 +694,37 @@ class ProfileViewController: ZQViewController {
 
     /// 打开客服页面（与「在线客服」「客服中心」共用）
     private func openCustomerService() {
-        guard let url = URL(string: "https://www.htsc.com.cn") else { return }
-        let vc = SFSafariViewController(url: url)
-        present(vc, animated: true)
+//        guard let url = URL(string: "https://www.htsc.com.cn") else { return }
+//        let vc = SFSafariViewController(url: url)
+//        present(vc, animated: true)
+        // 从配置接口获取客服 URL
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                // 补全协议头
+                if !kfUrl.hasPrefix("http") {
+                    kfUrl = "https://" + kfUrl
+                }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    UIApplication.shared.open(url)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
+        }
     }
 
     // MARK: - 通道密钥弹窗（类似首页弹窗：遮罩 + 白卡片 + 标题 + 输入 + 返回/确认）
