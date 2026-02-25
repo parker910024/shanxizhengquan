@@ -370,7 +370,9 @@ class MyHoldingsViewController: ZQViewController {
                     self.emptyLabel.isHidden = !self.historicalHoldings.isEmpty
                 }
                 
-            case .failure(_): break
+            case .failure(let err):
+                Toast.showInfo(err.localizedDescription)
+                break
             }
         }
     }
