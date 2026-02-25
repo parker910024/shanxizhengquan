@@ -35,6 +35,7 @@ class MarketViewController: ZQViewController {
     private var todayHeaderWrap: UIView!
     private var todayTitleLabel: UILabel!
     private var subscriptionList: [[String: Any]] = []  // API 数据
+    private var dzjyBalance: Double = 0  // 场外撮合可用余额
 
     // MARK: - 指数数据 (API)
     private var indexItems: [IndexCardModel] = []
@@ -1327,34 +1328,426 @@ class MarketViewController: ZQViewController {
         }.resume()
     }
 
-    /// 从 FeatureSwitchManager 中读取申购、配售、大宗交易数据
+    /// 从独立接口或 FeatureSwitchManager 加载申购、配售、大宗交易数据
     private func loadSubscriptionData() {
         let mgr = FeatureSwitchManager.shared
-        print("[调试] mgr.listSg 数量: \(mgr.listSg.count)")
-        print("[调试] mgr.listPs 数量: \(mgr.listPs.count)")
-        print("[调试] mgr.listDzjy 数量: \(mgr.listDzjy.count)")
 
-        var sourceList: [[String: Any]] = []
-        
         switch selectedSegmentIndex {
-        case 1: sourceList = mgr.listSg     // 新股申购
-        case 2: sourceList = mgr.listPs     // 战略配售(线下配售)
-        case 3: sourceList = mgr.listDzjy   // 天启护盘(大宗交易/场外撮合)
+        case 1:
+            // 新股申购使用独立接口 /api/subscribe/lst
+            loadXgsgData()
+            return
+        case 2:
+            // 线下配售使用独立接口 /api/subscribe/xxlst
+            loadXxpsData()
+            return
+        case 3:
+            // 场外撮合交易使用独立接口 /api/dzjy/lst
+            loadDzjyData()
+            return
         default: return
         }
+    }
 
-        var rows: [[String: Any]] = []
-        for item in sourceList {
-            if let subInfo = item["sub_info"] as? [[String: Any]] {
-                rows.append(contentsOf: subInfo)
-            } else {
-                rows.append(item)
+    /// 新股可申购列表 — /api/subscribe/lst
+    private func loadXgsgData() {
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/lst",
+            method: .get,
+            params: ["page": "1", "type": "0"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    print("[行情] 新股申购: 解析失败, raw=\(res.raw.prefix(200))")
+                    DispatchQueue.main.async {
+                        self.subscriptionList = []
+                        self.subsTableView.reloadData()
+                    }
+                    return
+                }
+                // 解析 sub_info 结构
+                var rows: [[String: Any]] = []
+                for item in list {
+                    if let subInfo = item["sub_info"] as? [[String: Any]] {
+                        rows.append(contentsOf: subInfo)
+                    } else {
+                        rows.append(item)
+                    }
+                }
+                DispatchQueue.main.async {
+                    self.subscriptionList = rows
+                    self.subsTableView.reloadData()
+                    print("[行情] 新股申购加载成功，共 \(rows.count) 条")
+                }
+            case .failure(let err):
+                print("[行情] 新股申购请求失败: \(err.localizedDescription)")
             }
         }
-        
-        self.subscriptionList = rows
-        self.subsTableView.reloadData()
-        print("[行情] 申购/配售/交易 (\(selectedSegmentIndex)) 数据加载完毕，共 \(rows.count) 条")
+    }
+
+    /// 场外撮合交易列表 — /api/dzjy/lst
+    private func loadDzjyData() {
+        SecureNetworkManager.shared.request(
+            api: "/api/dzjy/lst",
+            method: .get,
+            params: ["page": "1", "size": "50"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    print("[行情] 场外撮合: 解析失败, raw=\(res.raw.prefix(200))")
+                    DispatchQueue.main.async {
+                        self.subscriptionList = []
+                        self.subsTableView.reloadData()
+                    }
+                    return
+                }
+                // 保存可用余额
+                if let bal = data["balance"] as? Double {
+                    self.dzjyBalance = bal
+                } else if let balStr = data["balance"] as? String, let bal = Double(balStr) {
+                    self.dzjyBalance = bal
+                }
+                DispatchQueue.main.async {
+                    self.subscriptionList = list
+                    self.subsTableView.reloadData()
+                    print("[行情] 场外撮合加载成功，共 \(list.count) 条，余额: \(self.dzjyBalance)")
+                }
+            case .failure(let err):
+                print("[行情] 场外撮合请求失败: \(err.localizedDescription)")
+            }
+        }
+    }
+
+    /// 线下配售可申购列表 — /api/subscribe/xxlst
+    private func loadXxpsData() {
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/xxlst",
+            method: .get,
+            params: ["page": "1", "type": "0"]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    print("[行情] 线下配售: 解析失败, raw=\(res.raw.prefix(200))")
+                    DispatchQueue.main.async {
+                        self.subscriptionList = []
+                        self.subsTableView.reloadData()
+                    }
+                    return
+                }
+                // 返回格式与新股可申购列表一致，解析 sub_info
+                var rows: [[String: Any]] = []
+                for item in list {
+                    if let subInfo = item["sub_info"] as? [[String: Any]] {
+                        rows.append(contentsOf: subInfo)
+                    } else {
+                        rows.append(item)
+                    }
+                }
+                DispatchQueue.main.async {
+                    self.subscriptionList = rows
+                    self.subsTableView.reloadData()
+                    print("[行情] 线下配售加载成功，共 \(rows.count) 条")
+                }
+            case .failure(let err):
+                print("[行情] 线下配售请求失败: \(err.localizedDescription)")
+            }
+        }
+    }
+
+    // ===================================================================
+    // MARK: - 场外撮合交易购买弹窗
+    // ===================================================================
+    private func showDzjyBuySheet(item: [String: Any]) {
+        let name    = item["title"] as? String ?? (item["name"] as? String ?? "--")
+        let code    = item["code"] as? String ?? "--"
+        let allcode = item["allcode"] as? String ?? ""
+        let priceStr = "\(item["cai_buy"] ?? "0")"
+        let price   = Double(priceStr) ?? 0
+        let maxNum  = (item["max_num"] as? Int) ?? Int("\(item["max_num"] ?? "0")") ?? 0
+
+        // 半透明遮罩
+        let overlay = UIView(frame: view.bounds)
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        overlay.tag = 9999
+        view.addSubview(overlay)
+
+        // 弹窗容器
+        let sheet = UIView()
+        sheet.backgroundColor = .white
+        sheet.layer.cornerRadius = 12
+        sheet.clipsToBounds = true
+        sheet.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addSubview(sheet)
+
+        // 当前购买手数
+        var buyNums = 0
+
+        // ── 名称 + 价格 ──
+        let nameLabel = UILabel()
+        nameLabel.text = name
+        nameLabel.font = .boldSystemFont(ofSize: 17)
+        nameLabel.textColor = textPrimary
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(nameLabel)
+
+        let priceLabel = UILabel()
+        priceLabel.text = String(format: "%.2f", price)
+        priceLabel.font = .boldSystemFont(ofSize: 17)
+        priceLabel.textColor = themeRed
+        priceLabel.textAlignment = .right
+        priceLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(priceLabel)
+
+        let codeLabel = UILabel()
+        codeLabel.text = code
+        codeLabel.font = .systemFont(ofSize: 13)
+        codeLabel.textColor = textSec
+        codeLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(codeLabel)
+
+        // ── 可用余额 + 最大可买 ──
+        let balLabel = UILabel()
+        balLabel.text = "可用余额"
+        balLabel.font = .systemFont(ofSize: 14)
+        balLabel.textColor = textPrimary
+        balLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(balLabel)
+
+        let balValue = UILabel()
+        balValue.text = String(format: "%.2f", dzjyBalance)
+        balValue.font = .systemFont(ofSize: 14)
+        balValue.textColor = textPrimary
+        balValue.textAlignment = .right
+        balValue.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(balValue)
+
+        let maxLabel = UILabel()
+        maxLabel.text = "最大可买(手)"
+        maxLabel.font = .systemFont(ofSize: 14)
+        maxLabel.textColor = textPrimary
+        maxLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(maxLabel)
+
+        let maxValue = UILabel()
+        maxValue.text = "\(maxNum)"
+        maxValue.font = .systemFont(ofSize: 14)
+        maxValue.textColor = textPrimary
+        maxValue.textAlignment = .right
+        maxValue.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(maxValue)
+
+        // ── 步进器 ──
+        let minusBtn = UIButton(type: .system)
+        minusBtn.setTitle("−", for: .normal)
+        minusBtn.setTitleColor(textPrimary, for: .normal)
+        minusBtn.titleLabel?.font = .systemFont(ofSize: 22, weight: .medium)
+        minusBtn.layer.borderWidth = 1
+        minusBtn.layer.borderColor = UIColor(white: 0.85, alpha: 1).cgColor
+        minusBtn.layer.cornerRadius = 4
+        minusBtn.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(minusBtn)
+
+        let numsLbl = UILabel()
+        numsLbl.text = "\(buyNums)"
+        numsLbl.textAlignment = .center
+        numsLbl.font = .systemFont(ofSize: 16, weight: .medium)
+        numsLbl.textColor = textPrimary
+        numsLbl.layer.borderWidth = 1
+        numsLbl.layer.borderColor = UIColor(white: 0.85, alpha: 1).cgColor
+        numsLbl.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(numsLbl)
+
+        let plusBtn = UIButton(type: .system)
+        plusBtn.setTitle("+", for: .normal)
+        plusBtn.setTitleColor(textPrimary, for: .normal)
+        plusBtn.titleLabel?.font = .systemFont(ofSize: 22, weight: .medium)
+        plusBtn.layer.borderWidth = 1
+        plusBtn.layer.borderColor = UIColor(white: 0.85, alpha: 1).cgColor
+        plusBtn.layer.cornerRadius = 4
+        plusBtn.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(plusBtn)
+
+        // ── 支付金额 ──
+        let payTitle = UILabel()
+        payTitle.text = "支付金额"
+        payTitle.font = .systemFont(ofSize: 14)
+        payTitle.textColor = textPrimary
+        payTitle.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(payTitle)
+
+        let payValue = UILabel()
+        payValue.text = "0.00"
+        payValue.font = .boldSystemFont(ofSize: 14)
+        payValue.textColor = themeRed
+        payValue.textAlignment = .right
+        payValue.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(payValue)
+
+        // ── 底部按钮 ──
+        let cancelBtn = UIButton(type: .system)
+        cancelBtn.setTitle("取消", for: .normal)
+        cancelBtn.setTitleColor(textPrimary, for: .normal)
+        cancelBtn.titleLabel?.font = .systemFont(ofSize: 16)
+        cancelBtn.layer.borderWidth = 1
+        cancelBtn.layer.borderColor = UIColor(white: 0.85, alpha: 1).cgColor
+        cancelBtn.layer.cornerRadius = 6
+        cancelBtn.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(cancelBtn)
+
+        let confirmBtn = UIButton(type: .system)
+        confirmBtn.setTitle("确定", for: .normal)
+        confirmBtn.setTitleColor(.white, for: .normal)
+        confirmBtn.titleLabel?.font = .boldSystemFont(ofSize: 16)
+        confirmBtn.backgroundColor = themeRed
+        confirmBtn.layer.cornerRadius = 6
+        confirmBtn.translatesAutoresizingMaskIntoConstraints = false
+        sheet.addSubview(confirmBtn)
+
+        // 分隔线
+        let sep1 = UIView(); sep1.backgroundColor = UIColor(white: 0.93, alpha: 1)
+        sep1.translatesAutoresizingMaskIntoConstraints = false; sheet.addSubview(sep1)
+
+        // ── 约束 ──
+        NSLayoutConstraint.activate([
+            sheet.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
+            sheet.leadingAnchor.constraint(equalTo: overlay.leadingAnchor, constant: 20),
+            sheet.trailingAnchor.constraint(equalTo: overlay.trailingAnchor, constant: -20),
+
+            nameLabel.topAnchor.constraint(equalTo: sheet.topAnchor, constant: 20),
+            nameLabel.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+            priceLabel.centerYAnchor.constraint(equalTo: nameLabel.centerYAnchor),
+            priceLabel.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -20),
+
+            codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
+            codeLabel.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+
+            balLabel.topAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: 16),
+            balLabel.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+            balValue.centerYAnchor.constraint(equalTo: balLabel.centerYAnchor),
+            balValue.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -20),
+
+            maxLabel.topAnchor.constraint(equalTo: balLabel.bottomAnchor, constant: 8),
+            maxLabel.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+            maxValue.centerYAnchor.constraint(equalTo: maxLabel.centerYAnchor),
+            maxValue.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -20),
+
+            // 步进器
+            minusBtn.topAnchor.constraint(equalTo: maxLabel.bottomAnchor, constant: 16),
+            minusBtn.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+            minusBtn.widthAnchor.constraint(equalToConstant: 44),
+            minusBtn.heightAnchor.constraint(equalToConstant: 40),
+            numsLbl.topAnchor.constraint(equalTo: minusBtn.topAnchor),
+            numsLbl.leadingAnchor.constraint(equalTo: minusBtn.trailingAnchor),
+            numsLbl.trailingAnchor.constraint(equalTo: plusBtn.leadingAnchor),
+            numsLbl.heightAnchor.constraint(equalToConstant: 40),
+            plusBtn.topAnchor.constraint(equalTo: minusBtn.topAnchor),
+            plusBtn.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -20),
+            plusBtn.widthAnchor.constraint(equalToConstant: 44),
+            plusBtn.heightAnchor.constraint(equalToConstant: 40),
+
+            // 支付金额
+            payTitle.topAnchor.constraint(equalTo: minusBtn.bottomAnchor, constant: 12),
+            payTitle.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+            payValue.centerYAnchor.constraint(equalTo: payTitle.centerYAnchor),
+            payValue.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -20),
+
+            // 分隔线
+            sep1.topAnchor.constraint(equalTo: payTitle.bottomAnchor, constant: 12),
+            sep1.leadingAnchor.constraint(equalTo: sheet.leadingAnchor),
+            sep1.trailingAnchor.constraint(equalTo: sheet.trailingAnchor),
+            sep1.heightAnchor.constraint(equalToConstant: 0.5),
+
+            // 底部按钮
+            cancelBtn.topAnchor.constraint(equalTo: sep1.bottomAnchor, constant: 12),
+            cancelBtn.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 20),
+            cancelBtn.widthAnchor.constraint(equalTo: sheet.widthAnchor, multiplier: 0.38),
+            cancelBtn.heightAnchor.constraint(equalToConstant: 44),
+            cancelBtn.bottomAnchor.constraint(equalTo: sheet.bottomAnchor, constant: -16),
+
+            confirmBtn.topAnchor.constraint(equalTo: sep1.bottomAnchor, constant: 12),
+            confirmBtn.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -20),
+            confirmBtn.widthAnchor.constraint(equalTo: sheet.widthAnchor, multiplier: 0.38),
+            confirmBtn.heightAnchor.constraint(equalToConstant: 44),
+        ])
+
+        // ── 事件 ──
+        let updateAmount = {
+            let total = price * Double(buyNums) * 100
+            payValue.text = String(format: "%.2f", total)
+        }
+
+        minusBtn.addAction(UIAction { _ in
+            guard buyNums > 0 else { return }
+            buyNums -= 1
+            numsLbl.text = "\(buyNums)"
+            updateAmount()
+        }, for: .touchUpInside)
+
+        plusBtn.addAction(UIAction { _ in
+            guard buyNums < maxNum else { return }
+            buyNums += 1
+            numsLbl.text = "\(buyNums)"
+            updateAmount()
+        }, for: .touchUpInside)
+
+        cancelBtn.addAction(UIAction { _ in
+            overlay.removeFromSuperview()
+        }, for: .touchUpInside)
+
+        // 点遮罩关闭
+        let tapDismiss = UITapGestureRecognizer(target: self, action: nil)
+        tapDismiss.cancelsTouchesInView = false
+        overlay.addGestureRecognizer(tapDismiss)
+
+        confirmBtn.addAction(UIAction { [weak self] _ in
+            guard buyNums > 0 else {
+                Toast.show("请选择购买手数")
+                return
+            }
+            overlay.removeFromSuperview()
+            self?.performDzjyBuy(allcode: allcode, canBuy: buyNums)
+        }, for: .touchUpInside)
+    }
+
+    /// 调用大宗交易买入接口
+    private func performDzjyBuy(allcode: String, canBuy: Int) {
+        SecureNetworkManager.shared.request(
+            api: "/api/dzjy/addStrategy_zfa",
+            method: .post,
+            params: [
+                "allcode": allcode,
+                "canBuy": canBuy,
+                "miyao": ""
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    let dict = res.decrypted
+                    let code = dict?["code"] as? Int ?? 0
+                    let msg  = dict?["msg"] as? String ?? "购买成功"
+                    Toast.show(msg)
+                    if code == 1 {
+                        // 刷新列表
+                        self?.loadDzjyData()
+                    }
+                case .failure(let err):
+                    Toast.show("购买失败: \(err.localizedDescription)")
+                }
+            }
+        }
     }
 }
 
@@ -1441,16 +1834,51 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
                 sgTypeStr = ""
             }
             
-            // 比例/市盈率
-            let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? item["zfanum"] ?? ""
-            let rateVal = "\(rateValAny)"
-            let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : (rateVal.hasSuffix("%") ? rateVal : "\(rateVal)%")
-            
             let market: String = {
                 switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
             }()
 
-            cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: peStr)
+            // 根据 tab 使用不同的 cell 布局
+            if selectedSegmentIndex == 3 {
+                // 场外撮合交易
+                let priceStr = "\(item["cai_buy"] ?? "0")"
+                let maxNum = "\(item["max_num"] ?? "0")"
+                let typeVal: String
+                if let t = item["type"] as? Int { typeVal = "\(t)" }
+                else { typeVal = "\(item["type"] ?? "")" }
+                let mkt: String = {
+                    switch typeVal { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; case "6": return "基"; default: return "沪" }
+                }()
+                cell.configureDzjy(name: name, code: code, market: mkt, price: priceStr, maxNum: maxNum)
+                cell.onDetailTap = { [weak self] in
+                    guard let self = self else { return }
+                    self.showDzjyBuySheet(item: item)
+                }
+            } else if selectedSegmentIndex == 2 {
+                // 配售数量：fx_num 格式化为万股
+                let fxNumStr = "\(item["fx_num"] ?? "0")"
+                let fxNumFormatted: String
+                if let fxNum = Double(fxNumStr), fxNum > 0 {
+                    fxNumFormatted = String(format: "%.1f万股", fxNum / 10000.0)
+                } else {
+                    fxNumFormatted = "--"
+                }
+                cell.configureXxps(name: name, code: code, market: market, price: priceVal, fxNum: fxNumFormatted)
+                cell.onDetailTap = { [weak self] in
+                    guard let self = self else { return }
+                    let vc = XxpsDetailViewController()
+                    vc.stockId = "\(item["id"] ?? "")"
+                    vc.hidesBottomBarWhenPushed = true
+                    self.navigationController?.pushViewController(vc, animated: true)
+                }
+            } else {
+                // 新股申购 / 天启护盘 使用原布局
+                let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? item["zfanum"] ?? ""
+                let rateVal = "\(rateValAny)"
+                let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : (rateVal.hasSuffix("%") ? rateVal : "\(rateVal)%")
+                cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: peStr)
+                cell.onDetailTap = nil
+            }
         }
         return cell
     }
@@ -1466,7 +1894,16 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if tableView == subsTableView {
-            return tableView.dequeueReusableHeaderFooterView(withIdentifier: "SubsHeader") as? SubscriptionTableHeaderView
+            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "SubsHeader") as? SubscriptionTableHeaderView
+            // 根据 tab 使用不同的列头
+            if selectedSegmentIndex == 3 {
+                header?.configure(columns: ["名称", "折扣价", "总股额（股）", "操作"])
+            } else if selectedSegmentIndex == 2 {
+                header?.configure(columns: ["名称", "发行价", "配售数量", "操作"])
+            } else {
+                header?.configure(columns: ["申购代码", "发行价", "所属板块", "市盈率"])
+            }
+            return header
         }
         return nil
     }
@@ -1508,12 +1945,19 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         } else if tableView == subsTableView, indexPath.row < subscriptionList.count {
-            // 跳转新股详情页
             let item = subscriptionList[indexPath.row]
-            let vc = NewStockDetailViewController()
-            vc.stockId = "\(item["id"] ?? "")"
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
+            // 线下配售跳 XxpsDetailViewController，其他跳 NewStockDetailViewController
+            if selectedSegmentIndex == 2 {
+                let vc = XxpsDetailViewController()
+                vc.stockId = "\(item["id"] ?? "")"
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
+            } else {
+                let vc = NewStockDetailViewController()
+                vc.stockId = "\(item["id"] ?? "")"
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
+            }
         }
     }
 }
@@ -1726,40 +2170,60 @@ extension RankingStockCell: UIScrollViewDelegate {
 // MARK: - SubscriptionTableHeaderView
 // =====================================================================
 class SubscriptionTableHeaderView: UITableViewHeaderFooterView {
+    private var columnLabels: [UILabel] = []
+
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         contentView.backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
-        let cols = ["申购代码", "发行价", "所属板块", "市盈率"]
+        // 预创建 4 个列标题 label
         let xs: [CGFloat] = [16, 110, 200, -1]
-        for (i, t) in cols.enumerated() {
-            let l = UILabel(); l.text = t; l.font = .systemFont(ofSize: 13)
+        for i in 0..<4 {
+            let l = UILabel()
+            l.font = .systemFont(ofSize: 13)
             l.textColor = UIColor(red: 0.45, green: 0.45, blue: 0.48, alpha: 1)
             contentView.addSubview(l); l.translatesAutoresizingMaskIntoConstraints = false
             l.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
-            if xs[i] < 0 { l.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16).isActive = true }
-            else { l.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: xs[i]).isActive = true }
+            if xs[i] < 0 {
+                l.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16).isActive = true
+            } else {
+                l.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: xs[i]).isActive = true
+            }
+            columnLabels.append(l)
         }
     }
     required init?(coder: NSCoder) { fatalError() }
+
+    /// 动态设置列标题文字
+    func configure(columns: [String]) {
+        for (i, lbl) in columnLabels.enumerated() {
+            lbl.text = i < columns.count ? columns[i] : ""
+        }
+    }
 }
 
 // =====================================================================
 // MARK: - SubscriptionRowCell
 // =====================================================================
 class SubscriptionRowCell: UITableViewCell {
-    private let nameLabel   = UILabel()
-    private let codeLabel   = UILabel()
-    private let marketBadge = UILabel()
-    private let priceLabel  = UILabel()
-    private let sectorLabel = UILabel()
-    private let peLabel     = UILabel()
-    private let sep         = UIView()
+    private let nameLabel    = UILabel()
+    private let codeLabel    = UILabel()
+    private let marketBadge  = UILabel()
+    private let priceLabel   = UILabel()
+    private let sectorLabel  = UILabel()
+    private let peLabel      = UILabel()
+    private let detailButton = UIButton(type: .system)  // 线下配售「详情」按钮
+    private let sep          = UIView()
+
+    /// 详情按钮点击回调
+    var onDetailTap: (() -> Void)?
+
+    private let themeRed = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1)
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
-        for v: UIView in [nameLabel, codeLabel, marketBadge, priceLabel, sectorLabel, peLabel, sep] {
+        for v: UIView in [nameLabel, codeLabel, marketBadge, priceLabel, sectorLabel, peLabel, detailButton, sep] {
             contentView.addSubview(v); v.translatesAutoresizingMaskIntoConstraints = false
         }
         let tp = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
@@ -1772,6 +2236,16 @@ class SubscriptionRowCell: UITableViewCell {
         sectorLabel.font = .systemFont(ofSize: 13); sectorLabel.textColor = tp
         peLabel.font = .boldSystemFont(ofSize: 15); peLabel.textColor = tp
         sep.backgroundColor = UIColor(white: 0.9, alpha: 1)
+
+        // 详情按钮样式
+        detailButton.setTitle("详情", for: .normal)
+        detailButton.setTitleColor(.white, for: .normal)
+        detailButton.titleLabel?.font = .boldSystemFont(ofSize: 13)
+        detailButton.backgroundColor = themeRed
+        detailButton.layer.cornerRadius = 4
+        detailButton.clipsToBounds = true
+        detailButton.addTarget(self, action: #selector(detailTapped), for: .touchUpInside)
+        detailButton.isHidden = true  // 默认隐藏
 
         NSLayoutConstraint.activate([
             nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -1787,6 +2261,12 @@ class SubscriptionRowCell: UITableViewCell {
             sectorLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             peLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             peLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            // 详情按钮（右侧对齐）
+            detailButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            detailButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            detailButton.widthAnchor.constraint(equalToConstant: 60),
+            detailButton.heightAnchor.constraint(equalToConstant: 30),
+            // 分隔线
             sep.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             sep.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             sep.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
@@ -1795,11 +2275,51 @@ class SubscriptionRowCell: UITableViewCell {
     }
     required init?(coder: NSCoder) { fatalError() }
 
+    @objc private func detailTapped() {
+        onDetailTap?()
+    }
+
+    /// 新股申购 / 天启护盘 原布局
     func configure(name: String, code: String, market: String, price: String, sector: String, pe: String) {
         nameLabel.text = name; codeLabel.text = code; marketBadge.text = market
         let blue = UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
         let r    = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
         marketBadge.backgroundColor = (market == "北") ? blue : r
-        priceLabel.text = price; sectorLabel.text = sector; peLabel.text = pe
+        priceLabel.text = price; priceLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
+        sectorLabel.text = sector; sectorLabel.isHidden = false
+        peLabel.text = pe; peLabel.isHidden = false
+        detailButton.isHidden = true
+    }
+
+    /// 线下配售布局：¥发行价(红色) + 配售数量 + 详情按钮
+    func configureXxps(name: String, code: String, market: String, price: String, fxNum: String) {
+        nameLabel.text = name; codeLabel.text = code; marketBadge.text = market
+        let blue = UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
+        let r    = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
+        marketBadge.backgroundColor = (market == "北") ? blue : r
+        // 价格带 ¥ 前缀，红色
+        priceLabel.text = "¥\(price)"; priceLabel.textColor = themeRed
+        // 配售数量显示在 sectorLabel 位置
+        sectorLabel.text = fxNum; sectorLabel.isHidden = false
+        // 隐藏市盈率，显示详情按钮
+        peLabel.isHidden = true
+        detailButton.isHidden = false
+        detailButton.setTitle("详情", for: .normal)
+    }
+
+    /// 场外撮合交易布局：¥折扣价(红色) + 总股额 + 购买按钮
+    func configureDzjy(name: String, code: String, market: String, price: String, maxNum: String) {
+        nameLabel.text = name; codeLabel.text = code; marketBadge.text = market
+        let blue = UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
+        let r    = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
+        marketBadge.backgroundColor = (market == "北") ? blue : r
+        // 折扣价带 ¥ 前缀，红色
+        priceLabel.text = "¥\(price)"; priceLabel.textColor = themeRed
+        // 总股额显示在 sectorLabel 位置
+        sectorLabel.text = maxNum; sectorLabel.isHidden = false
+        // 隐藏市盈率，显示购买按钮
+        peLabel.isHidden = true
+        detailButton.isHidden = false
+        detailButton.setTitle("购买", for: .normal)
     }
 }
