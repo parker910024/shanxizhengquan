@@ -102,23 +102,23 @@ final class SecureNetworkManager {
             }
         }()
         
-//        if vpnSession == nil {
-//            if vpnDataModel.shared.isProxy == true {
-//                URLSessionNetworkProxy.stopProxy()
-//                sleep(UInt32(0.5))
-//                let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
-//                if start == true {
-//                    print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
-//                    print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
-//                    print("代理已启动")
-//                }
-//                vpnSession =  URLSessionNetworkProxy.newProxySession()
-//                
-//                sleep(1)
-//            }else{
+        if vpnSession == nil {
+            if vpnDataModel.shared.isProxy == true {
+                URLSessionNetworkProxy.stopProxy()
+                sleep(UInt32(0.5))
+                let start = URLSessionNetworkProxy.startProxy(url: vpnDataModel.shared.proxyURL ?? "")
+                if start == true {
+                    print("代理vless地址:%@",vpnDataModel.shared.proxyURL)
+                    print("代理域名地址:%@",vpnDataModel.shared.selectAddress)
+                    print("代理已启动")
+                }
+                vpnSession =  URLSessionNetworkProxy.newProxySession()
+                
+                sleep(1)
+            }else{
                 vpnSession = session
-//            }
-//        }
+            }
+        }
        
         // 2. 生成 path + confusePath，URL 与 HTML 一致：base（去尾斜杠）+ confusePath
         let realPath = PathHelper.pathFn(key: cryptoKey, unixString: baseUnixString)
