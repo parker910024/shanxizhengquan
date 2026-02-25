@@ -161,13 +161,10 @@ class ContractListViewController: ZQViewController {
     }
 
     func openContractDetail(_ contract: ContractModel) {
-//        let vc = ContractDetailViewController()
-//        vc.contract = contract
-//        vc.hidesBottomBarWhenPushed = true
-//        navigationController?.pushViewController(vc, animated: true)
-        guard let url = URL(string: contract.link) else { return }
-        let vc = SFSafariViewController(url: url)
-        present(vc, animated: true)
+        let vc = ContractDetailViewController()
+        vc.model = contract
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
 
     /// 点击签订时弹出「合同信息」弹框，确认后进入合同详情
