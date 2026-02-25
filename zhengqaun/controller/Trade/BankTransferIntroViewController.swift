@@ -810,7 +810,7 @@ class BankTransferIntroViewController: ZQViewController {
         // 使用选中的银行卡 id
         let cardId = bankCards.isEmpty ? "1" : "\(bankCards[selectedCardIndex]["id"] ?? 1)"
         SecureNetworkManager.shared.request(
-            api: "/api/user/sendCode",
+            api: "/api/user/applyWithdraw",
             method: .post,
             params: ["account_id": cardId, "money": "\(amount)", "pass": password]
         ) { [weak self] result in

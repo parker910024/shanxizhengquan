@@ -281,9 +281,10 @@ class MyHoldingsViewController: ZQViewController {
                         profitLossPercent: plRate
                     )
                 }
-                
-                self.tableView.reloadData()
-                self.emptyLabel.isHidden = !self.holdings.isEmpty
+                if self.selectedTabIndex == 0 {
+                    self.tableView.reloadData()
+                    self.emptyLabel.isHidden = !self.holdings.isEmpty
+                }
                 
             case .failure(_):
                 self.emptyLabel.isHidden = false
@@ -369,7 +370,9 @@ class MyHoldingsViewController: ZQViewController {
                     self.emptyLabel.isHidden = !self.historicalHoldings.isEmpty
                 }
                 
-            case .failure(_): break
+            case .failure(let err):
+                Toast.showInfo(err.localizedDescription)
+                break
             }
         }
     }

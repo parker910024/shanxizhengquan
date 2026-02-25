@@ -92,15 +92,80 @@ class TradeRecordViewController: ZQViewController {
     }
 
     private func loadData() {
-        records = [
-            TradeRecordItem(isSell: true, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
-            TradeRecordItem(isSell: false, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
-            TradeRecordItem(isSell: true, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
-            TradeRecordItem(isSell: false, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
-            TradeRecordItem(isSell: true, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
-            TradeRecordItem(isSell: false, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23")
-        ]
-        tableView.reloadData()
+//        records = [
+//            TradeRecordItem(isSell: true, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
+//            TradeRecordItem(isSell: false, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
+//            TradeRecordItem(isSell: true, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
+//            TradeRecordItem(isSell: false, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
+//            TradeRecordItem(isSell: true, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23"),
+//            TradeRecordItem(isSell: false, stockName: "盈方微", stockCode: "000670", amount: "142,120.00", shares: "15200", dateTime: "2026-01-20 14:01:23")
+//        ]
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let endDate = formatter.string(from: Date())
+        let startDate = formatter.string(from: Calendar.current.date(byAdding: .year, value: -1, to: Date()) ?? Date())
+        
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/getNowWarehouse_lishi",
+            method: .get,
+            params: ["buytype": "1", "page": "1", "size": "50", "status": "2", "s_time": startDate, "e_time": endDate]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else { return }
+                var tempRecords: [TradeRecordItem] = []
+                list.forEach { item in
+                    let name = item["title"] as? String ?? "--"
+                    let code = item["code"] as? String ?? "--"
+                    let allcode = item["allcode"] as? String ?? ""
+                    
+                    let typeVal = item["type"] as? Int ?? 0
+                    let exchangeStr: String
+                    switch typeVal {
+                    case 1, 5: exchangeStr = "沪"
+                    case 2, 3: exchangeStr = "深"
+                    case 4:    exchangeStr = "京"
+                    default:
+                        if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
+                        else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
+                        else { exchangeStr = "深" }
+                    }
+                    
+                    let buyPrice = item["buyprice"] as? Double ?? 0
+                    let sellPrice = Double("\(item["cai_buy"] ?? 0)") ?? 0
+                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
+                    let money = item["money"] as? String ?? "--"
+                    let pl = item["profitLose"] as? String ?? "0"
+                    let createTime = item["createtime_name"] as? String ?? "--"
+                    let outTime = item["outtime_name"] as? String ?? "--"
+                    
+                    let sell = String(format: "%.2f", sellPrice * (Double(number) ?? 0))
+                    tempRecords.append(TradeRecordItem(isSell: false,
+                                                       stockName: name,
+                                                       stockCode: code,
+                                                       amount: money,
+                                                       shares: number,
+                                                       dateTime: createTime))
+                    tempRecords.append(TradeRecordItem(isSell: true,
+                                                       stockName: name,
+                                                       stockCode: code,
+                                                       amount: sell,
+                                                       shares: number,
+                                                       dateTime: outTime))
+                }
+                
+                self.records = tempRecords
+                
+                self.tableView.reloadData()
+                    
+            case .failure(let err):
+                Toast.showInfo(err.localizedDescription)
+                break
+            }
+        }
     }
 }
 
