@@ -18,6 +18,10 @@ class ContractListViewController: ZQViewController {
         super.viewDidLoad()
         setupNavigationBar()
         setupUI()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         loadData()
     }
 
@@ -161,10 +165,81 @@ class ContractListViewController: ZQViewController {
     }
 
     func openContractDetail(_ contract: ContractModel) {
-        let vc = ContractDetailViewController()
-        vc.model = contract
-        vc.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(vc, animated: true)
+        SecureNetworkManager.shared.request(
+                    api: "/api/user/contractDetail",
+                    method: .get,
+                    params: ["id": "\(contract.id)"]
+                ) { [weak self] result in
+                    guard let self = self else { return }
+                    switch result {
+                    case .success(let res):
+                        guard let dict = res.decrypted,
+                              let data = dict["data"] as? [String: Any],
+                              let info = data["info"] as? [String: Any] else { return }
+                        debugPrint(info)
+                        requestContractTemplete(detail: info)
+                    case .failure(let err):
+                        Toast.showInfo(err.localizedDescription)
+                        break
+                    }
+                }
+        
+    }
+    
+    func requestContractTemplete(detail: [String: Any]) {
+        guard let type = detail["typedata"] as? String,
+                let name = detail["name"] as? String,
+                let tgdata = detail["tgdata"] as? String, //是否签名 1=否 2=是
+              let signtime = detail["signtime"] as? Int,
+              let signimage = detail["signimage"] as? String,
+              let idnumber = detail["idnumber"] as? String,
+              let address = detail["address"] as? String,
+                let id = detail["id"] as? Int
+        else {
+            return
+        }
+        
+        let signDate = Date(timeIntervalSince1970: TimeInterval(signtime))
+        
+        let api = type == "1" ? "/api/stock/one" : "/api/stock/two"
+        
+        SecureNetworkManager.shared.request(
+                    api: api,
+                    method: .get,
+                    params: [:]
+                ) { [weak self] result in
+                    guard let self = self else { return }
+                    switch result {
+                    case .success(let res):
+                        guard let dict = res.decrypted,
+                              let data = dict["data"] as? [String: Any],
+                              let info = data["info"] as? [String: Any] else { return }
+                        
+                        guard let JiaName = info["JiaName"] as? String,
+                              let SubTitle = info["SubTitle"] as? String,
+                              let Title = info["Title"] as? String
+                        else { return }
+                        
+                        let base = vpnDataModel.shared.selectAddress ?? ""
+                        
+                        let vc = ContractDetailViewController()
+                        vc.contract = Contract(id: "\(id)",
+                                               name: SubTitle,
+                                               status: tgdata == "1" ? .unsigned: .signed,
+                                               content: info["Content"] as? String ?? "",
+                                               partyA: JiaName,
+                                               partyAAddress: "",
+                                               partyB: name,
+                                               partyBAddress: address,
+                                               partyBIdCard: idnumber,
+                                               signDate: signDate,title: Title, signImage: base + signimage)
+                        vc.hidesBottomBarWhenPushed = true
+                        self.navigationController?.pushViewController(vc, animated: true)
+                    case .failure(let err):
+                        Toast.showInfo(err.localizedDescription)
+                        break
+                    }
+                }
     }
 
     /// 点击签订时弹出「合同信息」弹框，确认后进入合同详情
@@ -191,12 +266,7 @@ extension ContractListViewController: UITableViewDataSource {
         let contract = contracts[indexPath.row]
         cell.configure(with: contract) { [weak self] in
 //            self?.showContractSignPopup(for: contract)
-            let con = Contract.mockContracts()
-            let vc = ContractDetailViewController()
-            vc.contract = con.first
-            vc.model = contract
-            vc.hidesBottomBarWhenPushed = true
-            self?.navigationController?.pushViewController(vc, animated: true)
+            self?.openContractDetail(contract)
         }
         return cell
     }

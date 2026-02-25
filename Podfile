@@ -8,7 +8,7 @@ target 'zhengqaun' do
   pod 'GKNavigationBarViewController'
   pod 'FCUUID'
   pod 'DGCharts'
-
+  
 end
 
 post_install do |installer|

@@ -10,7 +10,6 @@ import UIKit
 
 class ContractDetailViewController: ZQViewController {
     var contract: Contract?
-    var model: ContractModel?
     private var signatureImage: UIImage?
     
     private let scrollView = UIScrollView()
@@ -54,14 +53,14 @@ class ContractDetailViewController: ZQViewController {
         
         // Logo文字
         let logoTextLabel = UILabel()
-        logoTextLabel.text = "长城证券"
+        logoTextLabel.text = contract?.title
         logoTextLabel.font = UIFont.boldSystemFont(ofSize: 24)
         logoTextLabel.textColor = UIColor(red: 0.1, green: 0.47, blue: 0.82, alpha: 1.0)
         logoContainer.addSubview(logoTextLabel)
         logoTextLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let logoSubLabel = UILabel()
-        logoSubLabel.text = "GREAT WALL SECURITIES"
+        logoSubLabel.text = ""
         logoSubLabel.font = UIFont.systemFont(ofSize: 12)
         logoSubLabel.textColor = Constants.Color.textSecondary
         logoContainer.addSubview(logoSubLabel)
@@ -81,7 +80,7 @@ class ContractDetailViewController: ZQViewController {
         ])
         
         // 公司名称
-        companyNameLabel.text = "华泰证券股份有限公司"
+        companyNameLabel.text = contract?.partyA
         companyNameLabel.font = UIFont.boldSystemFont(ofSize: 20)
         companyNameLabel.textColor = Constants.Color.textPrimary
         companyNameLabel.textAlignment = .center
@@ -89,7 +88,7 @@ class ContractDetailViewController: ZQViewController {
         companyNameLabel.translatesAutoresizingMaskIntoConstraints = false
         
         // 协议标题
-        agreementTitleLabel.text = "证券投资顾问咨询服务协议"
+        agreementTitleLabel.text = contract?.name
         agreementTitleLabel.font = UIFont.boldSystemFont(ofSize: 18)
         agreementTitleLabel.textColor = Constants.Color.stockRise // 红色
         agreementTitleLabel.textAlignment = .center
@@ -202,7 +201,7 @@ class ContractDetailViewController: ZQViewController {
         content = content.replacingOccurrences(of: "地址:包宝宝", with: "地址: \(contract.partyBAddress)")
         content = content.replacingOccurrences(of: "身份证号:420521198402154410", with: "身份证号: \(contract.partyBIdCard)")
         
-        contentLabel.text = content
+        contentLabel.attributedText = htmlToAttributedString(content)
         
         // 如果已签名，显示签名图片，不允许重新签名
         if contract.status == .signed {
@@ -218,16 +217,13 @@ class ContractDetailViewController: ZQViewController {
             scrollViewBottomConstraint = scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
             scrollViewBottomConstraint.isActive = true
             
-            // 加载已保存的签名图片（从UserDefaults或文件系统）
-            if let savedSignatureData = UserDefaults.standard.data(forKey: "contract_signature_\(contract.id)"),
-               let savedSignature = UIImage(data: savedSignatureData)
-            {
-                signatureImage = savedSignature
-                signatureImageView.image = savedSignature
-            } else {
-                // 如果没有保存的签名，创建一个默认的签名占位图
-                signatureImageView.backgroundColor = UIColor(white: 0.95, alpha: 1.0)
-            }
+            guard let url = URL(string: contract.signImage) else { return }
+            URLSession.shared.dataTask(with: url) { data, _, _ in
+                guard let data = data, let img = UIImage(data: data) else { return }
+                DispatchQueue.main.async { [unowned self] in
+                    self.signatureImageView.image = img
+                }
+            }.resume()
         } else {
             // 未签名状态
             signaturePlaceholderLabel.isHidden = false
@@ -304,7 +300,7 @@ class ContractDetailViewController: ZQViewController {
     }
     
     @objc private func submitTapped() {
-        guard let signatureImage = signatureImage, let _ = contract, let model = model else {
+        guard let signatureImage = signatureImage, let contract = contract else {
             Toast.show("请先进行签名")
             return
         }
@@ -312,12 +308,12 @@ class ContractDetailViewController: ZQViewController {
         let alert = UIAlertController(title: "确认提交", message: "确定要提交合同吗？", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
-            self?.performSubmit(signatureImage: signatureImage, contract: model)
+            self?.performSubmit(signatureImage: signatureImage, contract: contract)
         })
         present(alert, animated: true)
     }
     
-    private func performSubmit(signatureImage: UIImage, contract: ContractModel) {
+    private func performSubmit(signatureImage: UIImage, contract: Contract) {
         // 保存签名图片到UserDefaults（只有确认提交后才保存）
         if let imageData = signatureImage.pngData() {
             UserDefaults.standard.set(imageData, forKey: "contract_signature_\(contract.id)")
@@ -350,4 +346,68 @@ class ContractDetailViewController: ZQViewController {
             }
         }
      }
+    
+    private func htmlToAttributedString(_ html: String) -> NSAttributedString? {
+        // 清理HTML，移除script和style标签
+        var cleanHTML = html
+        cleanHTML = cleanHTML.replacingOccurrences(of: "<script[^>]*>.*?</script>", with: "", options: [.regularExpression, .caseInsensitive])
+        cleanHTML = cleanHTML.replacingOccurrences(of: "<style[^>]*>.*?</style>", with: "", options: [.regularExpression, .caseInsensitive])
+        
+        // 添加基础CSS样式
+        let cssStyle = """
+        <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1C1C1C;
+        }
+        p {
+            margin: 0 0 12px 0;
+        }
+        strong {
+            font-weight: bold;
+        }
+        </style>
+        """
+        
+        let htmlWithStyle = cssStyle + cleanHTML
+        
+        // 使用NSAttributedString的HTML初始化方法
+        guard let data = htmlWithStyle.data(using: .utf8) else {
+            return nil
+        }
+        
+        do {
+            let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+                .documentType: NSAttributedString.DocumentType.html,
+                .characterEncoding: String.Encoding.utf8.rawValue
+            ]
+            
+            let attributedString = try NSAttributedString(
+                data: data,
+                options: options,
+                documentAttributes: nil
+            )
+            
+            // 创建可变属性字符串，以便进一步自定义样式
+            let mutableAttributedString = NSMutableAttributedString(attributedString: attributedString)
+            
+            // 设置段落样式
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = 4
+            paragraphStyle.paragraphSpacing = 8
+            
+            mutableAttributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: mutableAttributedString.length)
+            )
+            
+            return mutableAttributedString
+        } catch {
+            print("HTML解析错误: \(error)")
+            return nil
+        }
+    }
 }
