@@ -58,6 +58,11 @@ class FeatureSwitchManager {
                 if let n = data["name_xgsg"] as? String, !n.isEmpty { self.nameXgsg = n }
                 if let n = data["name_xxps"] as? String, !n.isEmpty { self.nameXxps = n }
 
+                // 打印原始类型帮助排查解析失败
+                print("[调试] sgandps 原始 list_dzjy 类型: \(type(of: data["list_dzjy"]))")
+                print("[调试] sgandps 原始 list_ps 类型: \(type(of: data["list_ps"]))")
+                if let dzjyRaw = data["list_dzjy"] { print("[调试] list_dzjy 有值: \(dzjyRaw)") }
+                
                 // 解析列表数据
                 self.listDzjy = data["list_dzjy"] as? [[String: Any]] ?? []
                 self.listPs   = data["list_ps"] as? [[String: Any]] ?? []

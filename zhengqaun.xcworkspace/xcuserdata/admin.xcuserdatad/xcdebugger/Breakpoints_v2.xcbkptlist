@@ -16,7 +16,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "500"
             endingLineNumber = "500"
-            landmarkName = "tradeRecordTapped()"
+            landmarkName = "fundRecordTapped()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -32,7 +32,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "494"
             endingLineNumber = "494"
-            landmarkName = "fundRecordTapped()"
+            landmarkName = "toggleBalanceVisibility(_:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

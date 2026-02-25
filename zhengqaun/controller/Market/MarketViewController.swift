@@ -21,7 +21,7 @@ class MarketViewController: ZQViewController {
     private let cardBg      = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0)
 
     // MARK: - 顶部分段
-    private let segmentTitles = ["行情", "新股申购", "战略配售", "天启护盘"]
+    private var segmentTitles = ["行情", "新股申购", "战略配售", "天启护盘"]
     private var selectedSegmentIndex = 0
     private var segmentWrap: UIView!
     private var segmentButtons: [UIButton] = []
@@ -60,6 +60,14 @@ class MarketViewController: ZQViewController {
     private var rankingColumnHeaderScroll: UIScrollView?
     private var rankingColumnIndicator: UIView?
 
+    // MARK: - Layout Tracking
+    private var barChartRendered = false
+    
+    // MARK: - 分页加载
+    private var rankingCurrentPage: Int = 1
+    private var rankingIsLoading: Bool = false
+    private var rankingHasMore: Bool = true
+
     // MARK: - 市场概括
     private var barChartContainer: UIView!
     private var riseCountLabel: UILabel!
@@ -69,7 +77,6 @@ class MarketViewController: ZQViewController {
     private var marketOverviewContainer: UIView!
     private var sectorContainer: UIView!
     private var rankingContainer: UIView!
-    private var barChartRendered = false
     private weak var capFundValueLabel: UILabel?
     // MARK: - 行业板块数据
     private var sectorDataItems: [SectorDataItem] = []
@@ -126,15 +133,33 @@ class MarketViewController: ZQViewController {
         updateFeatureSegments()
     }
 
-    /// 根据功能开关隐藏/显示分段 tab
+    /// 根据功能开关隐藏/显示分段 tab 并更新标题
     @objc private func updateFeatureSegments() {
         let mgr = FeatureSwitchManager.shared
+        if !mgr.nameXgsg.isEmpty { segmentTitles[1] = mgr.nameXgsg }
+        if !mgr.nameXxps.isEmpty { segmentTitles[2] = mgr.nameXxps }
+        if !mgr.nameDzjy.isEmpty { segmentTitles[3] = mgr.nameDzjy }
+        
         for btn in segmentButtons {
             switch btn.tag {
-            case 1: btn.isHidden = !mgr.isXgsgEnabled  // 新股申购
-            case 2: btn.isHidden = !mgr.isXxpsEnabled   // 战略配售
+            case 1:
+                btn.isHidden = !mgr.isXgsgEnabled  // 新股申购
+                btn.setTitle(segmentTitles[1], for: .normal)
+            case 2:
+                btn.isHidden = !mgr.isXxpsEnabled   // 战略配售
+                btn.setTitle(segmentTitles[2], for: .normal)
+            case 3:
+                btn.isHidden = !mgr.isDzjyEnabled   // 天启护盘(大宗交易)
+                btn.setTitle(segmentTitles[3], for: .normal)
             default: break
             }
+        }
+        
+        if selectedSegmentIndex > 0 {
+            if todayTitleLabel != nil {
+                todayTitleLabel.text = segTitleFor(selectedSegmentIndex)
+            }
+            loadSubscriptionData()
         }
     }
 
@@ -208,12 +233,8 @@ class MarketViewController: ZQViewController {
     }
 
     private func segTitleFor(_ idx: Int) -> String {
-        switch idx {
-        case 1:  return "今日申购"
-        case 2:  return "今日战略配售"
-        case 3:  return "今日天启护盘"
-        default: return ""
-        }
+        guard idx > 0, idx < segmentTitles.count else { return "" }
+        return "今日\(segmentTitles[idx])"
     }
 
     // ===================================================================
@@ -224,6 +245,7 @@ class MarketViewController: ZQViewController {
         hangqingScrollView.translatesAutoresizingMaskIntoConstraints = false
         hangqingScrollView.backgroundColor = bgColor
         hangqingScrollView.showsVerticalScrollIndicator = false
+        hangqingScrollView.delegate = self
 
         hangqingScrollView.addSubview(hangqingContent)
         hangqingContent.translatesAutoresizingMaskIntoConstraints = false
@@ -615,7 +637,7 @@ class MarketViewController: ZQViewController {
         title.translatesAutoresizingMaskIntoConstraints = false
 
         let grid = UIStackView()
-        grid.axis = .vertical; grid.spacing = 0; grid.distribution = .fillEqually
+        grid.axis = .vertical; grid.spacing = 0; grid.distribution = .fill
         sectorContainer.addSubview(grid)
         grid.translatesAutoresizingMaskIntoConstraints = false
         sectorGridStack = grid
@@ -627,7 +649,6 @@ class MarketViewController: ZQViewController {
             grid.leadingAnchor.constraint(equalTo: sectorContainer.leadingAnchor),
             grid.trailingAnchor.constraint(equalTo: sectorContainer.trailingAnchor),
             grid.bottomAnchor.constraint(equalTo: sectorContainer.bottomAnchor, constant: -12),
-            grid.heightAnchor.constraint(equalToConstant: 180),
         ])
     }
 
@@ -635,11 +656,13 @@ class MarketViewController: ZQViewController {
     private func populateSectorGrid() {
         guard let grid = sectorGridStack else { return }
         grid.arrangedSubviews.forEach { grid.removeArrangedSubview($0); $0.removeFromSuperview() }
-        let items = Array(sectorDataItems.prefix(6))
+        let items = Array(sectorDataItems.prefix(20)) // 展示最多 20 个板块数据
         guard !items.isEmpty else { return }
-        for row in 0..<2 {
+        let rowCount = Int(ceil(Double(items.count) / 3.0))
+        for row in 0..<rowCount {
             let rowStack = UIStackView()
             rowStack.axis = .horizontal; rowStack.spacing = 0; rowStack.distribution = .fillEqually
+            rowStack.heightAnchor.constraint(equalToConstant: 90).isActive = true
             grid.addArrangedSubview(rowStack)
             for col in 0..<3 {
                 let idx = row * 3 + col
@@ -843,6 +866,10 @@ class MarketViewController: ZQViewController {
             btn.titleLabel?.font = i == idx ? .boldSystemFont(ofSize: 15) : .systemFont(ofSize: 15)
         }
         moveTabIndicator(animated: true)
+        
+        // 切换 Tab 时重置分页
+        rankingCurrentPage = 1
+        rankingHasMore = true
         loadRankingData()
     }
 
@@ -1036,14 +1063,20 @@ class MarketViewController: ZQViewController {
     }
 
     /// 股票排行榜 — 根据当前 tab 请求对应接口
-    private func loadRankingData() {
+    private func loadRankingData(isLoadMore: Bool = false) {
+        guard !rankingIsLoading && rankingHasMore else { return }
+        rankingIsLoading = true
+        
         let api = marketAPIs[selectedMarketTab]
+        let page = isLoadMore ? rankingCurrentPage + 1 : 1
+        
         SecureNetworkManager.shared.request(
             api: api,
             method: .get,
-            params: ["page": "1", "size": "20"]
+            params: ["page": "\(page)", "size": "20"]
         ) { [weak self] result in
             guard let self = self else { return }
+            self.rankingIsLoading = false
             switch result {
             case .success(let res):
                 guard res.statusCode == 200,
@@ -1051,6 +1084,7 @@ class MarketViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let list = data["list"] as? [[String: Any]] else {
                     print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab])): 解析失败, raw=\(res.raw.prefix(200))")
+                    if isLoadMore { self.rankingHasMore = false }
                     return
                 }
                 var stocks: [StockRankItem] = []
@@ -1070,10 +1104,18 @@ class MarketViewController: ZQViewController {
                                                prevClose: prevClose, open: openVal, high: "--"))
                 }
                 DispatchQueue.main.async {
-                    self.rankingStocks = stocks
+                    if isLoadMore {
+                        self.rankingStocks.append(contentsOf: stocks)
+                        self.rankingCurrentPage += 1
+                        if stocks.count < 20 { self.rankingHasMore = false }
+                    } else {
+                        self.rankingStocks = stocks
+                        self.rankingCurrentPage = 1
+                        self.rankingHasMore = stocks.count >= 20
+                    }
                     self.rankingTableView.reloadData()
                     self.updateRankingHeight()
-                    print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab]))加载成功，共 \(stocks.count) 条")
+                    print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab]))加载成功，共 \(self.rankingStocks.count) 条, 当前页: \(self.rankingCurrentPage)")
                 }
             case .failure(let err):
                 print("[行情] 排行榜请求失败: \(err.localizedDescription)")
@@ -1198,7 +1240,7 @@ class MarketViewController: ZQViewController {
     /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(2)
     private func loadSectorData(retryCount: Int = 0) {
         let url = "https://push2.eastmoney.com/api/qt/clist/get"
-            + "?pn=1&pz=6&po=1&np=1&fltt=2&invt=2&fid=f3"
+            + "?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f3"
             + "&fs=m:90+t:2&fields=f3,f12,f14,f128,f136"
         fetchEastMoneyJSON(url: url) { [weak self] root in
             guard let self = self else { return }
@@ -1285,60 +1327,34 @@ class MarketViewController: ZQViewController {
         }.resume()
     }
 
-    /// 新股申购 — Api.subscribe_api
-    /// 天玑护航 — /api/dzjy/lst
+    /// 从 FeatureSwitchManager 中读取申购、配售、大宗交易数据
     private func loadSubscriptionData() {
-        let typeParam: String
+        let mgr = FeatureSwitchManager.shared
+        print("[调试] mgr.listSg 数量: \(mgr.listSg.count)")
+        print("[调试] mgr.listPs 数量: \(mgr.listPs.count)")
+        print("[调试] mgr.listDzjy 数量: \(mgr.listDzjy.count)")
+
+        var sourceList: [[String: Any]] = []
+        
         switch selectedSegmentIndex {
-        case 1: typeParam = "0"   // 新股申购
-        case 2: typeParam = "0"   // 战略配售 — 使用线下配售接口
-        case 3: typeParam = "0"   // 天启护盘
+        case 1: sourceList = mgr.listSg     // 新股申购
+        case 2: sourceList = mgr.listPs     // 战略配售(线下配售)
+        case 3: sourceList = mgr.listDzjy   // 天启护盘(大宗交易/场外撮合)
         default: return
         }
 
-        let api: String
-        switch selectedSegmentIndex {
-        case 1: api = Api.subscribe_api
-        case 2: api = "/api/dzjy/lst" // 天玑护航
-        case 3: api = "/api/dzjy/lst"
-        default: return
-        }
-
-        SecureNetworkManager.shared.request(
-            api: api,
-            method: .get,
-            params: ["page": "1", "type": typeParam]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let res):
-                guard res.statusCode == 200,
-                      let dict = res.decrypted,
-                      let data = dict["data"] as? [String: Any] else {
-                    print("[行情] 申购列表解析失败")
-                    return
-                }
-                // 新股和线下配售返回 list -> [flag, sub_info[...]]
-                // 大宗交易返回 list -> [...]
-                var rows: [[String: Any]] = []
-                if let list = data["list"] as? [[String: Any]] {
-                    for item in list {
-                        if let subInfo = item["sub_info"] as? [[String: Any]] {
-                            rows.append(contentsOf: subInfo)
-                        } else {
-                            rows.append(item)
-                        }
-                    }
-                }
-                DispatchQueue.main.async {
-                    self.subscriptionList = rows
-                    self.subsTableView.reloadData()
-                    print("[行情] 申购列表加载成功，共 \(rows.count) 条")
-                }
-            case .failure(let err):
-                print("[行情] 申购列表请求失败: \(err.localizedDescription)")
+        var rows: [[String: Any]] = []
+        for item in sourceList {
+            if let subInfo = item["sub_info"] as? [[String: Any]] {
+                rows.append(contentsOf: subInfo)
+            } else {
+                rows.append(item)
             }
         }
+        
+        self.subscriptionList = rows
+        self.subsTableView.reloadData()
+        print("[行情] 申购/配售/交易 (\(selectedSegmentIndex)) 数据加载完毕，共 \(rows.count) 条")
     }
 }
 
@@ -1382,29 +1398,59 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "SubsRow", for: indexPath) as! SubscriptionRowCell
         if indexPath.row < subscriptionList.count {
             let item = subscriptionList[indexPath.row]
-            let name   = item["name"] as? String ?? (item["title"] as? String ?? "")
-            let code   = item["sgcode"] as? String ?? (item["code"] as? String ?? "")
+            // 名称：多种可能的 key
+            var name = "--"
+            for key in ["name", "title", "stock_name"] {
+                if let val = item[key] as? String, !val.isEmpty {
+                    name = val
+                    break
+                }
+            }
             
+            // 代码：多种可能的 key，需要过滤空字符串
+            var code = "--"
+            for key in ["sgcode", "code", "symbol", "stock_code", "allcode"] {
+                if let valAny = item[key] {
+                    let valStr = "\(valAny)"
+                    if !valStr.isEmpty {
+                        code = valStr
+                        break
+                    }
+                }
+            }
+            
+            // 价格
             let fx_price = item["fx_price"]
             let cai_buy  = item["cai_buy"]
-            let priceVal = fx_price != nil ? "\(fx_price!)" : (cai_buy != nil ? "\(cai_buy!)" : "0")
+            let priceAny = item["price"] ?? item["current_price"] ?? item["issue_price"] ?? item["p"]
+            var priceVal = ""
+            if let f = fx_price, String(describing: f) != "" { priceVal = "\(f)" }
+            else if let c = cai_buy, String(describing: c) != "" { priceVal = "\(c)" }
+            else if let p = priceAny, String(describing: p) != "" { priceVal = "\(p)" }
+            if priceVal.isEmpty || priceVal == "0.00" || priceVal == "0" { priceVal = "--" }
             
+            // 市场类型
             let sgTypeStr: String
             if let typeInt = item["sg_type"] as? Int {
                 sgTypeStr = "\(typeInt)"
             } else if let typeStr = item["sg_type"] as? String {
                 sgTypeStr = typeStr
+            } else if let typeAny = item["type"], let str = typeAny as? String {
+                sgTypeStr = str
             } else {
-                sgTypeStr = "\(item["type"] ?? "")"
+                sgTypeStr = ""
             }
             
-            let rateVal = item["fx_rate"] ?? item["rate"] ?? "0"
+            // 比例/市盈率
+            let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? item["zfanum"] ?? ""
+            let rateVal = "\(rateValAny)"
+            let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : (rateVal.hasSuffix("%") ? rateVal : "\(rateVal)%")
             
             let market: String = {
                 switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
             }()
 
-            cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: "\(rateVal)%")
+            cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: peStr)
         }
         return cell
     }
@@ -1430,10 +1476,22 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
         return 0
     }
 
-    /// 列标题横向滚 → 同步所有行
+    /// 列标题横向滚 → 同步所有行；整体 ScrollView 滚 → 下拉加载更多
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        guard scrollView === rankingColumnHeaderScroll else { return }
-        syncAllRankingRows(to: scrollView.contentOffset.x)
+        if scrollView === rankingColumnHeaderScroll {
+            syncAllRankingRows(to: scrollView.contentOffset.x)
+        } else if scrollView === hangqingScrollView {
+            // 监听行情整个 ScrollView 是否滚到底部，触发加载更多排行榜
+            let offsetY = scrollView.contentOffset.y
+            let contentHeight = scrollView.contentSize.height
+            let boundsHeight = scrollView.bounds.size.height
+            if offsetY > 0 && offsetY + boundsHeight >= contentHeight - 50 {
+                // 距离底部 50px 时加载更多
+                if !rankingIsLoading && rankingHasMore && selectedSegmentIndex == 0 {
+                    loadRankingData(isLoadMore: true)
+                }
+            }
+        }
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
