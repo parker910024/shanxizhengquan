@@ -2,7 +2,8 @@
 //  LoginPasswordViewController.swift
 //  zhengqaun
 //
-//  Created by 看门老大爷 on 2026/2/24.
+//  修改登录密码页面（对齐安卓 ChangeLoginPwdActivity）
+//  流程：原密码 + 新密码 + 确认新密码 → editPass1 API
 //
 
 import UIKit
@@ -10,21 +11,24 @@ import UIKit
 class LoginPasswordViewController: ZQViewController {
 
     private let contentView = UIView()
-    private let titleLabel = UILabel()
-    private let passwordRow = UIView()
-    private let passwordLabel = UILabel()
-    private let passwordField = UITextField()
-    private let newPasswordRow = UIView()
-    private let newPasswordLabel = UILabel()
-    private let newPasswordField = UITextField()
-    private let underline = UIView()
-    private let newUnderline = UIView()
+    private let sectionTitleLabel = UILabel()
+
+    // 三行输入（对齐安卓）
+    private let oldPassField = UITextField()
+    private let newPassField = UITextField()
+    private let confirmPassField = UITextField()
+
     private let confirmButton = UIButton(type: .system)
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupUI()
+
+        // 点击空白收键盘
+        let tap = UITapGestureRecognizer(target: view, action: #selector(UIView.endEditing(_:)))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
     }
 
     private func setupNavigationBar() {
@@ -35,11 +39,6 @@ class LoginPasswordViewController: ZQViewController {
         gk_navTitle = "登录密码"
         gk_navLineHidden = false
         gk_backStyle = .black
-
-    }
-
-    @objc private func searchTapped() {
-        // 可扩展：帮助或搜索
     }
 
     private func setupUI() {
@@ -48,59 +47,31 @@ class LoginPasswordViewController: ZQViewController {
         view.addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
 
-        // 大标题：设置交易密码
-        titleLabel.text = "修改登录密码"
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 22)
-        titleLabel.textColor = Constants.Color.textPrimary
-        contentView.addSubview(titleLabel)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        let margin: CGFloat = 16
 
-        // 一行：左侧「旧密码」+ 右侧输入框
-        passwordLabel.text = "旧密码"
-        passwordLabel.font = UIFont.systemFont(ofSize: 16)
-        passwordLabel.textColor = Constants.Color.textPrimary
-        passwordRow.addSubview(passwordLabel)
-        passwordLabel.translatesAutoresizingMaskIntoConstraints = false
+        // 大标题：修改登录密码
+        sectionTitleLabel.text = "修改登录密码"
+        sectionTitleLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        sectionTitleLabel.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
+        contentView.addSubview(sectionTitleLabel)
+        sectionTitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        passwordField.placeholder = "请输入旧密码"
-        passwordField.font = UIFont.systemFont(ofSize: 16)
-        passwordField.textColor = Constants.Color.textPrimary
-        passwordField.isSecureTextEntry = true
-        passwordField.borderStyle = .none
-        passwordField.clearButtonMode = .whileEditing
-        passwordRow.addSubview(passwordField)
-        passwordField.translatesAutoresizingMaskIntoConstraints = false
+        // 输入行（对齐安卓 activity_change_login_pwd.xml）
+        let row1 = makeInputRow(label: "原登录密码", field: oldPassField, placeholder: "请输入原登录密码")
+        let divider1 = makeDivider()
+        let row2 = makeInputRow(label: "新登录密码", field: newPassField, placeholder: "请输入新登录密码")
+        let divider2 = makeDivider()
+        let row3 = makeInputRow(label: "确认新密码", field: confirmPassField, placeholder: "请确认新登录密码")
+        let divider3 = makeDivider()
 
-        underline.backgroundColor = Constants.Color.separator
-        passwordRow.addSubview(underline)
-        underline.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 新密码
-        newPasswordLabel.text = "新密码"
-        newPasswordLabel.font = UIFont.systemFont(ofSize: 16)
-        newPasswordLabel.textColor = Constants.Color.textPrimary
-        newPasswordRow.addSubview(newPasswordLabel)
-        newPasswordLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(row1)
+        contentView.addSubview(divider1)
+        contentView.addSubview(row2)
+        contentView.addSubview(divider2)
+        contentView.addSubview(row3)
+        contentView.addSubview(divider3)
 
-        newPasswordField.placeholder = "请输入旧密码"
-        newPasswordField.font = UIFont.systemFont(ofSize: 16)
-        newPasswordField.textColor = Constants.Color.textPrimary
-        newPasswordField.isSecureTextEntry = true
-        newPasswordField.borderStyle = .none
-        newPasswordField.clearButtonMode = .whileEditing
-        newPasswordRow.addSubview(newPasswordField)
-        newPasswordField.translatesAutoresizingMaskIntoConstraints = false
-
-        newUnderline.backgroundColor = Constants.Color.separator
-        newPasswordRow.addSubview(newUnderline)
-        newUnderline.translatesAutoresizingMaskIntoConstraints = false
-        
-        contentView.addSubview(passwordRow)
-        contentView.addSubview(newPasswordRow)
-        passwordRow.translatesAutoresizingMaskIntoConstraints = false
-        newPasswordRow.translatesAutoresizingMaskIntoConstraints = false
-
-        // 确定按钮（红色）
+        // 确定按钮（红色，对齐安卓 bg_btn_red）
         confirmButton.setTitle("确定", for: .normal)
         confirmButton.setTitleColor(.white, for: .normal)
         confirmButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -110,112 +81,154 @@ class LoginPasswordViewController: ZQViewController {
         contentView.addSubview(confirmButton)
         confirmButton.translatesAutoresizingMaskIntoConstraints = false
 
-        let margin: CGFloat = 16
-        let rowH: CGFloat = 50
+        let rowH: CGFloat = 48
+
         NSLayoutConstraint.activate([
             contentView.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
             contentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 28),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
-            titleLabel.heightAnchor.constraint(equalToConstant: 28),
+            // 标题
+            sectionTitleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            sectionTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
 
-            passwordRow.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 32),
-            passwordRow.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
-            passwordRow.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
-            passwordRow.heightAnchor.constraint(equalToConstant: rowH),
+            // 第一行：原登录密码
+            row1.topAnchor.constraint(equalTo: sectionTitleLabel.bottomAnchor, constant: 24),
+            row1.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            row1.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            row1.heightAnchor.constraint(equalToConstant: rowH),
 
-            passwordLabel.leadingAnchor.constraint(equalTo: passwordRow.leadingAnchor),
-            passwordLabel.centerYAnchor.constraint(equalTo: passwordRow.centerYAnchor),
-            passwordLabel.widthAnchor.constraint(equalToConstant: 80),
+            divider1.topAnchor.constraint(equalTo: row1.bottomAnchor),
+            divider1.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            divider1.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            divider1.heightAnchor.constraint(equalToConstant: 0.5),
 
-            passwordField.leadingAnchor.constraint(equalTo: passwordLabel.trailingAnchor, constant: 12),
-            passwordField.trailingAnchor.constraint(equalTo: passwordRow.trailingAnchor),
-            passwordField.centerYAnchor.constraint(equalTo: passwordRow.centerYAnchor),
+            // 第二行：新登录密码
+            row2.topAnchor.constraint(equalTo: divider1.bottomAnchor),
+            row2.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            row2.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            row2.heightAnchor.constraint(equalToConstant: rowH),
 
-            underline.leadingAnchor.constraint(equalTo: passwordRow.leadingAnchor),
-            underline.trailingAnchor.constraint(equalTo: passwordRow.trailingAnchor),
-            underline.bottomAnchor.constraint(equalTo: passwordRow.bottomAnchor),
-            underline.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
-            
-            newPasswordRow.topAnchor.constraint(equalTo: underline.bottomAnchor),
-            newPasswordRow.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
-            newPasswordRow.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
-            newPasswordRow.heightAnchor.constraint(equalToConstant: rowH),
-            
-            newPasswordLabel.leadingAnchor.constraint(equalTo: newPasswordRow.leadingAnchor),
-            newPasswordLabel.centerYAnchor.constraint(equalTo: newPasswordRow.centerYAnchor),
-            newPasswordLabel.widthAnchor.constraint(equalToConstant: 80),
+            divider2.topAnchor.constraint(equalTo: row2.bottomAnchor),
+            divider2.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            divider2.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            divider2.heightAnchor.constraint(equalToConstant: 0.5),
 
-            newPasswordField.leadingAnchor.constraint(equalTo: newPasswordLabel.trailingAnchor, constant: 12),
-            newPasswordField.trailingAnchor.constraint(equalTo: newPasswordRow.trailingAnchor),
-            newPasswordField.centerYAnchor.constraint(equalTo: newPasswordRow.centerYAnchor),
-            
-            newUnderline.leadingAnchor.constraint(equalTo: newPasswordRow.leadingAnchor),
-            newUnderline.trailingAnchor.constraint(equalTo: newPasswordRow.trailingAnchor),
-            newUnderline.bottomAnchor.constraint(equalTo: newPasswordRow.bottomAnchor),
-            newUnderline.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
+            // 第三行：确认新密码
+            row3.topAnchor.constraint(equalTo: divider2.bottomAnchor),
+            row3.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            row3.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            row3.heightAnchor.constraint(equalToConstant: rowH),
 
-            confirmButton.topAnchor.constraint(equalTo: newPasswordRow.bottomAnchor, constant: 40),
-            confirmButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
-            confirmButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
-            confirmButton.heightAnchor.constraint(equalToConstant: 44)
+            divider3.topAnchor.constraint(equalTo: row3.bottomAnchor),
+            divider3.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            divider3.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            divider3.heightAnchor.constraint(equalToConstant: 0.5),
+
+            // 确定按钮
+            confirmButton.topAnchor.constraint(equalTo: divider3.bottomAnchor, constant: 48),
+            confirmButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40),
+            confirmButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
+            confirmButton.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
 
+    // MARK: - 构建输入行（左标签 + 右输入框）
+
+    private func makeInputRow(label: String, field: UITextField, placeholder: String) -> UIView {
+        let row = UIView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = label
+        titleLabel.font = UIFont.systemFont(ofSize: 15)
+        titleLabel.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
+        row.addSubview(titleLabel)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        field.placeholder = placeholder
+        field.font = UIFont.systemFont(ofSize: 15)
+        field.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
+        field.textAlignment = .right
+        field.isSecureTextEntry = true
+        field.borderStyle = .none
+        row.addSubview(field)
+        field.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+
+            field.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 12),
+            field.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            field.centerYAnchor.constraint(equalTo: row.centerYAnchor)
+        ])
+
+        return row
+    }
+
+    private func makeDivider() -> UIView {
+        let v = UIView()
+        v.backgroundColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }
+
+    // MARK: - 提交（对齐安卓 ChangeLoginPwdActivity 流程）
+
     @objc private func confirmTapped() {
-        let pwd = passwordField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if pwd.isEmpty {
-            Toast.showInfo("请输入交易密码")
+        let oldPass = oldPassField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let newPass = newPassField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let confirmPass = confirmPassField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if oldPass.isEmpty || newPass.isEmpty || confirmPass.isEmpty {
+            Toast.showInfo("请填写所有密码字段")
             return
         }
-        // TODO: 调用设置/修改交易密码接口
-        self.checkOldpay(password: pwd)
-    }
-    
-    private func checkOldpay(password: String) {
-        SecureNetworkManager.shared.request(api: Api.checkOldpay_api, method: .post, params: ["paypass": password]) { [unowned self] result in
-            switch result {
-            case .success(let res):
-                let dict = res.decrypted
-                debugPrint(dict ?? "nil")
-                if dict?["code"] as? NSNumber != 1 {
-                    DispatchQueue.main.async {
-                        Toast.showInfo(dict?["msg"] as? String ?? "")
-                    }
-                    return
-                } else {
-                    self.editPass(password: password)
-                }
-            case .failure(let error):
-                debugPrint("error =", error.localizedDescription)
-                Toast.showError(error.localizedDescription)
-            }
+        if newPass != confirmPass {
+            Toast.showInfo("两次输入的密码不一致")
+            return
         }
-    }
-    
-    private func editPass(password: String) {
-        SecureNetworkManager.shared.request(api: Api.editPass_api, method: .post, params: ["password": password]) { [unowned self] result in
+
+        confirmButton.isEnabled = false
+
+        // 对齐安卓：调用 editPass1 API，参数 oldpass/password/confimpassword
+        SecureNetworkManager.shared.request(
+            api: Api.editPass1_api,
+            method: .post,
+            params: [
+                "oldpass": oldPass,
+                "password": newPass,
+                "confimpassword": confirmPass
+            ]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.confirmButton.isEnabled = true
+            }
             switch result {
             case .success(let res):
                 let dict = res.decrypted
-                debugPrint(dict ?? "nil")
                 if dict?["code"] as? NSNumber != 1 {
                     DispatchQueue.main.async {
-                        Toast.showInfo(dict?["msg"] as? String ?? "")
+                        Toast.showInfo(dict?["msg"] as? String ?? "修改失败")
                     }
                     return
-                } else {
-                    Toast.showInfo("交易密码设置成功")
-                    self.navigationController?.popViewController(animated: true)
+                }
+                DispatchQueue.main.async {
+                    // 对齐安卓：弹出提示框，确认后返回
+                    let alert = UIAlertController(title: "提示", message: "修改成功", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
+                        self.navigationController?.popViewController(animated: true)
+                    })
+                    self.present(alert, animated: true)
                 }
             case .failure(let error):
-                debugPrint("error =", error.localizedDescription)
-                Toast.showError(error.localizedDescription)
+                DispatchQueue.main.async {
+                    Toast.showError(error.localizedDescription)
+                }
             }
         }
     }
 }
-

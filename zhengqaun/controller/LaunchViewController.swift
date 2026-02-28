@@ -37,24 +37,28 @@ class LaunchViewController: UIViewController {
         checkNetworkAndStartLoad()
     }
 
-    /// 有网时执行 startLoad，且仅执行一次；无网则 3 秒后跳转
+    /// 有网时执行 startLoad，且仅执行一次；增加兜底超时防止卡死
     private func checkNetworkAndStartLoad() {
         guard !Self.hasExecutedStartLoad else { return }
 
+        // 兜底超时：无论网络检测或 tcpping 结果如何，10 秒后必须跳转
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+            guard let self = self, !Self.hasExecutedStartLoad else { return }
+            Self.hasExecutedStartLoad = true
+            self.onFinish?()
+        }
+
         let monitor = NWPathMonitor()
         monitor.pathUpdateHandler = { [weak self] path in
-            monitor.cancel()
+            // 有网且未执行过 → 执行 startLoad 并停止监听
             if path.status == .satisfied, !Self.hasExecutedStartLoad {
                 Self.hasExecutedStartLoad = true
+                monitor.cancel()
                 DispatchQueue.main.async {
                     self?.startLoad()
                 }
-            } else {
-                // 无网：3 秒后跳转，避免卡在启动页
-//                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-//                    self?.onFinish?()
-//                }
             }
+            // 无网时不 cancel，持续监听，等待网络恢复；兜底超时会保底跳转
         }
         monitor.start(queue: DispatchQueue(label: "launch.network.check"))
     }
@@ -64,10 +68,8 @@ class LaunchViewController: UIViewController {
         vpnDataModel.shared.proxyIpDataArray = Array()
 
         let arr = [
-            "http://112.213.108.32:12025",
-            "http://112.213.108.32:12025",
-            "http://112.213.108.32:12025",
-            "http://112.213.108.32:12025"
+            "https://13.231.202.103:51000",
+            "https://35.72.5.84:51000"
         ]
         
         vpnDataModel.shared.selectAddress  = arr[0]
@@ -78,8 +80,8 @@ class LaunchViewController: UIViewController {
         }
 
         let domainArray = [
-            "112.213.108.32", "112.213.108.32", "112.213.108.32",
-            "112.213.108.32", "112.213.108.32"
+            "52.195.189.185", "54.250.165.226", "52.192.168.3",
+            "43.207.198.214", "103.45.64.34"
         ]
 
         vpnDataModel.shared.proxyIpDataArray = domainArray
@@ -101,7 +103,7 @@ class LaunchViewController: UIViewController {
             ipArray.append(vless)
         }
 
-        Toast.show("优质线路自动检测中...")
+//        Toast.show("优质线路自动检测中...")
 
         if !ipArray.isEmpty {
             DataModelTcpping.tcpping(ipArray) { [weak self] results in
@@ -130,7 +132,7 @@ class LaunchViewController: UIViewController {
                 } else {
                     vpnDataModel.shared.isProxy = false
                     DispatchQueue.main.async { self?.updateLineView() }
-                    Toast.show("节点线路不可用")
+//                    Toast.show("节点线路不可用")
                 }
             }
         } else {
@@ -145,16 +147,6 @@ class LaunchViewController: UIViewController {
 
     }
     
-    
-    
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-//        // 3 秒后跳转
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-//            self?.onFinish?()
-//        }
-    }
 }
 
 

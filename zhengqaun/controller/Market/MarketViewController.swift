@@ -23,6 +23,8 @@ class MarketViewController: ZQViewController {
     // MARK: - 顶部分段
     private var segmentTitles = ["行情", "新股申购", "战略配售", "天启护盘"]
     private var selectedSegmentIndex = 0
+    /// 外部指定初始选中的 tab 索引（0=行情，1=新股申购，3=撮合交易）
+    var initialSegmentIndex: Int = 0
     private var segmentWrap: UIView!
     private var segmentButtons: [UIButton] = []
 
@@ -36,6 +38,7 @@ class MarketViewController: ZQViewController {
     private var todayTitleLabel: UILabel!
     private var subscriptionList: [[String: Any]] = []  // API 数据
     private var dzjyBalance: Double = 0  // 场外撮合可用余额
+    private let subsEmptyLabel = UILabel()  // 暂无数据提示
 
     // MARK: - 指数数据 (API)
     private var indexItems: [IndexCardModel] = []
@@ -82,6 +85,12 @@ class MarketViewController: ZQViewController {
     // MARK: - 行业板块数据
     private var sectorDataItems: [SectorDataItem] = []
     private var sectorGridStack: UIStackView?
+    // MARK: - 概念板块数据
+    private var conceptSectorDataItems: [SectorDataItem] = []
+    private var conceptSectorGridStack: UIStackView?
+    private var conceptSectorContainer: UIView!
+    // MARK: - A股主力净流入
+    private weak var mainFundFlowLabel: UILabel?
 
     // MARK: - Models
     struct IndexCardModel {
@@ -132,6 +141,13 @@ class MarketViewController: ZQViewController {
         // 监听功能开关通知
         NotificationCenter.default.addObserver(self, selector: #selector(updateFeatureSegments), name: FeatureSwitchManager.didUpdateNotification, object: nil)
         updateFeatureSegments()
+        
+        // 对齐安卓：支持外部指定初始选中 tab
+        if initialSegmentIndex > 0, initialSegmentIndex < segmentTitles.count {
+            selectedSegmentIndex = initialSegmentIndex
+            refreshSegmentUI()
+            updateVisibleContent()
+        }
     }
 
     /// 根据功能开关隐藏/显示分段 tab 并更新标题
@@ -280,19 +296,23 @@ class MarketViewController: ZQViewController {
         indexCardsContainer.addSubview(indexCardsScroll)
         indexCardsScroll.translatesAutoresizingMaskIntoConstraints = false
 
-        // 2 — 市场概括
+        // 2 — 市场概括（已隐藏）
         marketOverviewContainer = UIView()
-        marketOverviewContainer.backgroundColor = .white
-        marketOverviewContainer.layer.cornerRadius = 8
+        marketOverviewContainer.isHidden = true
         hangqingContent.addSubview(marketOverviewContainer)
         marketOverviewContainer.translatesAutoresizingMaskIntoConstraints = false
 
-        // 3 — 行业板块
+        // 3 — 行业板块（已隐藏）
         sectorContainer = UIView()
-        sectorContainer.backgroundColor = .white
-        sectorContainer.layer.cornerRadius = 8
+        sectorContainer.isHidden = true
         hangqingContent.addSubview(sectorContainer)
         sectorContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        // 3.5 — 概念板块（已隐藏）
+        conceptSectorContainer = UIView()
+        conceptSectorContainer.isHidden = true
+        hangqingContent.addSubview(conceptSectorContainer)
+        conceptSectorContainer.translatesAutoresizingMaskIntoConstraints = false
 
         // 4 — 股票排行榜
         rankingContainer = UIView()
@@ -312,22 +332,29 @@ class MarketViewController: ZQViewController {
             indexCardsScroll.trailingAnchor.constraint(equalTo: indexCardsContainer.trailingAnchor),
             indexCardsScroll.bottomAnchor.constraint(equalTo: indexCardsContainer.bottomAnchor),
 
-            marketOverviewContainer.topAnchor.constraint(equalTo: indexCardsContainer.bottomAnchor, constant: 12),
-            marketOverviewContainer.leadingAnchor.constraint(equalTo: hangqingContent.leadingAnchor, constant: 12),
-            marketOverviewContainer.trailingAnchor.constraint(equalTo: hangqingContent.trailingAnchor, constant: -12),
+            // 市场概括和行业板块高度设为 0
+            marketOverviewContainer.topAnchor.constraint(equalTo: indexCardsContainer.bottomAnchor),
+            marketOverviewContainer.heightAnchor.constraint(equalToConstant: 0),
+            sectorContainer.topAnchor.constraint(equalTo: marketOverviewContainer.bottomAnchor),
+            sectorContainer.heightAnchor.constraint(equalToConstant: 0),
+            conceptSectorContainer.topAnchor.constraint(equalTo: sectorContainer.bottomAnchor),
+            conceptSectorContainer.heightAnchor.constraint(equalToConstant: 0),
 
-            sectorContainer.topAnchor.constraint(equalTo: marketOverviewContainer.bottomAnchor, constant: 12),
-            sectorContainer.leadingAnchor.constraint(equalTo: hangqingContent.leadingAnchor, constant: 12),
-            sectorContainer.trailingAnchor.constraint(equalTo: hangqingContent.trailingAnchor, constant: -12),
-
-            rankingContainer.topAnchor.constraint(equalTo: sectorContainer.bottomAnchor, constant: 12),
+            // 排行榜直接接在指数卡片下方
+            rankingContainer.topAnchor.constraint(equalTo: indexCardsContainer.bottomAnchor, constant: 12),
             rankingContainer.leadingAnchor.constraint(equalTo: hangqingContent.leadingAnchor, constant: 12),
             rankingContainer.trailingAnchor.constraint(equalTo: hangqingContent.trailingAnchor, constant: -12),
             rankingContainer.bottomAnchor.constraint(equalTo: hangqingContent.bottomAnchor, constant: -20),
         ])
 
-        buildMarketOverview()
-        buildSectorGrid()
+        // 市场概括和行业板块已隐藏，但仍需初始化变量以避免 nil 崩溃
+        barChartContainer = UIView()
+        riseCountLabel = UILabel()
+        fallCountLabel = UILabel()
+        progressBar = UIView()
+        riseProgressLayer = CALayer()
+//        buildMarketOverview()
+//        buildSectorGrid()
         buildRankingSection()
     }
 
@@ -516,6 +543,29 @@ class MarketViewController: ZQViewController {
         capValLbl.translatesAutoresizingMaskIntoConstraints = false
         capFundValueLabel = capValLbl
 
+        // A 股主力净流入
+        let mainFundTitleLbl = UILabel()
+        mainFundTitleLbl.text = "A股主力净流入"
+        mainFundTitleLbl.font = .systemFont(ofSize: 13)
+        mainFundTitleLbl.textColor = textSec
+        marketOverviewContainer.addSubview(mainFundTitleLbl)
+        mainFundTitleLbl.translatesAutoresizingMaskIntoConstraints = false
+
+        let mainFundValLbl = UILabel()
+        mainFundValLbl.text = "--"
+        mainFundValLbl.font = .boldSystemFont(ofSize: 15)
+        mainFundValLbl.textColor = themeRed
+        marketOverviewContainer.addSubview(mainFundValLbl)
+        mainFundValLbl.translatesAutoresizingMaskIntoConstraints = false
+        mainFundFlowLabel = mainFundValLbl
+
+        NSLayoutConstraint.activate([
+            mainFundTitleLbl.topAnchor.constraint(equalTo: capTitleLbl.topAnchor),
+            mainFundTitleLbl.leadingAnchor.constraint(equalTo: marketOverviewContainer.centerXAnchor, constant: 8),
+            mainFundValLbl.topAnchor.constraint(equalTo: capValLbl.topAnchor),
+            mainFundValLbl.leadingAnchor.constraint(equalTo: mainFundTitleLbl.leadingAnchor),
+        ])
+
         barChartContainer = UIView()
         marketOverviewContainer.addSubview(barChartContainer)
         barChartContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -618,15 +668,16 @@ class MarketViewController: ZQViewController {
     private func updateProgressBar() {
         let total = CGFloat(riseCount + fallCount)
         let r = total > 0 ? CGFloat(riseCount) / total : 0.5
-        if progressBar != nil, progressBar.bounds.width > 0 {
+        if progressBar.bounds.width > 0 {
             riseProgressLayer.frame = CGRect(x: 0, y: 0, width: progressBar.bounds.width * r, height: 6)
         }
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        if selectedSegmentIndex == 0 && !barChartRendered { layoutBarChart() }
-        updateProgressBar()
+        // 市场概括已隐藏，跳过 barChart 布局
+        if selectedSegmentIndex == 0 && !barChartRendered && barChartContainer.superview != nil { layoutBarChart() }
+        if progressBar.superview != nil { updateProgressBar() }
     }
 
     // ===================================================================
@@ -707,6 +758,68 @@ class MarketViewController: ZQViewController {
             }
         }
     }
+
+    /// 用 API 数据填充概念板块网格
+    private func populateConceptSectorGrid() {
+        // 如果还没构建过概念板块 grid，先构建
+        if conceptSectorGridStack == nil {
+            let title = makeTitle("概念板块")
+            conceptSectorContainer.addSubview(title)
+            title.translatesAutoresizingMaskIntoConstraints = false
+            let grid = UIStackView()
+            grid.axis = .vertical; grid.spacing = 0; grid.distribution = .fill
+            conceptSectorContainer.addSubview(grid)
+            grid.translatesAutoresizingMaskIntoConstraints = false
+            conceptSectorGridStack = grid
+            NSLayoutConstraint.activate([
+                title.topAnchor.constraint(equalTo: conceptSectorContainer.topAnchor, constant: 16),
+                title.leadingAnchor.constraint(equalTo: conceptSectorContainer.leadingAnchor, constant: 16),
+                grid.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 12),
+                grid.leadingAnchor.constraint(equalTo: conceptSectorContainer.leadingAnchor),
+                grid.trailingAnchor.constraint(equalTo: conceptSectorContainer.trailingAnchor),
+                grid.bottomAnchor.constraint(equalTo: conceptSectorContainer.bottomAnchor, constant: -12),
+            ])
+        }
+        guard let grid = conceptSectorGridStack else { return }
+        grid.arrangedSubviews.forEach { grid.removeArrangedSubview($0); $0.removeFromSuperview() }
+        let items = Array(conceptSectorDataItems.prefix(20))
+        guard !items.isEmpty else { return }
+        let rowCount = Int(ceil(Double(items.count) / 3.0))
+        for row in 0..<rowCount {
+            let rowStack = UIStackView()
+            rowStack.axis = .horizontal; rowStack.spacing = 0; rowStack.distribution = .fillEqually
+            rowStack.heightAnchor.constraint(equalToConstant: 90).isActive = true
+            grid.addArrangedSubview(rowStack)
+            for col in 0..<3 {
+                let idx = row * 3 + col
+                let cell = UIView()
+                let nm = UILabel(); let pc = UILabel(); let sb = UILabel()
+                if idx < items.count {
+                    let s = items[idx]
+                    let sign = s.isUp ? "+" : ""
+                    let color = s.isUp ? themeRed : stockGreen
+                    let topSign = s.topStockChange >= 0 ? "+" : ""
+                    nm.text = s.name
+                    pc.text = "\(sign)\(String(format: "%.2f", s.changePercent))%"
+                    pc.textColor = color
+                    sb.text = "\(s.topStock) \(topSign)\(String(format: "%.2f", s.topStockChange))%"
+                } else { nm.text = ""; pc.text = ""; sb.text = ""; pc.textColor = themeRed }
+                nm.font = .boldSystemFont(ofSize: 15); nm.textColor = textPrimary; nm.textAlignment = .center
+                pc.font = .boldSystemFont(ofSize: 17); pc.textAlignment = .center
+                sb.font = .systemFont(ofSize: 11); sb.textColor = textSec; sb.textAlignment = .center
+                for l: UIView in [nm, pc, sb] { cell.addSubview(l); l.translatesAutoresizingMaskIntoConstraints = false }
+                NSLayoutConstraint.activate([
+                    nm.topAnchor.constraint(equalTo: cell.topAnchor, constant: 10),
+                    nm.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                    pc.topAnchor.constraint(equalTo: nm.bottomAnchor, constant: 6),
+                    pc.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                    sb.topAnchor.constraint(equalTo: pc.bottomAnchor, constant: 4),
+                    sb.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                ])
+                rowStack.addArrangedSubview(cell)
+            }
+        }
+    }
     
     @objc private func sectorItemTapped(_ g: UITapGestureRecognizer) {
         guard let cell = g.view else { return }
@@ -730,8 +843,10 @@ class MarketViewController: ZQViewController {
         rankingContainer.addSubview(title)
         title.translatesAutoresizingMaskIntoConstraints = false
 
-        // 2. 市场 Tab（沪深/创业/北证/科创）
+        // 2. 市场 Tab（沪深/创业/北证/科创）— 对齐安卓：隐藏
         let tabWrap = UIView()
+        tabWrap.isHidden = true
+        tabWrap.clipsToBounds = true
         rankingContainer.addSubview(tabWrap)
         tabWrap.translatesAutoresizingMaskIntoConstraints = false
         let tabStack = UIStackView()
@@ -835,16 +950,17 @@ class MarketViewController: ZQViewController {
             title.topAnchor.constraint(equalTo: rankingContainer.topAnchor, constant: 16),
             title.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor, constant: 16),
 
-            tabWrap.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 12),
+            // 对齐安卓：隐藏市场分类 tab（沪深/创业/北证/科创），列标题直接显示在标题下方
+            tabWrap.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 0),
             tabWrap.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
             tabWrap.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
-            tabWrap.heightAnchor.constraint(equalToConstant: 40),
+            tabWrap.heightAnchor.constraint(equalToConstant: 0),
             tabStack.topAnchor.constraint(equalTo: tabWrap.topAnchor),
             tabStack.leadingAnchor.constraint(equalTo: tabWrap.leadingAnchor),
             tabStack.trailingAnchor.constraint(equalTo: tabWrap.trailingAnchor),
-            tabStack.heightAnchor.constraint(equalToConstant: 36),
+            tabStack.heightAnchor.constraint(equalToConstant: 0),
 
-            colHeaderWrap.topAnchor.constraint(equalTo: tabWrap.bottomAnchor, constant: 4),
+            colHeaderWrap.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
             colHeaderWrap.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
             colHeaderWrap.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
             colHeaderWrap.heightAnchor.constraint(equalToConstant: 34),
@@ -893,6 +1009,58 @@ class MarketViewController: ZQViewController {
         else {
             rankingTableHeightCons = rankingTableView.heightAnchor.constraint(equalToConstant: max(h, 120))
             rankingTableHeightCons?.isActive = true
+        }
+    }
+
+    // MARK: - 加载更多 footer（对应 Android layoutLoadMore）
+    private lazy var loadMoreFooter: UIView = {
+        let v = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 44))
+        let spinner = UIActivityIndicatorView(style: .medium)
+        spinner.tag = 100
+        spinner.hidesWhenStopped = true
+        v.addSubview(spinner)
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        let noMoreLbl = UILabel()
+        noMoreLbl.tag = 200
+        noMoreLbl.text = "没有更多数据了"
+        noMoreLbl.font = .systemFont(ofSize: 13)
+        noMoreLbl.textColor = UIColor(white: 0.6, alpha: 1)
+        noMoreLbl.textAlignment = .center
+        noMoreLbl.isHidden = true
+        v.addSubview(noMoreLbl)
+        noMoreLbl.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            spinner.centerXAnchor.constraint(equalTo: v.centerXAnchor),
+            spinner.centerYAnchor.constraint(equalTo: v.centerYAnchor),
+            noMoreLbl.centerXAnchor.constraint(equalTo: v.centerXAnchor),
+            noMoreLbl.centerYAnchor.constraint(equalTo: v.centerYAnchor),
+        ])
+        return v
+    }()
+
+    /// 更新加载更多 footer 状态（对应 Android stockLoadState: 0/1/2）
+    private func updateLoadMoreFooter() {
+        // 确保 footer 已挂载
+        if rankingTableView.tableFooterView !== loadMoreFooter {
+            rankingTableView.tableFooterView = loadMoreFooter
+        }
+        let spinner = loadMoreFooter.viewWithTag(100) as? UIActivityIndicatorView
+        let noMoreLbl = loadMoreFooter.viewWithTag(200) as? UILabel
+        if rankingIsLoading {
+            // 状态 1：加载中
+            loadMoreFooter.isHidden = false
+            spinner?.startAnimating()
+            noMoreLbl?.isHidden = true
+        } else if !rankingHasMore && !rankingStocks.isEmpty {
+            // 状态 2：没有更多
+            loadMoreFooter.isHidden = false
+            spinner?.stopAnimating()
+            noMoreLbl?.isHidden = false
+        } else {
+            // 状态 0：空闲
+            loadMoreFooter.isHidden = true
+            spinner?.stopAnimating()
+            noMoreLbl?.isHidden = true
         }
     }
 
@@ -965,6 +1133,15 @@ class MarketViewController: ZQViewController {
         if #available(iOS 11.0, *) { subsTableView.contentInsetAdjustmentBehavior = .never }
         if #available(iOS 15.0, *) { subsTableView.sectionHeaderTopPadding = 0 }
 
+        // 空状态标签
+        subsEmptyLabel.text = "暂无数据"
+        subsEmptyLabel.font = UIFont.systemFont(ofSize: 14)
+        subsEmptyLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        subsEmptyLabel.textAlignment = .center
+        subsEmptyLabel.isHidden = true
+        view.addSubview(subsEmptyLabel)
+        subsEmptyLabel.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
             todayHeaderWrap.topAnchor.constraint(equalTo: segmentWrap.bottomAnchor),
             todayHeaderWrap.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -982,6 +1159,9 @@ class MarketViewController: ZQViewController {
             subsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             subsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             subsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            subsEmptyLabel.centerXAnchor.constraint(equalTo: subsTableView.centerXAnchor),
+            subsEmptyLabel.centerYAnchor.constraint(equalTo: subsTableView.centerYAnchor),
         ])
     }
 
@@ -1017,6 +1197,8 @@ class MarketViewController: ZQViewController {
         loadMarketRiseCount()
         loadMarketFundFlow()
         loadSectorData()
+        loadConceptSectorData()
+        loadMainFundFlow()
     }
 
     /// 指数行情 — /api/Indexnew/sandahangqing_new
@@ -1067,6 +1249,7 @@ class MarketViewController: ZQViewController {
     private func loadRankingData(isLoadMore: Bool = false) {
         guard !rankingIsLoading && rankingHasMore else { return }
         rankingIsLoading = true
+        if isLoadMore { updateLoadMoreFooter() }  // 显示加载中转圈
         
         let api = marketAPIs[selectedMarketTab]
         let page = isLoadMore ? rankingCurrentPage + 1 : 1
@@ -1074,7 +1257,7 @@ class MarketViewController: ZQViewController {
         SecureNetworkManager.shared.request(
             api: api,
             method: .get,
-            params: ["page": "\(page)", "size": "20"]
+            params: ["page": "\(page)", "size": "50"]
         ) { [weak self] result in
             guard let self = self else { return }
             self.rankingIsLoading = false
@@ -1106,19 +1289,32 @@ class MarketViewController: ZQViewController {
                 }
                 DispatchQueue.main.async {
                     if isLoadMore {
-                        self.rankingStocks.append(contentsOf: stocks)
+                        // 去重逻辑（按 symbol 去重，与 Android 一致）
+                        let existedKeys = Set(self.rankingStocks.map { $0.symbol })
+                        let newStocks = stocks.filter { !existedKeys.contains($0.symbol) }
+                        self.rankingStocks.append(contentsOf: newStocks)
                         self.rankingCurrentPage += 1
-                        if stocks.count < 20 { self.rankingHasMore = false }
+                        if stocks.isEmpty || newStocks.isEmpty {
+                            self.rankingHasMore = false
+                        }
                     } else {
-                        self.rankingStocks = stocks
+                        // distinct by symbol
+                        var seen = Set<String>()
+                        self.rankingStocks = stocks.filter { seen.insert($0.symbol).inserted }
                         self.rankingCurrentPage = 1
-                        self.rankingHasMore = stocks.count >= 20
+                        self.rankingHasMore = !stocks.isEmpty
                     }
                     self.rankingTableView.reloadData()
                     self.updateRankingHeight()
+                    self.updateLoadMoreFooter()
                     print("[行情] 排行榜(\(self.marketTabs[self.selectedMarketTab]))加载成功，共 \(self.rankingStocks.count) 条, 当前页: \(self.rankingCurrentPage)")
                 }
             case .failure(let err):
+                self.rankingIsLoading = false
+                if isLoadMore {
+                    // 加载失败回退页码（与 Android 一致）
+                    self.rankingCurrentPage = max(1, self.rankingCurrentPage)
+                }
                 print("[行情] 排行榜请求失败: \(err.localizedDescription)")
             }
         }
@@ -1177,14 +1373,19 @@ class MarketViewController: ZQViewController {
     /// 全市场涨跌家数 — 东方财富 ulist API
     /// 对应 Android: EastMoneyMarketRepository.fetchRiseCount
     private func loadMarketRiseCount() {
-        let url = "https://push2.eastmoney.com/api/qt/ulist/get"
+        let url = "https://push2delay.eastmoney.com/api/qt/ulist/get"
             + "?fltt=2&invt=2&pn=1&np=1&pz=5"
             + "&secids=1.000001,0.399001&fields=f104,f105,f106"
         fetchEastMoneyJSON(url: url) { [weak self] root in
             guard let self = self,
-                  let data  = root?["data"] as? [String: Any],
-                  let diff  = data["diff"] as? [[String: Any]],
-                  let first = diff.first,
+                  let data = root?["data"] as? [String: Any] else { return }
+            // diff 兼容数组和字典格式
+            var diffArr: [[String: Any]] = []
+            if let arr = data["diff"] as? [[String: Any]] { diffArr = arr }
+            else if let dict = data["diff"] as? [String: Any] {
+                diffArr = dict.values.compactMap { $0 as? [String: Any] }
+            }
+            guard let first = diffArr.first,
                   let rise  = first["f104"] as? Int,
                   let fall  = first["f105"] as? Int else { return }
             DispatchQueue.main.async {
@@ -1201,7 +1402,7 @@ class MarketViewController: ZQViewController {
     /// 北向资金净流入 — 东方财富 kamt API
     /// 对应 Android: EastMoneyMarketRepository.fetchFundFlow
     private func loadMarketFundFlow() {
-        let url = "https://push2.eastmoney.com/api/qt/kamt/get"
+        let url = "https://push2delay.eastmoney.com/api/qt/kamt/get"
             + "?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f56,f62,f63,f65,f66"
         fetchEastMoneyJSON(url: url) { [weak self] root in
             guard let self = self, let root = root else { return }
@@ -1240,7 +1441,7 @@ class MarketViewController: ZQViewController {
     /// 行业板块 TOP6 — 东方财富 clist API (sectorType=2)
     /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(2)
     private func loadSectorData(retryCount: Int = 0) {
-        let url = "https://push2.eastmoney.com/api/qt/clist/get"
+        let url = "https://push2delay.eastmoney.com/api/qt/clist/get"
             + "?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f3"
             + "&fs=m:90+t:2&fields=f3,f12,f14,f128,f136"
         fetchEastMoneyJSON(url: url) { [weak self] root in
@@ -1293,6 +1494,82 @@ class MarketViewController: ZQViewController {
                 self.sectorDataItems = items
                 self.populateSectorGrid()
                 print("[行情] 行业板块加载成功，共 \(items.count) 条")
+            }
+        }
+    }
+
+    /// 概念板块 TOP20 — 东方财富 clist API (sectorType=3)
+    /// 对应 Android: EastMoneyMarketRepository.fetchSectorList(3)
+    private func loadConceptSectorData(retryCount: Int = 0) {
+        let url = "https://push2delay.eastmoney.com/api/qt/clist/get"
+            + "?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f3"
+            + "&fs=m:90+t:3&fields=f3,f12,f14,f128,f136"
+        fetchEastMoneyJSON(url: url) { [weak self] root in
+            guard let self = self else { return }
+            guard let root = root,
+                  let data = root["data"] as? [String: Any] else {
+                if retryCount < 3 {
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
+                        self.loadConceptSectorData(retryCount: retryCount + 1)
+                    }
+                }
+                return
+            }
+            var diffArr: [[String: Any]] = []
+            if let arr = data["diff"] as? [[String: Any]] { diffArr = arr }
+            else if let dict = data["diff"] as? [String: Any] {
+                diffArr = dict.keys.sorted().compactMap { dict[$0] as? [String: Any] }
+            }
+            guard !diffArr.isEmpty else {
+                if retryCount < 3 {
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
+                        self.loadConceptSectorData(retryCount: retryCount + 1)
+                    }
+                }
+                return
+            }
+            let items = diffArr.compactMap { obj -> SectorDataItem? in
+                guard let name = obj["f14"] as? String, !name.isEmpty else { return nil }
+                let code      = (obj["f12"] as? String) ?? ""
+                let changePct = (obj["f3"]  as? Double) ?? 0.0
+                let topStock  = (obj["f128"] as? String) ?? ""
+                let topChange = (obj["f136"] as? Double) ?? 0.0
+                return SectorDataItem(name: name, code: code, changePercent: changePct,
+                                      topStock: topStock, topStockChange: topChange,
+                                      isUp: changePct >= 0)
+            }
+            DispatchQueue.main.async {
+                self.conceptSectorDataItems = items
+                self.populateConceptSectorGrid()
+                print("[行情] 概念板块加载成功，共 \(items.count) 条")
+            }
+        }
+    }
+
+    /// A股主力净流入 — 东方财富 ulist f62
+    private func loadMainFundFlow() {
+        let url = "https://push2delay.eastmoney.com/api/qt/ulist/get"
+            + "?fltt=2&invt=2&secids=1.000001,0.399001&fields=f62,f184"
+        fetchEastMoneyJSON(url: url) { [weak self] root in
+            guard let self = self,
+                  let data = root?["data"] as? [String: Any] else { return }
+            var diffArr: [[String: Any]] = []
+            if let arr = data["diff"] as? [[String: Any]] { diffArr = arr }
+            else if let dict = data["diff"] as? [String: Any] {
+                diffArr = dict.values.compactMap { $0 as? [String: Any] }
+            }
+            var totalYuan = 0.0
+            for item in diffArr {
+                totalYuan += (item["f62"] as? Double) ?? 0
+            }
+            let yi = totalYuan / 100_000_000.0
+            let isPos = totalYuan >= 0
+            let sign = isPos ? "" : "-"
+            let display = "\(sign)\(String(format: "%.2f", abs(yi)))亿"
+            DispatchQueue.main.async {
+                self.mainFundFlowLabel?.text = display
+                self.mainFundFlowLabel?.textColor = isPos ? self.themeRed : self.stockGreen
+                print("[行情] A股主力净流入: \(display)")
             }
         }
     }
@@ -1366,6 +1643,7 @@ class MarketViewController: ZQViewController {
                     DispatchQueue.main.async {
                         self.subscriptionList = []
                         self.subsTableView.reloadData()
+                        self.subsEmptyLabel.isHidden = true
                     }
                     return
                 }
@@ -1381,6 +1659,7 @@ class MarketViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.subscriptionList = rows
                     self.subsTableView.reloadData()
+                    self.subsEmptyLabel.isHidden = !rows.isEmpty
                     print("[行情] 新股申购加载成功，共 \(rows.count) 条")
                 }
             case .failure(let err):
@@ -1406,6 +1685,7 @@ class MarketViewController: ZQViewController {
                     DispatchQueue.main.async {
                         self.subscriptionList = []
                         self.subsTableView.reloadData()
+                        self.subsEmptyLabel.isHidden = false
                     }
                     return
                 }
@@ -1418,6 +1698,7 @@ class MarketViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.subscriptionList = list
                     self.subsTableView.reloadData()
+                    self.subsEmptyLabel.isHidden = !list.isEmpty
                     print("[行情] 场外撮合加载成功，共 \(list.count) 条，余额: \(self.dzjyBalance)")
                 }
             case .failure(let err):
@@ -1443,6 +1724,7 @@ class MarketViewController: ZQViewController {
                     DispatchQueue.main.async {
                         self.subscriptionList = []
                         self.subsTableView.reloadData()
+                        self.subsEmptyLabel.isHidden = true
                     }
                     return
                 }
@@ -1458,6 +1740,7 @@ class MarketViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.subscriptionList = rows
                     self.subsTableView.reloadData()
+                    self.subsEmptyLabel.isHidden = !rows.isEmpty
                     print("[行情] 线下配售加载成功，共 \(rows.count) 条")
                 }
             case .failure(let err):
@@ -1922,8 +2205,8 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             let offsetY = scrollView.contentOffset.y
             let contentHeight = scrollView.contentSize.height
             let boundsHeight = scrollView.bounds.size.height
-            if offsetY > 0 && offsetY + boundsHeight >= contentHeight - 50 {
-                // 距离底部 50px 时加载更多
+            if offsetY > 0 && offsetY + boundsHeight >= contentHeight - 300 {
+                // 距离底部 300px 时加载更多（与 Android 一致）
                 if !rankingIsLoading && rankingHasMore && selectedSegmentIndex == 0 {
                     loadRankingData(isLoadMore: true)
                 }
@@ -1933,18 +2216,8 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        if tableView == rankingTableView, indexPath.row < rankingStocks.count {
-            let s = rankingStocks[indexPath.row]
-            let vc = IndexDetailViewController()
-            vc.indexName          = s.name
-            vc.indexCode          = s.code
-            vc.indexAllcode       = s.symbol        // e.g. "sh600519" — resolveSecId() uses this
-            vc.indexPrice         = s.price
-            vc.indexChange        = s.change
-            vc.indexChangePercent = s.changePercent
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
-        } else if tableView == subsTableView, indexPath.row < subscriptionList.count {
+        // 排行榜跳转由 RankingStockCell.onTap 手势处理，此处不重复
+        if tableView == subsTableView, indexPath.row < subscriptionList.count {
             let item = subscriptionList[indexPath.row]
             // 线下配售跳 XxpsDetailViewController，其他跳 NewStockDetailViewController
             if selectedSegmentIndex == 2 {
@@ -1953,10 +2226,10 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
                 vc.hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(vc, animated: true)
             } else {
-                let vc = NewStockDetailViewController()
-                vc.stockId = "\(item["id"] ?? "")"
-                vc.hidesBottomBarWhenPushed = true
-                navigationController?.pushViewController(vc, animated: true)
+//                let vc = NewStockDetailViewController()
+//                vc.stockId = "\(item["id"] ?? "")"
+//                vc.hidesBottomBarWhenPushed = true
+//                navigationController?.pushViewController(vc, animated: true)
             }
         }
     }

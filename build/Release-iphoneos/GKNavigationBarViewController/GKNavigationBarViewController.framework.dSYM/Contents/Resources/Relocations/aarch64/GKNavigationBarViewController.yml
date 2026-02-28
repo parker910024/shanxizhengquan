@@ -1,0 +1,486 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/wayne/Desktop/shanxizhengquan/build/Release-iphoneos/GKNavigationBarViewController/GKNavigationBarViewController.framework/GKNavigationBarViewController'
+relocations:
+  - { offset: 0x89A0A, size: 0x8, addend: 0x0, symName: _GKNavigationBarViewControllerVersionString, symObjAddr: 0x10, symBinAddr: 0x1A210, symSize: 0x0 }
+  - { offset: 0x89A3F, size: 0x8, addend: 0x0, symName: _GKNavigationBarViewControllerVersionNumber, symObjAddr: 0x50, symBinAddr: 0x1A250, symSize: 0x0 }
+  - { offset: 0x89A7C, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation initWithScale:]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x78 }
+  - { offset: 0x89A96, size: 0x8, addend: 0x0, symName: _GKCaptureImageKey, symObjAddr: 0x1620, symBinAddr: 0x26D00, symSize: 0x0 }
+  - { offset: 0x89BC3, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation initWithScale:]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x78 }
+  - { offset: 0x89C0A, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation transitionDuration:]', symObjAddr: 0x78, symBinAddr: 0x4078, symSize: 0x20 }
+  - { offset: 0x89C49, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation animateTransition:]', symObjAddr: 0x98, symBinAddr: 0x4098, symSize: 0xEC }
+  - { offset: 0x89CBC, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation animationDuration]', symObjAddr: 0x184, symBinAddr: 0x4184, symSize: 0x60 }
+  - { offset: 0x89CF3, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation animateTransition]', symObjAddr: 0x1E4, symBinAddr: 0x41E4, symSize: 0x14 }
+  - { offset: 0x89D22, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation completeTransition]', symObjAddr: 0x1F8, symBinAddr: 0x41F8, symSize: 0x6C }
+  - { offset: 0x89D55, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation getCaptureWithView:]', symObjAddr: 0x264, symBinAddr: 0x4264, symSize: 0x94 }
+  - { offset: 0x89E0A, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation scale]', symObjAddr: 0x2F8, symBinAddr: 0x42F8, symSize: 0x8 }
+  - { offset: 0x89E41, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setScale:]', symObjAddr: 0x300, symBinAddr: 0x4300, symSize: 0x8 }
+  - { offset: 0x89E7C, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation shadowView]', symObjAddr: 0x308, symBinAddr: 0x4308, symSize: 0x8 }
+  - { offset: 0x89EB3, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setShadowView:]', symObjAddr: 0x310, symBinAddr: 0x4310, symSize: 0xC }
+  - { offset: 0x89EF4, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation transitionContext]', symObjAddr: 0x31C, symBinAddr: 0x431C, symSize: 0x18 }
+  - { offset: 0x89F2B, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setTransitionContext:]', symObjAddr: 0x334, symBinAddr: 0x4334, symSize: 0xC }
+  - { offset: 0x89F6C, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation containerView]', symObjAddr: 0x340, symBinAddr: 0x4340, symSize: 0x18 }
+  - { offset: 0x89FA3, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setContainerView:]', symObjAddr: 0x358, symBinAddr: 0x4358, symSize: 0xC }
+  - { offset: 0x89FE4, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation fromViewController]', symObjAddr: 0x364, symBinAddr: 0x4364, symSize: 0x18 }
+  - { offset: 0x8A01B, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setFromViewController:]', symObjAddr: 0x37C, symBinAddr: 0x437C, symSize: 0xC }
+  - { offset: 0x8A05C, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation toViewController]', symObjAddr: 0x388, symBinAddr: 0x4388, symSize: 0x18 }
+  - { offset: 0x8A093, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setToViewController:]', symObjAddr: 0x3A0, symBinAddr: 0x43A0, symSize: 0xC }
+  - { offset: 0x8A0D4, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation isHideTabBar]', symObjAddr: 0x3AC, symBinAddr: 0x43AC, symSize: 0x8 }
+  - { offset: 0x8A10B, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setIsHideTabBar:]', symObjAddr: 0x3B4, symBinAddr: 0x43B4, symSize: 0x8 }
+  - { offset: 0x8A146, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation contentView]', symObjAddr: 0x3BC, symBinAddr: 0x43BC, symSize: 0x8 }
+  - { offset: 0x8A17D, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation setContentView:]', symObjAddr: 0x3C4, symBinAddr: 0x43C4, symSize: 0xC }
+  - { offset: 0x8A1BE, size: 0x8, addend: 0x0, symName: '-[GKBaseTransitionAnimation .cxx_destruct]', symObjAddr: 0x3D0, symBinAddr: 0x43D0, symSize: 0x50 }
+  - { offset: 0x8A1F1, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCapture) setGk_captureImage:]', symObjAddr: 0x420, symBinAddr: 0x4420, symSize: 0x20 }
+  - { offset: 0x8A273, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCapture) gk_captureImage]', symObjAddr: 0x440, symBinAddr: 0x4440, symSize: 0x1C }
+  - { offset: 0x8A367, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar initWithFrame:]', symObjAddr: 0x0, symBinAddr: 0x445C, symSize: 0x74 }
+  - { offset: 0x8A3E5, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar initWithFrame:]', symObjAddr: 0x0, symBinAddr: 0x445C, symSize: 0x74 }
+  - { offset: 0x8A428, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar layoutSubviews]', symObjAddr: 0x74, symBinAddr: 0x44D0, symSize: 0xCC }
+  - { offset: 0x8A45B, size: 0x8, addend: 0x0, symName: '___33-[GKNavigationBar layoutSubviews]_block_invoke', symObjAddr: 0x140, symBinAddr: 0x459C, symSize: 0x110 }
+  - { offset: 0x8A535, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0x250, symBinAddr: 0x46AC, symSize: 0x8 }
+  - { offset: 0x8A55C, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x258, symBinAddr: 0x46B4, symSize: 0x8 }
+  - { offset: 0x8A57B, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar gk_navLineHideOrShow]', symObjAddr: 0x260, symBinAddr: 0x46BC, symSize: 0x1C4 }
+  - { offset: 0x8A5D5, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar setGk_navBarBackgroundAlpha:]', symObjAddr: 0x424, symBinAddr: 0x4880, symSize: 0xE4 }
+  - { offset: 0x8A628, size: 0x8, addend: 0x0, symName: '___47-[GKNavigationBar setGk_navBarBackgroundAlpha:]_block_invoke', symObjAddr: 0x508, symBinAddr: 0x4964, symSize: 0xD8 }
+  - { offset: 0x8A6D7, size: 0x8, addend: 0x0, symName: '___47-[GKNavigationBar setGk_navBarBackgroundAlpha:]_block_invoke_2', symObjAddr: 0x5E0, symBinAddr: 0x4A3C, symSize: 0x64 }
+  - { offset: 0x8A722, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar gk_navBarBackgroundAlpha]', symObjAddr: 0x644, symBinAddr: 0x4AA0, symSize: 0x10 }
+  - { offset: 0x8A757, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar gk_navLineHidden]', symObjAddr: 0x654, symBinAddr: 0x4AB0, symSize: 0x10 }
+  - { offset: 0x8A78E, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar setGk_navLineHidden:]', symObjAddr: 0x664, symBinAddr: 0x4AC0, symSize: 0x10 }
+  - { offset: 0x8A7C9, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar gk_nonFullScreen]', symObjAddr: 0x674, symBinAddr: 0x4AD0, symSize: 0x10 }
+  - { offset: 0x8A800, size: 0x8, addend: 0x0, symName: '-[GKNavigationBar setGk_nonFullScreen:]', symObjAddr: 0x684, symBinAddr: 0x4AE0, symSize: 0x10 }
+  - { offset: 0x8AA81, size: 0x8, addend: 0x0, symName: _instance, symObjAddr: 0x13390, symBinAddr: 0x34000, symSize: 0x0 }
+  - { offset: 0x8AD6A, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x4AF0, symSize: 0x40 }
+  - { offset: 0x8AD94, size: 0x8, addend: 0x0, symName: _sharedInstance.onceToken, symObjAddr: 0x13398, symBinAddr: 0x34008, symSize: 0x0 }
+  - { offset: 0x8ADF4, size: 0x8, addend: 0x0, symName: _isIPad, symObjAddr: 0x5280, symBinAddr: 0x26D08, symSize: 0x0 }
+  - { offset: 0x8AE0A, size: 0x8, addend: 0x0, symName: _isIPod, symObjAddr: 0x5288, symBinAddr: 0x26D10, symSize: 0x0 }
+  - { offset: 0x8AE20, size: 0x8, addend: 0x0, symName: _isIPhone, symObjAddr: 0x5290, symBinAddr: 0x26D18, symSize: 0x0 }
+  - { offset: 0x8AE36, size: 0x8, addend: 0x0, symName: _isSimulator, symObjAddr: 0x133A0, symBinAddr: 0x34010, symSize: 0x0 }
+  - { offset: 0x8AE54, size: 0x8, addend: 0x0, symName: _isNotchedScreen, symObjAddr: 0x5298, symBinAddr: 0x26D20, symSize: 0x0 }
+  - { offset: 0x8AE6A, size: 0x8, addend: 0x0, symName: _is67InchScreen, symObjAddr: 0x52A0, symBinAddr: 0x26D28, symSize: 0x0 }
+  - { offset: 0x8AE81, size: 0x8, addend: 0x0, symName: _is65InchScreen, symObjAddr: 0x52A8, symBinAddr: 0x26D30, symSize: 0x0 }
+  - { offset: 0x8AE98, size: 0x8, addend: 0x0, symName: _is61InchScreenAndiPhone12, symObjAddr: 0x52B0, symBinAddr: 0x26D38, symSize: 0x0 }
+  - { offset: 0x8AEAF, size: 0x8, addend: 0x0, symName: _is61InchScreen, symObjAddr: 0x52B8, symBinAddr: 0x26D40, symSize: 0x0 }
+  - { offset: 0x8AEC6, size: 0x8, addend: 0x0, symName: _is58InchScreen, symObjAddr: 0x52C0, symBinAddr: 0x26D48, symSize: 0x0 }
+  - { offset: 0x8AEDD, size: 0x8, addend: 0x0, symName: _is55InchScreen, symObjAddr: 0x52C8, symBinAddr: 0x26D50, symSize: 0x0 }
+  - { offset: 0x8AEF4, size: 0x8, addend: 0x0, symName: _is54InchScreen, symObjAddr: 0x52D0, symBinAddr: 0x26D58, symSize: 0x0 }
+  - { offset: 0x8AF0B, size: 0x8, addend: 0x0, symName: _is47InchScreen, symObjAddr: 0x52D8, symBinAddr: 0x26D60, symSize: 0x0 }
+  - { offset: 0x8AF22, size: 0x8, addend: 0x0, symName: _is40InchScreen, symObjAddr: 0x52E0, symBinAddr: 0x26D68, symSize: 0x0 }
+  - { offset: 0x8AF39, size: 0x8, addend: 0x0, symName: _is35InchScreen, symObjAddr: 0x52E8, symBinAddr: 0x26D70, symSize: 0x0 }
+  - { offset: 0x8AF50, size: 0x8, addend: 0x0, symName: _tabBarHeight, symObjAddr: 0x52F0, symBinAddr: 0x26D78, symSize: 0x0 }
+  - { offset: 0x8AF8F, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure sharedInstance].cold.1', symObjAddr: 0x2E38, symBinAddr: 0x15C60, symSize: 0x14 }
+  - { offset: 0x8AFAB, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure sharedInstance].cold.1', symObjAddr: 0x2E38, symBinAddr: 0x15C60, symSize: 0x14 }
+  - { offset: 0x8AFBD, size: 0x8, addend: 0x0, symName: '___42+[GKNavigationBarConfigure sharedInstance]_block_invoke', symObjAddr: 0x40, symBinAddr: 0x4B30, symSize: 0x3C }
+  - { offset: 0x8AFE4, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setupDefaultConfigure]', symObjAddr: 0x7C, symBinAddr: 0x4B6C, symSize: 0x16C }
+  - { offset: 0x8B017, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_navItemLeftSpace:]', symObjAddr: 0x1E8, symBinAddr: 0x4CD8, symSize: 0x18 }
+  - { offset: 0x8B057, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_navItemRightSpace:]', symObjAddr: 0x200, symBinAddr: 0x4CF0, symSize: 0x18 }
+  - { offset: 0x8B097, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setupCustomConfigure:]', symObjAddr: 0x218, symBinAddr: 0x4D08, symSize: 0x8C }
+  - { offset: 0x8B0F5, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure updateConfigure:]', symObjAddr: 0x2A4, symBinAddr: 0x4D94, symSize: 0x38 }
+  - { offset: 0x8B142, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure visibleViewController]', symObjAddr: 0x2DC, symBinAddr: 0x4DCC, symSize: 0x7C }
+  - { offset: 0x8B175, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_fixedSpace]', symObjAddr: 0x358, symBinAddr: 0x4E48, symSize: 0xE8 }
+  - { offset: 0x8B1D7, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_libraryBundle]', symObjAddr: 0x440, symBinAddr: 0x4F30, symSize: 0xBC }
+  - { offset: 0x8B22E, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure isVelocityInSensitivity:]', symObjAddr: 0x4FC, symBinAddr: 0x4FEC, symSize: 0x4C }
+  - { offset: 0x8B275, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure backgroundColor]', symObjAddr: 0x548, symBinAddr: 0x5038, symSize: 0x8 }
+  - { offset: 0x8B2AC, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setBackgroundColor:]', symObjAddr: 0x550, symBinAddr: 0x5040, symSize: 0xC }
+  - { offset: 0x8B2ED, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure titleColor]', symObjAddr: 0x55C, symBinAddr: 0x504C, symSize: 0x8 }
+  - { offset: 0x8B324, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setTitleColor:]', symObjAddr: 0x564, symBinAddr: 0x5054, symSize: 0xC }
+  - { offset: 0x8B365, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure titleFont]', symObjAddr: 0x570, symBinAddr: 0x5060, symSize: 0x8 }
+  - { offset: 0x8B39C, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setTitleFont:]', symObjAddr: 0x578, symBinAddr: 0x5068, symSize: 0xC }
+  - { offset: 0x8B3DD, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure backImage]', symObjAddr: 0x584, symBinAddr: 0x5074, symSize: 0x8 }
+  - { offset: 0x8B414, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setBackImage:]', symObjAddr: 0x58C, symBinAddr: 0x507C, symSize: 0xC }
+  - { offset: 0x8B455, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure backStyle]', symObjAddr: 0x598, symBinAddr: 0x5088, symSize: 0x8 }
+  - { offset: 0x8B48C, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setBackStyle:]', symObjAddr: 0x5A0, symBinAddr: 0x5090, symSize: 0x8 }
+  - { offset: 0x8B4C9, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_disableFixSpace]', symObjAddr: 0x5A8, symBinAddr: 0x5098, symSize: 0x8 }
+  - { offset: 0x8B500, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_disableFixSpace:]', symObjAddr: 0x5B0, symBinAddr: 0x50A0, symSize: 0x8 }
+  - { offset: 0x8B53B, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_navItemLeftSpace]', symObjAddr: 0x5B8, symBinAddr: 0x50A8, symSize: 0x8 }
+  - { offset: 0x8B570, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_navItemRightSpace]', symObjAddr: 0x5C0, symBinAddr: 0x50B0, symSize: 0x8 }
+  - { offset: 0x8B5A5, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure statusBarHidden]', symObjAddr: 0x5C8, symBinAddr: 0x50B8, symSize: 0x8 }
+  - { offset: 0x8B5DC, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setStatusBarHidden:]', symObjAddr: 0x5D0, symBinAddr: 0x50C0, symSize: 0x8 }
+  - { offset: 0x8B617, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure statusBarStyle]', symObjAddr: 0x5D8, symBinAddr: 0x50C8, symSize: 0x8 }
+  - { offset: 0x8B64E, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setStatusBarStyle:]', symObjAddr: 0x5E0, symBinAddr: 0x50D0, symSize: 0x8 }
+  - { offset: 0x8B68B, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_snapMovementSensitivity]', symObjAddr: 0x5E8, symBinAddr: 0x50D8, symSize: 0x8 }
+  - { offset: 0x8B6C0, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_snapMovementSensitivity:]', symObjAddr: 0x5F0, symBinAddr: 0x50E0, symSize: 0x8 }
+  - { offset: 0x8B6FE, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_pushTransitionCriticalValue]', symObjAddr: 0x5F8, symBinAddr: 0x50E8, symSize: 0x8 }
+  - { offset: 0x8B733, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_pushTransitionCriticalValue:]', symObjAddr: 0x600, symBinAddr: 0x50F0, symSize: 0x8 }
+  - { offset: 0x8B771, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_popTransitionCriticalValue]', symObjAddr: 0x608, symBinAddr: 0x50F8, symSize: 0x8 }
+  - { offset: 0x8B7A6, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_popTransitionCriticalValue:]', symObjAddr: 0x610, symBinAddr: 0x5100, symSize: 0x8 }
+  - { offset: 0x8B7E4, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_translationX]', symObjAddr: 0x618, symBinAddr: 0x5108, symSize: 0x8 }
+  - { offset: 0x8B819, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_translationX:]', symObjAddr: 0x620, symBinAddr: 0x5110, symSize: 0x8 }
+  - { offset: 0x8B857, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_translationY]', symObjAddr: 0x628, symBinAddr: 0x5118, symSize: 0x8 }
+  - { offset: 0x8B88C, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_translationY:]', symObjAddr: 0x630, symBinAddr: 0x5120, symSize: 0x8 }
+  - { offset: 0x8B8CA, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_scaleX]', symObjAddr: 0x638, symBinAddr: 0x5128, symSize: 0x8 }
+  - { offset: 0x8B8FF, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_scaleX:]', symObjAddr: 0x640, symBinAddr: 0x5130, symSize: 0x8 }
+  - { offset: 0x8B93D, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_scaleY]', symObjAddr: 0x648, symBinAddr: 0x5138, symSize: 0x8 }
+  - { offset: 0x8B972, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_scaleY:]', symObjAddr: 0x650, symBinAddr: 0x5140, symSize: 0x8 }
+  - { offset: 0x8B9B0, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure shiledItemSpaceVCs]', symObjAddr: 0x658, symBinAddr: 0x5148, symSize: 0x8 }
+  - { offset: 0x8B9E7, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setShiledItemSpaceVCs:]', symObjAddr: 0x660, symBinAddr: 0x5150, symSize: 0xC }
+  - { offset: 0x8BA28, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure shiledGuestureVCs]', symObjAddr: 0x66C, symBinAddr: 0x515C, symSize: 0x8 }
+  - { offset: 0x8BA5F, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setShiledGuestureVCs:]', symObjAddr: 0x674, symBinAddr: 0x5164, symSize: 0xC }
+  - { offset: 0x8BAA0, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure gk_openScrollViewGestureHandle]', symObjAddr: 0x680, symBinAddr: 0x5170, symSize: 0x8 }
+  - { offset: 0x8BAD7, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setGk_openScrollViewGestureHandle:]', symObjAddr: 0x688, symBinAddr: 0x5178, symSize: 0x8 }
+  - { offset: 0x8BB12, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure navItemLeftSpace]', symObjAddr: 0x690, symBinAddr: 0x5180, symSize: 0x8 }
+  - { offset: 0x8BB47, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setNavItemLeftSpace:]', symObjAddr: 0x698, symBinAddr: 0x5188, symSize: 0x8 }
+  - { offset: 0x8BB85, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure navItemRightSpace]', symObjAddr: 0x6A0, symBinAddr: 0x5190, symSize: 0x8 }
+  - { offset: 0x8BBBA, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure setNavItemRightSpace:]', symObjAddr: 0x6A8, symBinAddr: 0x5198, symSize: 0x8 }
+  - { offset: 0x8BBF8, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarConfigure .cxx_destruct]', symObjAddr: 0x6B0, symBinAddr: 0x51A0, symSize: 0x60 }
+  - { offset: 0x8BC2B, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) deviceModel]', symObjAddr: 0x710, symBinAddr: 0x5200, symSize: 0xD0 }
+  - { offset: 0x8BCCD, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isZoomedMode]', symObjAddr: 0x7E0, symBinAddr: 0x52D0, symSize: 0x10C }
+  - { offset: 0x8BD3D, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isIPad]', symObjAddr: 0x8EC, symBinAddr: 0x53DC, symSize: 0xCC }
+  - { offset: 0x8BD7D, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isIPod]', symObjAddr: 0x9B8, symBinAddr: 0x54A8, symSize: 0xC0 }
+  - { offset: 0x8BDCF, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isIPhone]', symObjAddr: 0xA78, symBinAddr: 0x5568, symSize: 0xC0 }
+  - { offset: 0x8BE21, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isSimulator]', symObjAddr: 0xB38, symBinAddr: 0x5628, symSize: 0x3C }
+  - { offset: 0x8BE54, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isMac]', symObjAddr: 0xB74, symBinAddr: 0x5664, symSize: 0x60 }
+  - { offset: 0x8BE87, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isNotchedScreen]', symObjAddr: 0xBD4, symBinAddr: 0x56C4, symSize: 0x228 }
+  - { offset: 0x8BF83, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) object:performSelector:returnValue:]', symObjAddr: 0xDFC, symBinAddr: 0x58EC, symSize: 0xD4 }
+  - { offset: 0x8BFF2, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) isRegularScreen]', symObjAddr: 0xED0, symBinAddr: 0x59C0, symSize: 0x104 }
+  - { offset: 0x8C029, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is67InchScreen]', symObjAddr: 0xFD4, symBinAddr: 0x5AC4, symSize: 0x18C }
+  - { offset: 0x8C0BE, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is65InchScreen]', symObjAddr: 0x1160, symBinAddr: 0x5C50, symSize: 0x2A8 }
+  - { offset: 0x8C158, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is61InchScreenAndiPhone12]', symObjAddr: 0x1408, symBinAddr: 0x5EF8, symSize: 0x240 }
+  - { offset: 0x8C1F2, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is61InchScreen]', symObjAddr: 0x1648, symBinAddr: 0x6138, symSize: 0x240 }
+  - { offset: 0x8C28C, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is58InchScreen]', symObjAddr: 0x1888, symBinAddr: 0x6378, symSize: 0x18C }
+  - { offset: 0x8C326, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is55InchScreen]', symObjAddr: 0x1A14, symBinAddr: 0x6504, symSize: 0x18C }
+  - { offset: 0x8C3C0, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is54InchScreen]', symObjAddr: 0x1BA0, symBinAddr: 0x6690, symSize: 0x18C }
+  - { offset: 0x8C45A, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is47InchScreen]', symObjAddr: 0x1D2C, symBinAddr: 0x681C, symSize: 0x18C }
+  - { offset: 0x8C4F4, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is40InchScreen]', symObjAddr: 0x1EB8, symBinAddr: 0x69A8, symSize: 0x18C }
+  - { offset: 0x8C58E, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) is35InchScreen]', symObjAddr: 0x2044, symBinAddr: 0x6B34, symSize: 0x18C }
+  - { offset: 0x8C628, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor67Inch]', symObjAddr: 0x21D0, symBinAddr: 0x6CC0, symSize: 0x24 }
+  - { offset: 0x8C65C, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor65Inch]', symObjAddr: 0x21F4, symBinAddr: 0x6CE4, symSize: 0x24 }
+  - { offset: 0x8C690, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor61InchAndiPhone12]', symObjAddr: 0x2218, symBinAddr: 0x6D08, symSize: 0x24 }
+  - { offset: 0x8C6C4, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor61Inch]', symObjAddr: 0x223C, symBinAddr: 0x6D2C, symSize: 0x24 }
+  - { offset: 0x8C6F8, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor58Inch]', symObjAddr: 0x2260, symBinAddr: 0x6D50, symSize: 0x24 }
+  - { offset: 0x8C72C, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor55Inch]', symObjAddr: 0x2284, symBinAddr: 0x6D74, symSize: 0x24 }
+  - { offset: 0x8C760, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor54Inch]', symObjAddr: 0x22A8, symBinAddr: 0x6D98, symSize: 0x24 }
+  - { offset: 0x8C794, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor47Inch]', symObjAddr: 0x22CC, symBinAddr: 0x6DBC, symSize: 0x24 }
+  - { offset: 0x8C7C8, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor40Inch]', symObjAddr: 0x22F0, symBinAddr: 0x6DE0, symSize: 0x24 }
+  - { offset: 0x8C7FC, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) screenSizeFor35Inch]', symObjAddr: 0x2314, symBinAddr: 0x6E04, symSize: 0x24 }
+  - { offset: 0x8C84A, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) navBarHeight]', symObjAddr: 0x2338, symBinAddr: 0x6E28, symSize: 0x140 }
+  - { offset: 0x8C8A1, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) navBarHeight_nonFullScreen]', symObjAddr: 0x2478, symBinAddr: 0x6F68, symSize: 0x1C }
+  - { offset: 0x8C8D5, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) tabBarHeight]', symObjAddr: 0x2494, symBinAddr: 0x6F84, symSize: 0x17C }
+  - { offset: 0x8C92C, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) safeAreaInsets]', symObjAddr: 0x2610, symBinAddr: 0x7100, symSize: 0x11C }
+  - { offset: 0x8C9B1, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) statusBarFrame]', symObjAddr: 0x272C, symBinAddr: 0x721C, symSize: 0x1DC }
+  - { offset: 0x8CA4D, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) keyWindow]', symObjAddr: 0x2908, symBinAddr: 0x73F8, symSize: 0x3B0 }
+  - { offset: 0x8CAF0, size: 0x8, addend: 0x0, symName: '+[GKNavigationBarConfigure(UIDevice) safeAreaInsetsForDeviceWithNotch]', symObjAddr: 0x2CB8, symBinAddr: 0x77A8, symSize: 0x170 }
+  - { offset: 0x8CCBF, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController viewDidLoad]', symObjAddr: 0x0, symBinAddr: 0x7918, symSize: 0x60 }
+  - { offset: 0x8CF32, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController viewDidLoad]', symObjAddr: 0x0, symBinAddr: 0x7918, symSize: 0x60 }
+  - { offset: 0x8CF65, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController viewWillAppear:]', symObjAddr: 0x60, symBinAddr: 0x7978, symSize: 0x1B8 }
+  - { offset: 0x8CFA8, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController showNavLine]', symObjAddr: 0x218, symBinAddr: 0x7B30, symSize: 0x18 }
+  - { offset: 0x8CFD9, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController hideNavLine]', symObjAddr: 0x230, symBinAddr: 0x7B48, symSize: 0x18 }
+  - { offset: 0x8D00A, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController refreshNavBarFrame]', symObjAddr: 0x248, symBinAddr: 0x7B60, symSize: 0x14 }
+  - { offset: 0x8D03B, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setupCustomNavBar]', symObjAddr: 0x25C, symBinAddr: 0x7B74, symSize: 0x11C }
+  - { offset: 0x8D06E, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setupNavBarAppearance]', symObjAddr: 0x378, symBinAddr: 0x7C90, symSize: 0x1CC }
+  - { offset: 0x8D0B1, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController viewWillLayoutSubviews]', symObjAddr: 0x544, symBinAddr: 0x7E5C, symSize: 0x58 }
+  - { offset: 0x8D0FE, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setupNavBarFrame]', symObjAddr: 0x59C, symBinAddr: 0x7EB4, symSize: 0x3F8 }
+  - { offset: 0x8D1A6, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController prefersStatusBarHidden]', symObjAddr: 0x994, symBinAddr: 0x82AC, symSize: 0x14 }
+  - { offset: 0x8D1DB, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController preferredStatusBarStyle]', symObjAddr: 0x9A8, symBinAddr: 0x82C0, symSize: 0x14 }
+  - { offset: 0x8D210, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navigationBar]', symObjAddr: 0x9BC, symBinAddr: 0x82D4, symSize: 0x80 }
+  - { offset: 0x8D247, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navigationItem]', symObjAddr: 0xA3C, symBinAddr: 0x8354, symSize: 0x6C }
+  - { offset: 0x8D27E, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navTitle:]', symObjAddr: 0xAA8, symBinAddr: 0x83C0, symSize: 0x78 }
+  - { offset: 0x8D2C1, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navBarTintColor:]', symObjAddr: 0xB20, symBinAddr: 0x8438, symSize: 0x78 }
+  - { offset: 0x8D304, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navBackgroundColor:]', symObjAddr: 0xB98, symBinAddr: 0x84B0, symSize: 0xAC }
+  - { offset: 0x8D347, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navBackgroundImage:]', symObjAddr: 0xC44, symBinAddr: 0x855C, symSize: 0x7C }
+  - { offset: 0x8D38A, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navShadowColor:]', symObjAddr: 0xCC0, symBinAddr: 0x85D8, symSize: 0xD0 }
+  - { offset: 0x8D3CD, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navShadowImage:]', symObjAddr: 0xD90, symBinAddr: 0x86A8, symSize: 0x78 }
+  - { offset: 0x8D410, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navTintColor:]', symObjAddr: 0xE08, symBinAddr: 0x8720, symSize: 0x78 }
+  - { offset: 0x8D453, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navTitleView:]', symObjAddr: 0xE80, symBinAddr: 0x8798, symSize: 0x78 }
+  - { offset: 0x8D496, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navTitleColor:]', symObjAddr: 0xEF8, symBinAddr: 0x8810, symSize: 0x18C }
+  - { offset: 0x8D4E9, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navTitleFont:]', symObjAddr: 0x1084, symBinAddr: 0x899C, symSize: 0x18C }
+  - { offset: 0x8D53C, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navLeftBarButtonItem:]', symObjAddr: 0x1210, symBinAddr: 0x8B28, symSize: 0x78 }
+  - { offset: 0x8D57F, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navLeftBarButtonItems:]', symObjAddr: 0x1288, symBinAddr: 0x8BA0, symSize: 0x78 }
+  - { offset: 0x8D5C2, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navRightBarButtonItem:]', symObjAddr: 0x1300, symBinAddr: 0x8C18, symSize: 0x78 }
+  - { offset: 0x8D607, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navRightBarButtonItems:]', symObjAddr: 0x1378, symBinAddr: 0x8C90, symSize: 0x78 }
+  - { offset: 0x8D64C, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navLineHidden:]', symObjAddr: 0x13F0, symBinAddr: 0x8D08, symSize: 0x1B4 }
+  - { offset: 0x8D6A5, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navigationBar:]', symObjAddr: 0x15A4, symBinAddr: 0x8EBC, symSize: 0x14 }
+  - { offset: 0x8D6E6, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController setGk_navigationItem:]', symObjAddr: 0x15B8, symBinAddr: 0x8ED0, symSize: 0x14 }
+  - { offset: 0x8D727, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navBarTintColor]', symObjAddr: 0x15CC, symBinAddr: 0x8EE4, symSize: 0x10 }
+  - { offset: 0x8D75E, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navBackgroundColor]', symObjAddr: 0x15DC, symBinAddr: 0x8EF4, symSize: 0x10 }
+  - { offset: 0x8D795, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navBackgroundImage]', symObjAddr: 0x15EC, symBinAddr: 0x8F04, symSize: 0x10 }
+  - { offset: 0x8D7CC, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navShadowColor]', symObjAddr: 0x15FC, symBinAddr: 0x8F14, symSize: 0x10 }
+  - { offset: 0x8D803, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navShadowImage]', symObjAddr: 0x160C, symBinAddr: 0x8F24, symSize: 0x10 }
+  - { offset: 0x8D83A, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navTintColor]', symObjAddr: 0x161C, symBinAddr: 0x8F34, symSize: 0x10 }
+  - { offset: 0x8D871, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navTitleView]', symObjAddr: 0x162C, symBinAddr: 0x8F44, symSize: 0x10 }
+  - { offset: 0x8D8A8, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navTitleColor]', symObjAddr: 0x163C, symBinAddr: 0x8F54, symSize: 0x10 }
+  - { offset: 0x8D8DF, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navTitleFont]', symObjAddr: 0x164C, symBinAddr: 0x8F64, symSize: 0x10 }
+  - { offset: 0x8D916, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navLeftBarButtonItem]', symObjAddr: 0x165C, symBinAddr: 0x8F74, symSize: 0x10 }
+  - { offset: 0x8D94D, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navLeftBarButtonItems]', symObjAddr: 0x166C, symBinAddr: 0x8F84, symSize: 0x10 }
+  - { offset: 0x8D984, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navRightBarButtonItem]', symObjAddr: 0x167C, symBinAddr: 0x8F94, symSize: 0x10 }
+  - { offset: 0x8D9BB, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navRightBarButtonItems]', symObjAddr: 0x168C, symBinAddr: 0x8FA4, symSize: 0x10 }
+  - { offset: 0x8D9F2, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navTitle]', symObjAddr: 0x169C, symBinAddr: 0x8FB4, symSize: 0x10 }
+  - { offset: 0x8DA29, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController gk_navLineHidden]', symObjAddr: 0x16AC, symBinAddr: 0x8FC4, symSize: 0x10 }
+  - { offset: 0x8DA60, size: 0x8, addend: 0x0, symName: '-[GKNavigationBarViewController .cxx_destruct]', symObjAddr: 0x16BC, symBinAddr: 0x8FD4, symSize: 0x158 }
+  - { offset: 0x8DCC2, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition panGestureAction:]', symObjAddr: 0x0, symBinAddr: 0x912C, symSize: 0x8F8 }
+  - { offset: 0x8DDEA, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition panGestureAction:]', symObjAddr: 0x0, symBinAddr: 0x912C, symSize: 0x8F8 }
+  - { offset: 0x8DEF1, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition pushScrollBegan]', symObjAddr: 0x8F8, symBinAddr: 0x9A24, symSize: 0x12C }
+  - { offset: 0x8DF24, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition pushScrollUpdate:]', symObjAddr: 0xA24, symBinAddr: 0x9B50, symSize: 0x13C }
+  - { offset: 0x8DF67, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition pushScrollEnded:]', symObjAddr: 0xB60, symBinAddr: 0x9C8C, symSize: 0x13C }
+  - { offset: 0x8DFAA, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition popScrollBegan]', symObjAddr: 0xC9C, symBinAddr: 0x9DC8, symSize: 0x12C }
+  - { offset: 0x8DFDD, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition popScrollUpdate:]', symObjAddr: 0xDC8, symBinAddr: 0x9EF4, symSize: 0x13C }
+  - { offset: 0x8E020, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition popScrollEnded:]', symObjAddr: 0xF04, symBinAddr: 0xA030, symSize: 0x13C }
+  - { offset: 0x8E063, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition navigationController:animationControllerForOperation:fromViewController:toViewController:]', symObjAddr: 0x1040, symBinAddr: 0xA16C, symSize: 0x2BC }
+  - { offset: 0x8E0DE, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition navigationController:interactionControllerForAnimationController:]', symObjAddr: 0x12FC, symBinAddr: 0xA428, symSize: 0x164 }
+  - { offset: 0x8E131, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition gestureRecognizerShouldBegin:]', symObjAddr: 0x1460, symBinAddr: 0xA58C, symSize: 0x45C }
+  - { offset: 0x8E1D6, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition gestureRecognizer:shouldRecognizeSimultaneouslyWithGestureRecognizer:]', symObjAddr: 0x18BC, symBinAddr: 0xA9E8, symSize: 0xD8 }
+  - { offset: 0x8E241, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition navigationController]', symObjAddr: 0x1994, symBinAddr: 0xAAC0, symSize: 0x18 }
+  - { offset: 0x8E278, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setNavigationController:]', symObjAddr: 0x19AC, symBinAddr: 0xAAD8, symSize: 0xC }
+  - { offset: 0x8E2B9, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition systemTarget]', symObjAddr: 0x19B8, symBinAddr: 0xAAE4, symSize: 0x18 }
+  - { offset: 0x8E2F0, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setSystemTarget:]', symObjAddr: 0x19D0, symBinAddr: 0xAAFC, symSize: 0xC }
+  - { offset: 0x8E331, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition systemAction]', symObjAddr: 0x19DC, symBinAddr: 0xAB08, symSize: 0x8 }
+  - { offset: 0x8E368, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setSystemAction:]', symObjAddr: 0x19E4, symBinAddr: 0xAB10, symSize: 0x8 }
+  - { offset: 0x8E3A5, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition visibleVC]', symObjAddr: 0x19EC, symBinAddr: 0xAB18, symSize: 0x18 }
+  - { offset: 0x8E3DC, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setVisibleVC:]', symObjAddr: 0x1A04, symBinAddr: 0xAB30, symSize: 0xC }
+  - { offset: 0x8E41D, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition isGesturePush]', symObjAddr: 0x1A10, symBinAddr: 0xAB3C, symSize: 0x8 }
+  - { offset: 0x8E454, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setIsGesturePush:]', symObjAddr: 0x1A18, symBinAddr: 0xAB44, symSize: 0x8 }
+  - { offset: 0x8E48F, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition pushTransition]', symObjAddr: 0x1A20, symBinAddr: 0xAB4C, symSize: 0x8 }
+  - { offset: 0x8E4C6, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setPushTransition:]', symObjAddr: 0x1A28, symBinAddr: 0xAB54, symSize: 0xC }
+  - { offset: 0x8E507, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition popTransition]', symObjAddr: 0x1A34, symBinAddr: 0xAB60, symSize: 0x8 }
+  - { offset: 0x8E53E, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition setPopTransition:]', symObjAddr: 0x1A3C, symBinAddr: 0xAB68, symSize: 0xC }
+  - { offset: 0x8E57F, size: 0x8, addend: 0x0, symName: '-[GKNavigationInteractiveTransition .cxx_destruct]', symObjAddr: 0x1A48, symBinAddr: 0xAB74, symSize: 0x48 }
+  - { offset: 0x8E62C, size: 0x8, addend: 0x0, symName: '-[GKPopTransitionAnimation animateTransition]', symObjAddr: 0x0, symBinAddr: 0xABBC, symSize: 0x7F8 }
+  - { offset: 0x8E6FE, size: 0x8, addend: 0x0, symName: '-[GKPopTransitionAnimation animateTransition]', symObjAddr: 0x0, symBinAddr: 0xABBC, symSize: 0x7F8 }
+  - { offset: 0x8E7A4, size: 0x8, addend: 0x0, symName: ___Block_byref_object_copy_, symObjAddr: 0x7F8, symBinAddr: 0xB3B4, symSize: 0x10 }
+  - { offset: 0x8E7C9, size: 0x8, addend: 0x0, symName: ___Block_byref_object_dispose_, symObjAddr: 0x808, symBinAddr: 0xB3C4, symSize: 0x8 }
+  - { offset: 0x8E7E8, size: 0x8, addend: 0x0, symName: '___45-[GKPopTransitionAnimation animateTransition]_block_invoke', symObjAddr: 0x810, symBinAddr: 0xB3CC, symSize: 0x12C }
+  - { offset: 0x8E857, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40r, symObjAddr: 0x93C, symBinAddr: 0xB4F8, symSize: 0x34 }
+  - { offset: 0x8E880, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40r, symObjAddr: 0x970, symBinAddr: 0xB52C, symSize: 0x2C }
+  - { offset: 0x8E89F, size: 0x8, addend: 0x0, symName: '___45-[GKPopTransitionAnimation animateTransition]_block_invoke.4', symObjAddr: 0x99C, symBinAddr: 0xB558, symSize: 0x1D4 }
+  - { offset: 0x8EAED, size: 0x8, addend: 0x0, symName: '-[GKPushTransitionAnimation animateTransition]', symObjAddr: 0x0, symBinAddr: 0xB72C, symSize: 0x6B8 }
+  - { offset: 0x8EBBF, size: 0x8, addend: 0x0, symName: '-[GKPushTransitionAnimation animateTransition]', symObjAddr: 0x0, symBinAddr: 0xB72C, symSize: 0x6B8 }
+  - { offset: 0x8EC56, size: 0x8, addend: 0x0, symName: ___Block_byref_object_copy_, symObjAddr: 0x6B8, symBinAddr: 0xBDE4, symSize: 0x10 }
+  - { offset: 0x8EC7B, size: 0x8, addend: 0x0, symName: ___Block_byref_object_dispose_, symObjAddr: 0x6C8, symBinAddr: 0xBDF4, symSize: 0x8 }
+  - { offset: 0x8EC9A, size: 0x8, addend: 0x0, symName: '___46-[GKPushTransitionAnimation animateTransition]_block_invoke', symObjAddr: 0x6D0, symBinAddr: 0xBDFC, symSize: 0x1E8 }
+  - { offset: 0x8ED28, size: 0x8, addend: 0x0, symName: '___46-[GKPushTransitionAnimation animateTransition]_block_invoke.4', symObjAddr: 0x918, symBinAddr: 0xBFE4, symSize: 0x1D4 }
+  - { offset: 0x8EF7B, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithTitle:imageName:target:action:]', symObjAddr: 0x0, symBinAddr: 0xC1B8, symSize: 0xF8 }
+  - { offset: 0x8EF89, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithTitle:imageName:target:action:]', symObjAddr: 0x0, symBinAddr: 0xC1B8, symSize: 0xF8 }
+  - { offset: 0x8F010, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithTitle:image:target:action:]', symObjAddr: 0xF8, symBinAddr: 0xC2B0, symSize: 0x20 }
+  - { offset: 0x8F081, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithImageName:target:action:]', symObjAddr: 0x118, symBinAddr: 0xC2D0, symSize: 0xE0 }
+  - { offset: 0x8F0F8, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithImageName:highLightImageName:target:action:]', symObjAddr: 0x1F8, symBinAddr: 0xC3B0, symSize: 0x144 }
+  - { offset: 0x8F18F, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithTitle:target:action:]', symObjAddr: 0x33C, symBinAddr: 0xC4F4, symSize: 0x24 }
+  - { offset: 0x8F1F2, size: 0x8, addend: 0x0, symName: '+[UIBarButtonItem(GKCategory) itemWithTitle:image:highLightImage:target:action:]', symObjAddr: 0x360, symBinAddr: 0xC518, symSize: 0x1A4 }
+  - { offset: 0x8F315, size: 0x8, addend: 0x0, symName: '+[UIImage(GKCategory) gk_imageNamed:]', symObjAddr: 0x0, symBinAddr: 0xC6BC, symSize: 0x118 }
+  - { offset: 0x8F323, size: 0x8, addend: 0x0, symName: '+[UIImage(GKCategory) gk_imageNamed:]', symObjAddr: 0x0, symBinAddr: 0xC6BC, symSize: 0x118 }
+  - { offset: 0x8F376, size: 0x8, addend: 0x0, symName: '+[UIImage(GKCategory) gk_imageWithColor:]', symObjAddr: 0x118, symBinAddr: 0xC7D4, symSize: 0x1C }
+  - { offset: 0x8F3B9, size: 0x8, addend: 0x0, symName: '+[UIImage(GKCategory) gk_imageWithColor:size:]', symObjAddr: 0x134, symBinAddr: 0xC7F0, symSize: 0xB4 }
+  - { offset: 0x8F502, size: 0x8, addend: 0x0, symName: '+[UIImage(GKCategory) gk_changeImage:color:]', symObjAddr: 0x1E8, symBinAddr: 0xC8A4, symSize: 0x140 }
+  - { offset: 0x8F739, size: 0x8, addend: 0x0, symName: '+[UINavigationController(GKCategory) rootVC:]', symObjAddr: 0x0, symBinAddr: 0xC9E4, symSize: 0x5C }
+  - { offset: 0x8F747, size: 0x8, addend: 0x0, symName: '+[UINavigationController(GKCategory) load]', symObjAddr: 0x178, symBinAddr: 0xCB5C, symSize: 0x7C }
+  - { offset: 0x8F76D, size: 0x8, addend: 0x0, symName: _load.onceToken, symObjAddr: 0x9718, symBinAddr: 0x34018, symSize: 0x0 }
+  - { offset: 0x8F7D1, size: 0x8, addend: 0x0, symName: _kAssociatedObjectKey_interactiveTransition, symObjAddr: 0x9720, symBinAddr: 0x34020, symSize: 0x0 }
+  - { offset: 0x8F7E2, size: 0x8, addend: 0x0, symName: '+[UINavigationController(GKCategory) rootVC:]', symObjAddr: 0x0, symBinAddr: 0xC9E4, symSize: 0x5C }
+  - { offset: 0x8F829, size: 0x8, addend: 0x0, symName: '+[UINavigationController(GKCategory) rootVC:translationScale:]', symObjAddr: 0x5C, symBinAddr: 0xCA40, symSize: 0x68 }
+  - { offset: 0x8F880, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) initWithRootVC:translationScale:]', symObjAddr: 0xC4, symBinAddr: 0xCAA8, symSize: 0xB4 }
+  - { offset: 0x8F926, size: 0x8, addend: 0x0, symName: '___42+[UINavigationController(GKCategory) load]_block_invoke', symObjAddr: 0x1F4, symBinAddr: 0xCBD8, symSize: 0x6C }
+  - { offset: 0x8FA38, size: 0x8, addend: 0x0, symName: '___42+[UINavigationController(GKCategory) load]_block_invoke_2', symObjAddr: 0x260, symBinAddr: 0xCC44, symSize: 0x160 }
+  - { offset: 0x8FD02, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gkNav_viewDidLoad]', symObjAddr: 0x3C0, symBinAddr: 0xCDA4, symSize: 0x18C }
+  - { offset: 0x8FD35, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gkNav_pushViewController:animated:]', symObjAddr: 0x54C, symBinAddr: 0xCF30, symSize: 0x80 }
+  - { offset: 0x8FD88, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gkNav_navigationBar:shouldPopItem:]', symObjAddr: 0x5CC, symBinAddr: 0xCFB0, symSize: 0x33C }
+  - { offset: 0x8FE2C, size: 0x8, addend: 0x0, symName: '___72-[UINavigationController(GKCategory) gkNav_navigationBar:shouldPopItem:]_block_invoke', symObjAddr: 0x908, symBinAddr: 0xD2EC, symSize: 0x34 }
+  - { offset: 0x8FE6B, size: 0x8, addend: 0x0, symName: '___72-[UINavigationController(GKCategory) gkNav_navigationBar:shouldPopItem:]_block_invoke.20', symObjAddr: 0x94C, symBinAddr: 0xD320, symSize: 0x1C }
+  - { offset: 0x8FEA6, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gkNav_dealloc]', symObjAddr: 0x968, symBinAddr: 0xD33C, symSize: 0x68 }
+  - { offset: 0x8FED9, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) handleNotification:]', symObjAddr: 0x9D0, symBinAddr: 0xD3A4, symSize: 0x590 }
+  - { offset: 0x8FF40, size: 0x8, addend: 0x0, symName: '___57-[UINavigationController(GKCategory) handleNotification:]_block_invoke', symObjAddr: 0xF60, symBinAddr: 0xD934, symSize: 0x160 }
+  - { offset: 0x8FFE6, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gk_translationScale]', symObjAddr: 0x1120, symBinAddr: 0xDA94, symSize: 0x4C }
+  - { offset: 0x9007D, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gk_openScrollLeftPush]', symObjAddr: 0x116C, symBinAddr: 0xDAE0, symSize: 0x4C }
+  - { offset: 0x900D7, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gk_openGestureHandle]', symObjAddr: 0x11B8, symBinAddr: 0xDB2C, symSize: 0x4C }
+  - { offset: 0x90131, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) gk_openSystemNavHandle]', symObjAddr: 0x1204, symBinAddr: 0xDB78, symSize: 0x4C }
+  - { offset: 0x9018B, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) screenPanGesture]', symObjAddr: 0x1250, symBinAddr: 0xDBC4, symSize: 0xEC }
+  - { offset: 0x9023D, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) panGesture]', symObjAddr: 0x133C, symBinAddr: 0xDCB0, symSize: 0xEC }
+  - { offset: 0x902D1, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) interactiveTransition]', symObjAddr: 0x1428, symBinAddr: 0xDD9C, symSize: 0xD0 }
+  - { offset: 0x90352, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) systemTarget]', symObjAddr: 0x14F8, symBinAddr: 0xDE6C, symSize: 0xA0 }
+  - { offset: 0x903A9, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) systemAction]', symObjAddr: 0x1598, symBinAddr: 0xDF0C, symSize: 0x1C }
+  - { offset: 0x903EA, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) setGk_translationScale:]', symObjAddr: 0x15B4, symBinAddr: 0xDF28, symSize: 0x6C }
+  - { offset: 0x90457, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) setGk_openScrollLeftPush:]', symObjAddr: 0x1620, symBinAddr: 0xDF94, symSize: 0x6C }
+  - { offset: 0x904C4, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) setGk_openGestureHandle:]', symObjAddr: 0x168C, symBinAddr: 0xE000, symSize: 0x6C }
+  - { offset: 0x90531, size: 0x8, addend: 0x0, symName: '-[UINavigationController(GKCategory) setGk_openSystemNavHandle:]', symObjAddr: 0x16F8, symBinAddr: 0xE06C, symSize: 0x6C }
+  - { offset: 0x90984, size: 0x8, addend: 0x0, symName: '+[UINavigationItem(GKCategory) load]', symObjAddr: 0x0, symBinAddr: 0xE0D8, symSize: 0x20 }
+  - { offset: 0x909C7, size: 0x8, addend: 0x0, symName: '+[NSObject(GKCategory) load]', symObjAddr: 0x718, symBinAddr: 0xE7F0, symSize: 0x38 }
+  - { offset: 0x909ED, size: 0x8, addend: 0x0, symName: _load.onceToken.36, symObjAddr: 0x6C40, symBinAddr: 0x34028, symSize: 0x0 }
+  - { offset: 0x90A28, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setLeftBarButtonItem:]', symObjAddr: 0x20, symBinAddr: 0xE0F8, symSize: 0x18 }
+  - { offset: 0x90A67, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setLeftBarButtonItem:animated:]', symObjAddr: 0x38, symBinAddr: 0xE110, symSize: 0x148 }
+  - { offset: 0x90ABA, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setLeftBarButtonItems:]', symObjAddr: 0x180, symBinAddr: 0xE258, symSize: 0x18 }
+  - { offset: 0x90AF9, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setLeftBarButtonItems:animated:]', symObjAddr: 0x198, symBinAddr: 0xE270, symSize: 0x1D4 }
+  - { offset: 0x90B92, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setRightBarButtonItem:]', symObjAddr: 0x36C, symBinAddr: 0xE444, symSize: 0x18 }
+  - { offset: 0x90BD1, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setRightBarButtonItem:animated:]', symObjAddr: 0x384, symBinAddr: 0xE45C, symSize: 0x148 }
+  - { offset: 0x90C24, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setRightBarButtonItems:]', symObjAddr: 0x4CC, symBinAddr: 0xE5A4, symSize: 0x18 }
+  - { offset: 0x90C63, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) gk_setRightBarButtonItems:animated:]', symObjAddr: 0x4E4, symBinAddr: 0xE5BC, symSize: 0x1D4 }
+  - { offset: 0x90CFC, size: 0x8, addend: 0x0, symName: '-[UINavigationItem(GKCategory) fixedSpaceWithWidth:]', symObjAddr: 0x6B8, symBinAddr: 0xE790, symSize: 0x60 }
+  - { offset: 0x90D8A, size: 0x8, addend: 0x0, symName: '+[NSObject(GKCategory) load].cold.1', symObjAddr: 0xF90, symBinAddr: 0x15C74, symSize: 0x14 }
+  - { offset: 0x90DA6, size: 0x8, addend: 0x0, symName: '+[NSObject(GKCategory) load].cold.1', symObjAddr: 0xF90, symBinAddr: 0x15C74, symSize: 0x14 }
+  - { offset: 0x90DB8, size: 0x8, addend: 0x0, symName: '___28+[NSObject(GKCategory) load]_block_invoke', symObjAddr: 0x750, symBinAddr: 0xE828, symSize: 0x30 }
+  - { offset: 0x90EB2, size: 0x8, addend: 0x0, symName: '___28+[NSObject(GKCategory) load]_block_invoke_2', symObjAddr: 0x780, symBinAddr: 0xE858, symSize: 0x198 }
+  - { offset: 0x9118C, size: 0x8, addend: 0x0, symName: '-[NSObject(GKCategory) gk_layoutSubviews]', symObjAddr: 0x918, symBinAddr: 0xE9F0, symSize: 0x118 }
+  - { offset: 0x91236, size: 0x8, addend: 0x0, symName: '-[NSObject(GKCategory) gk__updateMarginConstraints]', symObjAddr: 0xA30, symBinAddr: 0xEB08, symSize: 0xC0 }
+  - { offset: 0x91277, size: 0x8, addend: 0x0, symName: '-[NSObject(GKCategory) gk_adjustLeadingBarConstraints]', symObjAddr: 0xAF0, symBinAddr: 0xEBC8, symSize: 0x248 }
+  - { offset: 0x912E1, size: 0x8, addend: 0x0, symName: '-[NSObject(GKCategory) gk_adjustTrailingBarConstraints]', symObjAddr: 0xD38, symBinAddr: 0xEE10, symSize: 0x248 }
+  - { offset: 0x914D9, size: 0x8, addend: 0x0, symName: '+[UIScrollView(GKCategory) load]', symObjAddr: 0x0, symBinAddr: 0xF058, symSize: 0x7C }
+  - { offset: 0x914E7, size: 0x8, addend: 0x0, symName: '+[UIScrollView(GKCategory) load]', symObjAddr: 0x0, symBinAddr: 0xF058, symSize: 0x7C }
+  - { offset: 0x9150D, size: 0x8, addend: 0x0, symName: _load.onceToken, symObjAddr: 0x4708, symBinAddr: 0x34030, symSize: 0x0 }
+  - { offset: 0x915BA, size: 0x8, addend: 0x0, symName: '___32+[UIScrollView(GKCategory) load]_block_invoke', symObjAddr: 0x7C, symBinAddr: 0xF0D4, symSize: 0x6C }
+  - { offset: 0x916CC, size: 0x8, addend: 0x0, symName: '___32+[UIScrollView(GKCategory) load]_block_invoke_2', symObjAddr: 0xE8, symBinAddr: 0xF140, symSize: 0x160 }
+  - { offset: 0x9199D, size: 0x8, addend: 0x0, symName: '-[UIScrollView(GKCategory) gkGesture_willMoveToSuperview:]', symObjAddr: 0x248, symBinAddr: 0xF2A0, symSize: 0xC4 }
+  - { offset: 0x919E0, size: 0x8, addend: 0x0, symName: '-[UIScrollView(GKCategory) setGk_openGestureHandle:]', symObjAddr: 0x30C, symBinAddr: 0xF364, symSize: 0x60 }
+  - { offset: 0x91A83, size: 0x8, addend: 0x0, symName: '-[UIScrollView(GKCategory) gk_openGestureHandle]', symObjAddr: 0x36C, symBinAddr: 0xF3C4, symSize: 0x54 }
+  - { offset: 0x91AE9, size: 0x8, addend: 0x0, symName: '-[UIScrollView(GKCategory) gestureRecognizerShouldBegin:]', symObjAddr: 0x3C0, symBinAddr: 0xF418, symSize: 0x90 }
+  - { offset: 0x91B30, size: 0x8, addend: 0x0, symName: '-[UIScrollView(GKCategory) gestureRecognizer:shouldRecognizeSimultaneouslyWithGestureRecognizer:]', symObjAddr: 0x450, symBinAddr: 0xF4A8, symSize: 0x8C }
+  - { offset: 0x91B83, size: 0x8, addend: 0x0, symName: '-[UIScrollView(GKCategory) panBack:]', symObjAddr: 0x4DC, symBinAddr: 0xF534, symSize: 0x1A0 }
+  - { offset: 0x91D8C, size: 0x8, addend: 0x0, symName: '+[UIViewController(GKGesture) load]', symObjAddr: 0x0, symBinAddr: 0xF6D4, symSize: 0x7C }
+  - { offset: 0x91DA6, size: 0x8, addend: 0x0, symName: _GKViewControllerPropertyChangedNotification, symObjAddr: 0x2A90, symBinAddr: 0x20538, symSize: 0x0 }
+  - { offset: 0x91DBA, size: 0x8, addend: 0x0, symName: '+[UIViewController(GKGesture) load]', symObjAddr: 0x0, symBinAddr: 0xF6D4, symSize: 0x7C }
+  - { offset: 0x91DE0, size: 0x8, addend: 0x0, symName: _load.onceToken, symObjAddr: 0x10D70, symBinAddr: 0x34038, symSize: 0x0 }
+  - { offset: 0x91E38, size: 0x8, addend: 0x0, symName: '+[UIViewController(GKCategory) load]', symObjAddr: 0xACC, symBinAddr: 0x101A0, symSize: 0x7C }
+  - { offset: 0x91E5E, size: 0x8, addend: 0x0, symName: _load.onceToken.102, symObjAddr: 0x10D80, symBinAddr: 0x34048, symSize: 0x0 }
+  - { offset: 0x91EDD, size: 0x8, addend: 0x0, symName: _kAssociatedObjectKey_hasPushDelegate, symObjAddr: 0x10D78, symBinAddr: 0x34040, symSize: 0x0 }
+  - { offset: 0x91EFA, size: 0x8, addend: 0x0, symName: _kAssociatedObjectKey_hasPopDelegate, symObjAddr: 0x10D79, symBinAddr: 0x34041, symSize: 0x0 }
+  - { offset: 0x920D1, size: 0x8, addend: 0x0, symName: '___35+[UIViewController(GKGesture) load]_block_invoke', symObjAddr: 0x7C, symBinAddr: 0xF750, symSize: 0x6C }
+  - { offset: 0x9212F, size: 0x8, addend: 0x0, symName: '___35+[UIViewController(GKGesture) load]_block_invoke_2', symObjAddr: 0xE8, symBinAddr: 0xF7BC, symSize: 0x28 }
+  - { offset: 0x921AD, size: 0x8, addend: 0x0, symName: _gk_swizzled_method, symObjAddr: 0x110, symBinAddr: 0xF7E4, symSize: 0x150 }
+  - { offset: 0x92479, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gkGesture_viewWillAppear:]', symObjAddr: 0x260, symBinAddr: 0xF934, symSize: 0x9C }
+  - { offset: 0x924BC, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gkGesture_viewDidAppear:]', symObjAddr: 0x2FC, symBinAddr: 0xF9D0, symSize: 0xD8 }
+  - { offset: 0x924FF, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gkGesture_viewDidDisappear:]', symObjAddr: 0x3D4, symBinAddr: 0xFAA8, symSize: 0xCC }
+  - { offset: 0x92542, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_interactivePopDisabled]', symObjAddr: 0x4A0, symBinAddr: 0xFB74, symSize: 0x54 }
+  - { offset: 0x925C7, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_interactivePopDisabled:]', symObjAddr: 0x4F4, symBinAddr: 0xFBC8, symSize: 0x68 }
+  - { offset: 0x9264B, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_fullScreenPopDisabled]', symObjAddr: 0x55C, symBinAddr: 0xFC30, symSize: 0x54 }
+  - { offset: 0x92699, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_fullScreenPopDisabled:]', symObjAddr: 0x5B0, symBinAddr: 0xFC84, symSize: 0x68 }
+  - { offset: 0x926FF, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_systemGestureHandleDisabled]', symObjAddr: 0x618, symBinAddr: 0xFCEC, symSize: 0x54 }
+  - { offset: 0x9274D, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_systemGestureHandleDisabled:]', symObjAddr: 0x66C, symBinAddr: 0xFD40, symSize: 0x60 }
+  - { offset: 0x927B3, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_popMaxAllowedDistanceToLeftEdge]', symObjAddr: 0x6CC, symBinAddr: 0xFDA0, symSize: 0x5C }
+  - { offset: 0x92801, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_popMaxAllowedDistanceToLeftEdge:]', symObjAddr: 0x728, symBinAddr: 0xFDFC, symSize: 0x68 }
+  - { offset: 0x92867, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_pushDelegate]', symObjAddr: 0x790, symBinAddr: 0xFE64, symSize: 0x1C }
+  - { offset: 0x928B3, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_pushDelegate:]', symObjAddr: 0x7AC, symBinAddr: 0xFE80, symSize: 0x20 }
+  - { offset: 0x92917, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_popDelegate]', symObjAddr: 0x7CC, symBinAddr: 0xFEA0, symSize: 0x1C }
+  - { offset: 0x92963, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_popDelegate:]', symObjAddr: 0x7E8, symBinAddr: 0xFEBC, symSize: 0x20 }
+  - { offset: 0x929C7, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_pushTransition]', symObjAddr: 0x808, symBinAddr: 0xFEDC, symSize: 0x1C }
+  - { offset: 0x92A13, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_pushTransition:]', symObjAddr: 0x824, symBinAddr: 0xFEF8, symSize: 0x20 }
+  - { offset: 0x92A77, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) gk_popTransition]', symObjAddr: 0x844, symBinAddr: 0xFF18, symSize: 0x1C }
+  - { offset: 0x92AC3, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setGk_popTransition:]', symObjAddr: 0x860, symBinAddr: 0xFF34, symSize: 0x20 }
+  - { offset: 0x92B27, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) hasPushDelegate]', symObjAddr: 0x880, symBinAddr: 0xFF54, symSize: 0x54 }
+  - { offset: 0x92B75, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setHasPushDelegate:]', symObjAddr: 0x8D4, symBinAddr: 0xFFA8, symSize: 0x60 }
+  - { offset: 0x92BDB, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) hasPopDelegate]', symObjAddr: 0x934, symBinAddr: 0x10008, symSize: 0x54 }
+  - { offset: 0x92C29, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) setHasPopDelegate:]', symObjAddr: 0x988, symBinAddr: 0x1005C, symSize: 0x60 }
+  - { offset: 0x92C8F, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) navigationShouldPop]', symObjAddr: 0x9E8, symBinAddr: 0x100BC, symSize: 0x18 }
+  - { offset: 0x92CC2, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKGesture) postPropertyChangeNotification]', symObjAddr: 0xA00, symBinAddr: 0x100D4, symSize: 0xCC }
+  - { offset: 0x92CF5, size: 0x8, addend: 0x0, symName: '___36+[UIViewController(GKCategory) load]_block_invoke', symObjAddr: 0xB48, symBinAddr: 0x1021C, symSize: 0x6C }
+  - { offset: 0x92D53, size: 0x8, addend: 0x0, symName: '___36+[UIViewController(GKCategory) load]_block_invoke_2', symObjAddr: 0xBB4, symBinAddr: 0x10288, symSize: 0x28 }
+  - { offset: 0x92DD1, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_viewDidLoad]', symObjAddr: 0xBDC, symBinAddr: 0x102B0, symSize: 0x168 }
+  - { offset: 0x92E04, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_viewWillAppear:]', symObjAddr: 0xD44, symBinAddr: 0x10418, symSize: 0x338 }
+  - { offset: 0x92E68, size: 0x8, addend: 0x0, symName: '___50-[UIViewController(GKCategory) gk_viewWillAppear:]_block_invoke', symObjAddr: 0x107C, symBinAddr: 0x10750, symSize: 0x4C }
+  - { offset: 0x92EB7, size: 0x8, addend: 0x0, symName: '___50-[UIViewController(GKCategory) gk_viewWillAppear:]_block_invoke.118', symObjAddr: 0x10D8, symBinAddr: 0x1079C, symSize: 0x4C }
+  - { offset: 0x92F06, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) prefersStatusBarHidden]', symObjAddr: 0x1124, symBinAddr: 0x107E8, symSize: 0x14 }
+  - { offset: 0x92F3C, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) preferredStatusBarStyle]', symObjAddr: 0x1138, symBinAddr: 0x107FC, symSize: 0x14 }
+  - { offset: 0x92F72, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_navBarAlpha]', symObjAddr: 0x114C, symBinAddr: 0x10810, symSize: 0x7C }
+  - { offset: 0x92FD2, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_navBarAlpha:]', symObjAddr: 0x11C8, symBinAddr: 0x1088C, symSize: 0x78 }
+  - { offset: 0x9303A, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_statusBarStyle]', symObjAddr: 0x1240, symBinAddr: 0x10904, symSize: 0xA0 }
+  - { offset: 0x9309A, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_statusBarStyle:]', symObjAddr: 0x12E0, symBinAddr: 0x109A4, symSize: 0x68 }
+  - { offset: 0x93102, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_statusBarHidden]', symObjAddr: 0x1348, symBinAddr: 0x10A0C, symSize: 0xA0 }
+  - { offset: 0x93162, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_statusBarHidden:]', symObjAddr: 0x13E8, symBinAddr: 0x10AAC, symSize: 0x68 }
+  - { offset: 0x931CA, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_backStyle]', symObjAddr: 0x1450, symBinAddr: 0x10B14, symSize: 0xA0 }
+  - { offset: 0x9322A, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_backStyle:]', symObjAddr: 0x14F0, symBinAddr: 0x10BB4, symSize: 0x88 }
+  - { offset: 0x93292, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_backImage]', symObjAddr: 0x1578, symBinAddr: 0x10C3C, symSize: 0x1C }
+  - { offset: 0x932DF, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_backImage:]', symObjAddr: 0x1594, symBinAddr: 0x10C58, symSize: 0x60 }
+  - { offset: 0x93347, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_disableFixNavItemSpace]', symObjAddr: 0x15F4, symBinAddr: 0x10CB8, symSize: 0x54 }
+  - { offset: 0x93396, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_disableFixNavItemSpace:]', symObjAddr: 0x1648, symBinAddr: 0x10D0C, symSize: 0x10C }
+  - { offset: 0x933FE, size: 0x8, addend: 0x0, symName: '___61-[UIViewController(GKCategory) setGk_disableFixNavItemSpace:]_block_invoke', symObjAddr: 0x1754, symBinAddr: 0x10E18, symSize: 0x1C }
+  - { offset: 0x9344D, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_navItemLeftSpace]', symObjAddr: 0x1770, symBinAddr: 0x10E34, symSize: 0x5C }
+  - { offset: 0x9349C, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_navItemLeftSpace:]', symObjAddr: 0x17CC, symBinAddr: 0x10E90, symSize: 0xF0 }
+  - { offset: 0x93504, size: 0x8, addend: 0x0, symName: '___55-[UIViewController(GKCategory) setGk_navItemLeftSpace:]_block_invoke', symObjAddr: 0x18BC, symBinAddr: 0x10F80, symSize: 0x1C }
+  - { offset: 0x93553, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_navItemRightSpace]', symObjAddr: 0x18D8, symBinAddr: 0x10F9C, symSize: 0x5C }
+  - { offset: 0x935A2, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setGk_navItemRightSpace:]', symObjAddr: 0x1934, symBinAddr: 0x10FF8, symSize: 0xF0 }
+  - { offset: 0x9360A, size: 0x8, addend: 0x0, symName: '___56-[UIViewController(GKCategory) setGk_navItemRightSpace:]_block_invoke', symObjAddr: 0x1A24, symBinAddr: 0x110E8, symSize: 0x1C }
+  - { offset: 0x93659, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) backItemClick:]', symObjAddr: 0x1A40, symBinAddr: 0x11104, symSize: 0xC4 }
+  - { offset: 0x936AB, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) gk_visibleViewControllerIfExist]', symObjAddr: 0x1B04, symBinAddr: 0x111C8, symSize: 0x1E4 }
+  - { offset: 0x93701, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) checkFixNavItemSpace]', symObjAddr: 0x1CE8, symBinAddr: 0x113AC, symSize: 0xF8 }
+  - { offset: 0x9374E, size: 0x8, addend: 0x0, symName: '___52-[UIViewController(GKCategory) checkFixNavItemSpace]_block_invoke', symObjAddr: 0x1DE0, symBinAddr: 0x114A4, symSize: 0x160 }
+  - { offset: 0x937EC, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) navItemSpaceChangeIfNeeded]', symObjAddr: 0x1FA0, symBinAddr: 0x11604, symSize: 0x9C }
+  - { offset: 0x93824, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setNavBarAlpha:]', symObjAddr: 0x203C, symBinAddr: 0x116A0, symSize: 0x218 }
+  - { offset: 0x938EB, size: 0x8, addend: 0x0, symName: '-[UIViewController(GKCategory) setBackItemImage:]', symObjAddr: 0x2254, symBinAddr: 0x118B8, symSize: 0x1D0 }
+  - { offset: 0x9400D, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_magic, symObjAddr: 0x28, symBinAddr: 0x11A88, symSize: 0x14 }
+  - { offset: 0x9401F, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_padding_bytes, symObjAddr: 0x44, symBinAddr: 0x11A9C, symSize: 0xC }
+  - { offset: 0x94031, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_version, symObjAddr: 0x50, symBinAddr: 0x11AA8, symSize: 0xC }
+  - { offset: 0x94074, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0x11AB4, symSize: 0xC }
+  - { offset: 0x94082, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0x11AB4, symSize: 0xC }
+  - { offset: 0x940BE, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0x11AC0, symSize: 0xC }
+  - { offset: 0x940CC, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0x11AC0, symSize: 0xC }
+  - { offset: 0x940E5, size: 0x8, addend: 0x0, symName: _getValueProfRecordValueData, symObjAddr: 0x1C, symBinAddr: 0x11ACC, symSize: 0x14 }
+  - { offset: 0x9411C, size: 0x8, addend: 0x0, symName: _getValueProfRecordNext, symObjAddr: 0x170, symBinAddr: 0x11AE0, symSize: 0x15C }
+  - { offset: 0x9415A, size: 0x8, addend: 0x0, symName: _getFirstValueProfRecord, symObjAddr: 0x2CC, symBinAddr: 0x11C3C, symSize: 0x8 }
+  - { offset: 0x94188, size: 0x8, addend: 0x0, symName: _lprofSetupValueProfiler, symObjAddr: 0xA10, symBinAddr: 0x11C44, symSize: 0x68 }
+  - { offset: 0x941F4, size: 0x8, addend: 0x0, symName: ___llvm_profile_instrument_target_value, symObjAddr: 0xD50, symBinAddr: 0x11CAC, symSize: 0x2CC }
+  - { offset: 0x94268, size: 0x8, addend: 0x0, symName: _lprofGetVPDataReader, symObjAddr: 0x1054, symBinAddr: 0x11F78, symSize: 0xC }
+  - { offset: 0x9427A, size: 0x8, addend: 0x0, symName: _initializeValueProfRuntimeRecord, symObjAddr: 0x1060, symBinAddr: 0x11F84, symSize: 0x210 }
+  - { offset: 0x94293, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0x12194, symSize: 0x14 }
+  - { offset: 0x942A9, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0x12194, symSize: 0x14 }
+  - { offset: 0x942BC, size: 0x8, addend: 0x0, symName: _getValueProfDataSizeWrapper, symObjAddr: 0x1284, symBinAddr: 0x121A8, symSize: 0xE0 }
+  - { offset: 0x9435D, size: 0x8, addend: 0x0, symName: _getNumValueSitesRT, symObjAddr: 0x13A0, symBinAddr: 0x122C4, symSize: 0x10 }
+  - { offset: 0x9436F, size: 0x8, addend: 0x0, symName: _getNumValueDataRT, symObjAddr: 0x13B0, symBinAddr: 0x122D4, symSize: 0x148 }
+  - { offset: 0x94381, size: 0x8, addend: 0x0, symName: _getNextNValueData, symObjAddr: 0x1364, symBinAddr: 0x12288, symSize: 0x3C }
+  - { offset: 0x943BD, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0x1241C, symSize: 0x1C }
+  - { offset: 0x943CB, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0x1241C, symSize: 0x1C }
+  - { offset: 0x943DD, size: 0x8, addend: 0x0, symName: ___llvm_profile_enable_continuous_mode, symObjAddr: 0x1C, symBinAddr: 0x12438, symSize: 0x10 }
+  - { offset: 0x943EF, size: 0x8, addend: 0x0, symName: ___llvm_profile_disable_continuous_mode, symObjAddr: 0x2C, symBinAddr: 0x12448, symSize: 0xC }
+  - { offset: 0x94401, size: 0x8, addend: 0x0, symName: ___llvm_profile_set_page_size, symObjAddr: 0x38, symBinAddr: 0x12454, symSize: 0xC }
+  - { offset: 0x94413, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer, symObjAddr: 0x44, symBinAddr: 0x12460, symSize: 0xC8 }
+  - { offset: 0x94510, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer_internal, symObjAddr: 0x10C, symBinAddr: 0x12528, symSize: 0x1C8 }
+  - { offset: 0x94777, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_data, symObjAddr: 0x2D4, symBinAddr: 0x126F0, symSize: 0x10 }
+  - { offset: 0x94789, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0x12700, symSize: 0x10 }
+  - { offset: 0x9479F, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0x12700, symSize: 0x10 }
+  - { offset: 0x947B1, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_vtable, symObjAddr: 0x2F4, symBinAddr: 0x12710, symSize: 0x18 }
+  - { offset: 0x947C3, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_vtable_section_size, symObjAddr: 0x30C, symBinAddr: 0x12728, symSize: 0x8 }
+  - { offset: 0x947D5, size: 0x8, addend: 0x0, symName: ___llvm_profile_counter_entry_size, symObjAddr: 0x314, symBinAddr: 0x12730, symSize: 0x20 }
+  - { offset: 0x947F6, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_counters, symObjAddr: 0x334, symBinAddr: 0x12750, symSize: 0x4C }
+  - { offset: 0x9484F, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_counters_size, symObjAddr: 0x380, symBinAddr: 0x1279C, symSize: 0x5C }
+  - { offset: 0x948E1, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_padding_sizes_for_counters, symObjAddr: 0x3EC, symBinAddr: 0x127F8, symSize: 0x160 }
+  - { offset: 0x949B9, size: 0x8, addend: 0x0, symName: _initBufferWriter, symObjAddr: 0x54C, symBinAddr: 0x12958, symSize: 0x10 }
+  - { offset: 0x94A19, size: 0x8, addend: 0x0, symName: _getCurFilenameLength, symObjAddr: 0x1C0, symBinAddr: 0x12968, symSize: 0x318 }
+  - { offset: 0x94A64, size: 0x8, addend: 0x0, symName: _getCurFilename, symObjAddr: 0x4D8, symBinAddr: 0x12C80, symSize: 0x338 }
+  - { offset: 0x94B68, size: 0x8, addend: 0x0, symName: _parseAndSetFilename, symObjAddr: 0x918, symBinAddr: 0x12FB8, symSize: 0x580 }
+  - { offset: 0x94DD8, size: 0x8, addend: 0x0, symName: _truncateCurrentFile, symObjAddr: 0x1E2C, symBinAddr: 0x13FB4, symSize: 0xCC }
+  - { offset: 0x94E4D, size: 0x8, addend: 0x0, symName: _initializeProfileForContinuousMode, symObjAddr: 0x1EF8, symBinAddr: 0x14080, symSize: 0x250 }
+  - { offset: 0x95066, size: 0x8, addend: 0x0, symName: ___llvm_profile_initialize, symObjAddr: 0xE98, symBinAddr: 0x13538, symSize: 0xBC }
+  - { offset: 0x95124, size: 0x8, addend: 0x0, symName: ___llvm_profile_write_file, symObjAddr: 0xFD8, symBinAddr: 0x135F4, symSize: 0x1B0 }
+  - { offset: 0x951FD, size: 0x8, addend: 0x0, symName: _writeFile, symObjAddr: 0x1188, symBinAddr: 0x137A4, symSize: 0x29C }
+  - { offset: 0x954AF, size: 0x8, addend: 0x0, symName: _createProfileDir, symObjAddr: 0x2148, symBinAddr: 0x142D0, symSize: 0x88 }
+  - { offset: 0x954F4, size: 0x8, addend: 0x0, symName: _getProfileFileSizeForMerging, symObjAddr: 0x18BC, symBinAddr: 0x13A44, symSize: 0x114 }
+  - { offset: 0x95585, size: 0x8, addend: 0x0, symName: _mmapProfileForMerging, symObjAddr: 0x19D0, symBinAddr: 0x13B58, symSize: 0xC0 }
+  - { offset: 0x95645, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0x13A40, symSize: 0x4 }
+  - { offset: 0x9565B, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0x13A40, symSize: 0x4 }
+  - { offset: 0x9566D, size: 0x8, addend: 0x0, symName: _mmapForContinuousMode, symObjAddr: 0x1A90, symBinAddr: 0x13C18, symSize: 0x260 }
+  - { offset: 0x95822, size: 0x8, addend: 0x0, symName: _fileWriter, symObjAddr: 0x1CF0, symBinAddr: 0x13E78, symSize: 0x13C }
+  - { offset: 0x9587F, size: 0x8, addend: 0x0, symName: _exitSignalHandler, symObjAddr: 0x21D0, symBinAddr: 0x14358, symSize: 0x10 }
+  - { offset: 0x958D2, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0x14368, symSize: 0xD4 }
+  - { offset: 0x958E0, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0x14368, symSize: 0xD4 }
+  - { offset: 0x959DF, size: 0x8, addend: 0x0, symName: ___llvm_profile_check_compatibility, symObjAddr: 0xD4, symBinAddr: 0x1443C, symSize: 0x1D8 }
+  - { offset: 0x95B04, size: 0x8, addend: 0x0, symName: ___llvm_profile_merge_from_buffer, symObjAddr: 0x2AC, symBinAddr: 0x14614, symSize: 0x4A4 }
+  - { offset: 0x95C44, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0x14AB8, symSize: 0xF4 }
+  - { offset: 0x95C52, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0x14AB8, symSize: 0xF4 }
+  - { offset: 0x95CEA, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0x14BAC, symSize: 0x70 }
+  - { offset: 0x95CF8, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0x14BAC, symSize: 0x70 }
+  - { offset: 0x95D1F, size: 0x8, addend: 0x0, symName: _lprofBufferIOWrite, symObjAddr: 0x108, symBinAddr: 0x14C1C, symSize: 0x13C }
+  - { offset: 0x95D8A, size: 0x8, addend: 0x0, symName: _lprofWriteData, symObjAddr: 0x308, symBinAddr: 0x14D58, symSize: 0xD8 }
+  - { offset: 0x95E87, size: 0x8, addend: 0x0, symName: _lprofWriteDataImpl, symObjAddr: 0x3E0, symBinAddr: 0x14E30, symSize: 0x320 }
+  - { offset: 0x95F90, size: 0x8, addend: 0x0, symName: _createHeader, symObjAddr: 0x700, symBinAddr: 0x15150, symSize: 0x1A4 }
+  - { offset: 0x96072, size: 0x8, addend: 0x0, symName: _writeValueProfData, symObjAddr: 0x8A4, symBinAddr: 0x152F4, symSize: 0x15C }
+  - { offset: 0x9612C, size: 0x8, addend: 0x0, symName: _writeOneValueProfData, symObjAddr: 0x105C, symBinAddr: 0x15450, symSize: 0x408 }
+  - { offset: 0x962D0, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0x15858, symSize: 0xC }
+  - { offset: 0x962DE, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0x15858, symSize: 0xC }
+  - { offset: 0x962F0, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_data, symObjAddr: 0xC, symBinAddr: 0x15864, symSize: 0xC }
+  - { offset: 0x96302, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_names, symObjAddr: 0x18, symBinAddr: 0x15870, symSize: 0xC }
+  - { offset: 0x96314, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_names, symObjAddr: 0x24, symBinAddr: 0x1587C, symSize: 0xC }
+  - { offset: 0x96326, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_counters, symObjAddr: 0x30, symBinAddr: 0x15888, symSize: 0xC }
+  - { offset: 0x96338, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_counters, symObjAddr: 0x3C, symBinAddr: 0x15894, symSize: 0xC }
+  - { offset: 0x9634A, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_bitmap, symObjAddr: 0x48, symBinAddr: 0x158A0, symSize: 0xC }
+  - { offset: 0x9635C, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_bitmap, symObjAddr: 0x54, symBinAddr: 0x158AC, symSize: 0xC }
+  - { offset: 0x9636E, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtables, symObjAddr: 0x60, symBinAddr: 0x158B8, symSize: 0xC }
+  - { offset: 0x96380, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtables, symObjAddr: 0x6C, symBinAddr: 0x158C4, symSize: 0xC }
+  - { offset: 0x96392, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtabnames, symObjAddr: 0x78, symBinAddr: 0x158D0, symSize: 0xC }
+  - { offset: 0x963A4, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtabnames, symObjAddr: 0x84, symBinAddr: 0x158DC, symSize: 0xC }
+  - { offset: 0x963B6, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vnodes, symObjAddr: 0x9C, symBinAddr: 0x158E8, symSize: 0xC }
+  - { offset: 0x963C8, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vnodes, symObjAddr: 0xA8, symBinAddr: 0x158F4, symSize: 0xC }
+  - { offset: 0x963DA, size: 0x8, addend: 0x0, symName: ___llvm_write_binary_ids, symObjAddr: 0xB4, symBinAddr: 0x15900, symSize: 0x8 }
+  - { offset: 0x96416, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0x15908, symSize: 0x1C }
+  - { offset: 0x96432, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0x15908, symSize: 0x1C }
+  - { offset: 0x964AB, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0x15924, symSize: 0x5C }
+  - { offset: 0x964C0, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0x15924, symSize: 0x5C }
+  - { offset: 0x964FF, size: 0x8, addend: 0x0, symName: _lprofGetHostName, symObjAddr: 0x74, symBinAddr: 0x15980, symSize: 0x80 }
+  - { offset: 0x96549, size: 0x8, addend: 0x0, symName: _lprofLockFileHandle, symObjAddr: 0x214, symBinAddr: 0x15A00, symSize: 0x94 }
+  - { offset: 0x965C7, size: 0x8, addend: 0x0, symName: _lprofUnlockFileHandle, symObjAddr: 0x2A8, symBinAddr: 0x15A94, symSize: 0x94 }
+  - { offset: 0x96635, size: 0x8, addend: 0x0, symName: _lprofOpenFileEx, symObjAddr: 0x33C, symBinAddr: 0x15B28, symSize: 0xD4 }
+  - { offset: 0x966DA, size: 0x8, addend: 0x0, symName: _lprofFindFirstDirSeparator, symObjAddr: 0x554, symBinAddr: 0x15BFC, symSize: 0x8 }
+  - { offset: 0x96703, size: 0x8, addend: 0x0, symName: _lprofInstallSignalHandler, symObjAddr: 0x564, symBinAddr: 0x15C04, symSize: 0x58 }
+  - { offset: 0x9673A, size: 0x8, addend: 0x0, symName: _lprofRestoreSigKill, symObjAddr: 0x5C4, symBinAddr: 0x15C5C, symSize: 0x4 }
+...

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 消息详情 Figma 山西证券新版 node-id=4-907 https://www.figma.com/design/DhDt9rwQ8muDLZ9axrhP5n/?node-id=4-907 -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/message_page_bg">
+
+    <include
+        android:id="@+id/title_bar"
+        layout="@layout/include_title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_message_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/message_detail_h_margin"
+        android:layout_marginTop="@dimen/message_detail_title_top"
+        android:gravity="center"
+        android:textColor="@color/message_title"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/title_bar"
+        tools:text="中签通知" />
+
+    <WebView
+        android:id="@+id/web_message_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="@dimen/message_detail_h_margin"
+        android:layout_marginTop="@dimen/message_detail_content_top"
+        app:layout_constraintBottom_toTopOf="@id/tv_message_time"
+        app:layout_constraintTop_toBottomOf="@id/tv_message_title" />
+
+    <TextView
+        android:id="@+id/tv_message_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/message_detail_h_margin"
+        android:layout_marginTop="@dimen/message_detail_time_top"
+        android:gravity="end"
+        android:textColor="@color/message_empty_text"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/web_message_content"
+        tools:text="时间:2026-01-07 20:37:37" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

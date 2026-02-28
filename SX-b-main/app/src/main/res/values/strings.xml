@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Citic Securities</string>
+    <string name="unknown_host">未连接网络？</string>
+    <string name="tab_home">首页</string>
+    <string name="tab_hq">行情</string>
+    <string name="tab_trade">交易</string>
+    <string name="tab_financial">自选</string>
+    <string name="tab_mine">我的</string>
+    <string name="new_version_title">检测到新版本</string>
+    <string name="new_version_done">立即更新</string>
+    <string name="new_version_cancel">暂不更新</string>
+
+    <!-- About Page -->
+    <string name="about_title">关于我们</string>
+    <string name="about_version">版本 %s</string>
+
+    <!-- Home Page Strings -->
+    <string name="home_search_hint">输入股票代码/简称</string>
+
+    <!-- Home Quick Functions Row 1 -->
+    <string name="home_open_account">极速开户</string>
+    <string name="home_market">市场行情</string>
+    <string name="home_position">持仓记录</string>
+    <string name="home_transfer_in">银证转入</string>
+    <string name="home_transfer_out">银证转出</string>
+
+    <!-- Home Quick Functions Row 2 -->
+    <string name="home_new_stock">新股申购</string>
+    <string name="home_otc">场外撮合交易</string>
+    <string name="home_strategy">战略配售</string>
+    <string name="home_ai">AI智投</string>
+    <string name="home_dragon">龙虎榜</string>
+    <string name="dragon_empty">该日暂无龙虎榜数据</string>
+    <string name="dragon_loading">加载中…</string>
+    <string name="dragon_load_fail">加载失败，请稍后重试</string>
+
+    <!-- Home Fund Flow -->
+    <string name="home_north_fund">北上资金净流入</string>
+    <string name="home_south_fund">南向资金流入</string>
+    <string name="home_main_fund">A股主力净流入</string>
+
+    <!-- Home Cards -->
+    <string name="home_hot_news">直击热点</string>
+    <string name="home_rise_fall">涨平跌分布</string>
+    <string name="home_today_market">今日大盘</string>
+    <string name="home_rise">涨</string>
+    <string name="home_flat">平</string>
+    <string name="home_fall">跌</string>
+
+    <!-- Home News Section -->
+    <string name="home_dynamic">动态</string>
+    <string name="home_7x24">7X24</string>
+    <string name="home_market_news">盘面</string>
+    <string name="home_advisor">投顾</string>
+    <string name="home_important">要闻</string>
+    <string name="home_more">更多</string>
+
+    <!-- User Page Strings -->
+    <string name="user_phone_placeholder">187****7718</string>
+    <string name="user_account_placeholder">T007975614</string>
+
+    <!-- Quick Actions -->
+    <string name="user_transfer_in">银证转入</string>
+    <string name="user_transfer_out">银证转出</string>
+    <string name="user_position">持仓记录</string>
+    <string name="user_online_service">在线客服</string>
+
+    <!-- Assets Section -->
+    <string name="user_my_assets">我的资产</string>
+    <string name="user_assets_value">0.00</string>
+    <string name="user_available">可用</string>
+    <string name="user_withdrawable">可取</string>
+    <string name="user_stock_pledge">新股申购</string>
+    <string name="user_market_value">总市值</string>
+    <string name="user_total_pnl">总盈亏</string>
+    <string name="user_floating_pnl">浮动盈亏</string>
+    <string name="user_fund_record">资金记录</string>
+    <string name="user_trade_record">交易记录</string>
+    <string name="user_position_record">持仓记录</string>
+    <string name="user_ipo_record">打新记录</string>
+    <string name="user_placement_record">配售记录</string>
+    <string name="user_block_trade">大宗交易</string>
+
+    <!-- Functions Section -->
+    <string name="user_my_functions">我的功能</string>
+    <string name="user_realname">实名认证</string>
+    <string name="user_profile">个人资料</string>
+    <string name="user_bank_card">银行卡</string>
+    <string name="user_contract">线上合同</string>
+    <string name="user_login_pwd">登录密码</string>
+    <string name="user_trade_pwd">交易密码</string>
+    <string name="user_customer_service">客服中心</string>
+    <string name="user_logout">退出账户</string>
+    <string name="logout_confirm_message">确定要退出账户吗？</string>
+    <string name="common_dialog_title">提示</string>
+    <string name="common_confirm">确定</string>
+    <string name="common_cancel">取消</string>
+    <string name="login_expired_message">登录失效</string>
+    <string name="login_expired_go_login">去登录</string>
+
+    <!-- Trade Page Strings -->
+    <string name="trade_holding_value">持仓市值（元）</string>
+    <string name="trade_today_pnl">今日盈亏</string>
+    <string name="trade_total_pnl">累计盈亏</string>
+    <string name="trade_holding_pnl">持仓盈亏</string>
+    <string name="trade_account_asset">账户资产</string>
+    <string name="trade_fund_record">资金记录</string>
+    <string name="trade_available_asset">可用资产</string>
+    <string name="trade_bank_transfer_in">银证转入</string>
+
+    <!-- Trade Quick Actions -->
+    <string name="trade_buy">买入</string>
+    <string name="trade_sell">卖出</string>
+    <string name="trade_cancel">撤单</string>
+    <string name="trade_position">持仓</string>
+    <string name="trade_query">查询</string>
+    <string name="trade_order">委托记录</string>
+    <string name="trade_deal">成交</string>
+    <string name="trade_statement">对账单</string>
+    <string name="trade_bank_transfer">银证转账</string>
+    <string name="trade_more">更多</string>
+
+    <!-- Trade Feature Cards -->
+    <string name="trade_new_stock">新股新债</string>
+    <string name="trade_new_stock_desc">%1$d新股，%2$d申购</string>
+    <string name="trade_otc">场外撮合交易</string>
+    <string name="trade_no_stock">暂无股票</string>
+    <string name="trade_treasury">国债逆回购</string>
+    <string name="trade_annual_rate">年化利率</string>
+    <string name="trade_wealth">智慧汇现金理财</string>
+
+    <!-- Trade Menu Items -->
+    <string name="trade_menu_sci_tech">科创板</string>
+    <string name="trade_menu_dragon">龙虎榜</string>
+    <string name="trade_menu_notification">消息通知</string>
+    <string name="trade_menu_change_pwd">修改交易密码</string>
+    <string name="trade_menu_bank_card">银行卡管理</string>
+    <string name="trade_menu_transfer_out">银证转出</string>
+    <string name="trade_menu_more">更多功能</string>
+
+    <!-- Profile Page Strings -->
+    <string name="profile_title">个人资料</string>
+    <string name="profile_change_avatar">点击更换头像</string>
+    <string name="profile_withdrawable">可转出金额</string>
+    <string name="profile_phone">手机号</string>
+    <string name="profile_account">账号</string>
+    <string name="profile_login_pwd">登录密码</string>
+    <string name="profile_trade_pwd">交易密码</string>
+    <string name="profile_version">系统版本</string>
+    <string name="profile_modify">修改</string>
+    <string name="profile_logout">退出登录</string>
+
+    <!-- Trade Record Page Strings -->
+    <string name="trade_record_title">交易记录</string>
+    <string name="trade_record_buy">买入</string>
+    <string name="trade_record_sell">卖出</string>
+    <string name="trade_record_shares">%s股</string>
+
+    <!-- Password Page Strings (交易密码等) -->
+    <string name="pwd_trade_title">交易密码</string>
+    <string name="pwd_set_trade_section">设置交易密码</string>
+    <string name="pwd_trade_password">交易密码</string>
+    <string name="pwd_input_hint">请输入交易密码</string>
+    <string name="pwd_input_trade_hint">请输入交易密码</string>
+    <string name="pwd_old_pay">原支付密码</string>
+    <string name="pwd_new_pay">新支付密码</string>
+    <string name="pwd_confirm_pay">确认新密码</string>
+    <string name="pwd_pay_mismatch">两次密码输入不一致</string>
+    <string name="pwd_pay_wrong">支付密码不正确</string>
+    <string name="pwd_pay_change_success">支付密码修改成功</string>
+    <string name="pwd_pay_need_six">请输入6位支付密码</string>
+    <string name="pwd_pay_new_six">新支付密码须为6位</string>
+    <string name="pwd_confirm">确定</string>
+    <string name="pwd_login_title">登录密码</string>
+    <string name="pwd_set_login_section">修改登录密码</string>
+    <string name="pwd_old_login">原密码</string>
+    <string name="pwd_new_login">新密码</string>
+    <string name="pwd_confirm_login">确认新密码</string>
+    <string name="pwd_input_old_login_hint">请输入原密码</string>
+    <string name="pwd_input_new_login_hint">请输入新密码</string>
+    <string name="pwd_input_confirm_login_hint">请再次输入新密码</string>
+    <string name="pwd_login_all_required">请完整填写密码</string>
+    <string name="pwd_login_change_success">登录密码修改成功</string>
+
+    <!-- Message Page Strings -->
+    <string name="msg_list_title">站内消息</string>
+    <string name="msg_detail_title">消息详情</string>
+    <string name="news_detail_title">新闻详情</string>
+    <string name="msg_read_all">全部已读</string>
+    <string name="msg_read">已读</string>
+    <string name="msg_unread">未读消息</string>
+    <string name="msg_no_more">没有更多了</string>
+    <string name="msg_tag_subscribe">认缴通知</string>
+    <string name="msg_tag_winning">中签通知</string>
+
+    <!-- HQ Page Strings -->
+    <string name="hq_tab_market">行情</string>
+    <string name="hq_tab_ipo">新股申购</string>
+    <string name="hq_tab_strategy">战略配售</string>
+    <string name="hq_tab_protection">天启护盘</string>
+    <string name="hq_industry_sector">行业板块</string>
+    <string name="hq_concept_sector">概念板块</string>
+    <string name="hq_stock_ranking">股票排行榜</string>
+    <string name="hq_col_price">现价</string>
+    <string name="hq_col_change">涨跌</string>
+    <string name="hq_col_change_pct">涨跌%</string>
+    <string name="hq_col_volume">成交量</string>
+    <string name="hq_col_turnover">换手率</string>
+    <string name="hq_col_prev_close">昨收</string>
+    <string name="hq_col_open">今开</string>
+    <string name="hq_col_high">最高价</string>
+    <string name="hq_col_name">名称</string>
+    <string name="hq_rise_stop">涨停</string>
+    <string name="hq_fall_stop">跌停</string>
+    <string name="hq_rise">上涨</string>
+    <string name="hq_fall">下跌</string>
+    <string name="hq_market_overview">市场概括</string>
+    <string name="hq_south_fund">南向资金流入</string>
+    <string name="hq_north_fund">北向资金流入</string>
+    <string name="hq_main_fund">主力资金流入</string>
+
+    <!-- Stock Search Page Strings -->
+    <string name="stock_search_title">搜索</string>
+    <string name="stock_search_hint">请输入股票代码/名称</string>
+    <string name="stock_search_btn">搜索</string>
+    <string name="stock_search_hot">热门搜索</string>
+    <string name="stock_search_empty_hint">请输入搜索关键字</string>
+    <string name="stock_search_list_title">股票列表</string>
+    <string name="stock_search_header_name">名称</string>
+    <string name="stock_search_header_code">代码</string>
+    <string name="stock_search_header_latter">简拼</string>
+    <string name="stock_search_header_price">现价</string>
+    <string name="stock_search_header_change_pct">涨跌%</string>
+    <string name="stock_search_header_change">涨跌</string>
+
+    <!-- Real Name Verification Page Strings -->
+    <string name="realname_title">实名认证</string>
+    <string name="realname_nationality">国籍</string>
+    <string name="realname_nationality_hint">请输入</string>
+    <string name="realname_name">真实姓名</string>
+    <string name="realname_name_hint">请输入真实姓名</string>
+    <string name="realname_id_type">证件类型</string>
+    <string name="realname_id_type_value">身份证</string>
+    <string name="realname_id_number">身份证号码</string>
+    <string name="realname_id_number_hint">请输入身份证号码</string>
+    <string name="realname_front">头像面</string>
+    <string name="realname_front_hint">上传身份证头像面</string>
+    <string name="realname_back">国徽面</string>
+    <string name="realname_back_hint">上传身份证国徽面</string>
+    <string name="realname_submit">确定</string>
+    <string name="realname_confirm">确认</string>
+    <string name="realname_success">恭喜您认证通过</string>
+    <string name="realname_pending">审核中</string>
+    <string name="realname_rejected">认证未通过</string>
+</resources>

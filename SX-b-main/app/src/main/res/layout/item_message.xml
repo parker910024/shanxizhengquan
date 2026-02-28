@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 消息列表项 Figma 山西证券新版 node-id=4-884 列表项 -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/message_list_bg"
+    android:paddingHorizontal="@dimen/message_list_h_padding"
+    android:paddingVertical="@dimen/message_list_v_padding">
+
+    <TextView
+        android:id="@+id/tv_tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_message_tag"
+        android:paddingHorizontal="8dp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="认缴通知" />
+
+    <TextView
+        android:id="@+id/tv_time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/message_time"
+        android:textSize="14sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/tv_tag"
+        app:layout_constraintEnd_toStartOf="@id/tv_read_status"
+        app:layout_constraintStart_toEndOf="@id/tv_tag"
+        tools:text="时间:2026-01-07 20:37:37" />
+
+    <TextView
+        android:id="@+id/tv_read_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/msg_read"
+        android:textColor="@color/message_unread"
+        android:textSize="14sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/tv_tag"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="@color/message_content"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/tv_tag"
+        tools:text="您已认缴股票至信股份!" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/message_item_divider_height"
+        android:layout_marginTop="16dp"
+        android:background="@color/message_divider"
+        app:layout_constraintTop_toBottomOf="@id/tv_content" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

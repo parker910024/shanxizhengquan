@@ -2,7 +2,7 @@
 //  MyNewStocksViewController.swift
 //  zhengqaun
 //
-//  Created by admin on 2026/1/6.
+//  我的新股：三 Tab（申购中/中签/未中签），对齐安卓 MyIpoActivity + MyIpoAdapter
 //
 
 import UIKit
@@ -12,21 +12,24 @@ enum NewStockStatus: String {
     case subscribing = "0"  // 申购中
     case successful = "1"   // 中签
     case unsuccessful = "2" // 未中签
+    case abandoned = "3"    // 已弃购
 }
 
-/// 新股模型
+/// 新股模型（对齐安卓 MyIpoItem）
 struct NewStock {
     let id: String
     let name: String
     let code: String
     let status: NewStockStatus
-    let statusText: String  // 后端返回的明确状态文本
-    let issuePrice: String
-    let quantity: String // 数量(股)
-    let lots: String? // 中签手数
-    let listingTime: String // 上市时间
-    let paidAmount: String? // 已认缴金额/中签金额
-    let date: String
+    let statusText: String       // 后端 status_txt
+    let issuePrice: Double       // 发行价 sg_fx_price
+    let quantity: Int            // 数量(股) zq_num
+    let lots: Int                // 中签手数 zq_nums
+    let listingDate: String      // 上市时间 sg_ss_date
+    let hasListingDate: Bool     // sg_ss_tag == 1
+    let paidAmount: Double       // 中签金额 zq_money
+    let remainRenjiao: Double    // 剩余认缴 sy_renjiao
+    let date: String             // createtime_txt
 }
 
 class MyNewStocksViewController: ZQViewController {
@@ -34,13 +37,18 @@ class MyNewStocksViewController: ZQViewController {
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let tabContainer = UIView()
     private var tabButtons: [UIButton] = []
-    private let indicatorView = UIView()
-    private var selectedTabIndex: Int = 1 // 默认选中"中签"
+    private var selectedTabIndex: Int = 0 // 对齐安卓：默认选中"申购中"
+    var initialTab: Int = 0 // 外部可设置默认 Tab（0=申购中, 1=中签, 2=未中签）
     private var stocks: [NewStock] = []
-    private var indicatorCenterXConstraint: NSLayoutConstraint!
+    private let emptyLabel = UILabel()
+    private let loadingIndicator = UIActivityIndicatorView(style: .medium)
+    
+    private let themeRed = UIColor(red: 226/255, green: 60/255, blue: 57/255, alpha: 1.0) // 对齐安卓 #E23C39
+    private let grayColor = UIColor(red: 109/255, green: 109/255, blue: 109/255, alpha: 1.0) // 对齐安卓 #6D6D6D
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        selectedTabIndex = initialTab
         setupNavigationBar()
         setupUI()
         loadData()
@@ -48,90 +56,98 @@ class MyNewStocksViewController: ZQViewController {
     
     private func setupNavigationBar() {
         gk_navTitle = "我的新股"
-        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
-        gk_navTitleColor = .white
-        gk_statusBarStyle = .lightContent
+        gk_navBackgroundColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
+        gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
+        gk_statusBarStyle = .default
+        gk_backStyle = .black
     }
     
     private func setupUI() {
         view.backgroundColor = Constants.Color.backgroundMain
         
-        // Tab栏
+        // Tab 栏（对齐安卓：白色背景 + 12dp padding + 等分按钮）
         tabContainer.backgroundColor = .white
         view.addSubview(tabContainer)
         tabContainer.translatesAutoresizingMaskIntoConstraints = false
         
-        let tabs = ["申购中", "中签", "未中签"]
         let tabStackView = UIStackView()
         tabStackView.axis = .horizontal
         tabStackView.distribution = .fillEqually
-        tabStackView.spacing = 0
+        tabStackView.spacing = 12
         tabContainer.addSubview(tabStackView)
         tabStackView.translatesAutoresizingMaskIntoConstraints = false
         
+        let tabs = ["申购中", "中签", "未中签"]
         for (index, tabTitle) in tabs.enumerated() {
-            let button = UIButton(type: .system)
+            let button = UIButton(type: .custom)
             button.setTitle(tabTitle, for: .normal)
-            button.titleLabel?.font = UIFont.systemFont(ofSize: 15)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 13)
+            button.layer.cornerRadius = 4
+            button.layer.borderWidth = 1
             button.tag = index
+            button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
             button.addTarget(self, action: #selector(tabButtonTapped(_:)), for: .touchUpInside)
             tabStackView.addArrangedSubview(button)
             tabButtons.append(button)
         }
         
-        // 指示器
-        indicatorView.backgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // 蓝色
-        tabContainer.addSubview(indicatorView)
-        indicatorView.translatesAutoresizingMaskIntoConstraints = false
-        
         // TableView
         tableView.delegate = self
         tableView.dataSource = self
         tableView.separatorStyle = .none
-        tableView.backgroundColor = Constants.Color.backgroundMain
+        tableView.backgroundColor = .white
         tableView.register(NewStockCell.self, forCellReuseIdentifier: "NewStockCell")
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 空状态
+        emptyLabel.text = "暂无数据"
+        emptyLabel.textColor = Constants.Color.textSecondary
+        emptyLabel.font = UIFont.systemFont(ofSize: 14)
+        emptyLabel.textAlignment = .center
+        emptyLabel.isHidden = true
+        view.addSubview(emptyLabel)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Loading
+        loadingIndicator.hidesWhenStopped = true
+        view.addSubview(loadingIndicator)
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             tabContainer.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
             tabContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tabContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tabContainer.heightAnchor.constraint(equalToConstant: 44),
+            tabContainer.heightAnchor.constraint(equalToConstant: 56),
             
-            tabStackView.topAnchor.constraint(equalTo: tabContainer.topAnchor),
-            tabStackView.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
-            tabStackView.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
-            tabStackView.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
-            
-            indicatorView.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
-            indicatorView.heightAnchor.constraint(equalToConstant: 2),
-            indicatorView.widthAnchor.constraint(equalToConstant: 20),
+            tabStackView.centerYAnchor.constraint(equalTo: tabContainer.centerYAnchor),
+            tabStackView.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor, constant: 12),
+            tabStackView.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor, constant: -12),
+            tabStackView.heightAnchor.constraint(equalToConstant: 32),
             
             tableView.topAnchor.constraint(equalTo: tabContainer.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-        
-        // 设置指示器初始位置（确保tabButtons已经填充）
-        guard !tabButtons.isEmpty && selectedTabIndex < tabButtons.count else {
-            return
-        }
-        indicatorCenterXConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
-        indicatorCenterXConstraint.isActive = true
         
         updateTabSelection()
     }
     
     private func loadData() {
-        let statusParam: String
-        switch selectedTabIndex {
-        case 0: statusParam = "0"
-        case 1: statusParam = "1"
-        case 2: statusParam = "2"
-        default: statusParam = "1"
-        }
+        let statusParam = "\(selectedTabIndex)"
+        
+        // 对齐安卓：加载时显示 loading
+        loadingIndicator.startAnimating()
+        emptyLabel.isHidden = true
+        tableView.isHidden = false
         
         SecureNetworkManager.shared.request(
             api: "/api/subscribe/getsgnewgu0",
@@ -140,22 +156,23 @@ class MyNewStocksViewController: ZQViewController {
         ) { [weak self] result in
             guard let self = self else { return }
             
+            DispatchQueue.main.async {
+                self.loadingIndicator.stopAnimating()
+            }
+            
             switch result {
             case .success(let res):
                 guard let dict = res.decrypted,
                       let data = dict["data"] as? [String: Any],
                       let list = data["dxlog_list"] as? [[String: Any]] else {
-                    if let dict = res.decrypted {
-                        print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
-                    }
                     DispatchQueue.main.async {
                         self.stocks = []
                         self.tableView.reloadData()
+                        self.tableView.isHidden = true
+                        self.emptyLabel.isHidden = false
                     }
                     return
                 }
-                
-                print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
                 
                 var newStocks: [NewStock] = []
                 for item in list {
@@ -164,25 +181,70 @@ class MyNewStocksViewController: ZQViewController {
                     let code = item["code"] as? String ?? ""
                     let statusStr = "\(item["status"] ?? "")"
                     let statusText = item["status_txt"] as? String ?? ""
-                    let issuePrice = "\(item["sg_fx_price"] ?? "0")"
-                    let quantity = "\(item["zq_num"] ?? "0")"
-                    let lots = "\(item["zq_nums"] ?? "0")"
-                    var listingTime = item["sg_ss_date"] as? String ?? "未公布"
-                    if listingTime.isEmpty { listingTime = "未公布" }
-                    let zqMoney = "\(item["zq_money"] ?? "0")"
+                    
+                    // 对齐安卓：发行价 Double
+                    let issuePrice: Double
+                    if let d = item["sg_fx_price"] as? Double {
+                        issuePrice = d
+                    } else if let n = item["sg_fx_price"] as? NSNumber {
+                        issuePrice = n.doubleValue
+                    } else if let s = item["sg_fx_price"] as? String, let d = Double(s) {
+                        issuePrice = d
+                    } else {
+                        issuePrice = 0.0
+                    }
+                    
+                    let zqNum = item["zq_num"] as? Int ?? (Int("\(item["zq_num"] ?? "0")") ?? 0)
+                    let zqNums = item["zq_nums"] as? Int ?? (Int("\(item["zq_nums"] ?? "0")") ?? 0)
+                    
+                    let sgSsDate = item["sg_ss_date"] as? String ?? ""
+                    let sgSsTag = item["sg_ss_tag"] as? Int ?? (Int("\(item["sg_ss_tag"] ?? "0")") ?? 0)
+                    
+                    let zqMoney: Double
+                    if let d = item["zq_money"] as? Double {
+                        zqMoney = d
+                    } else if let n = item["zq_money"] as? NSNumber {
+                        zqMoney = n.doubleValue
+                    } else if let s = item["zq_money"] as? String, let d = Double(s) {
+                        zqMoney = d
+                    } else {
+                        zqMoney = 0.0
+                    }
+                    
+                    let syRenjiao: Double
+                    if let d = item["sy_renjiao"] as? Double {
+                        syRenjiao = d
+                    } else if let n = item["sy_renjiao"] as? NSNumber {
+                        syRenjiao = n.doubleValue
+                    } else if let s = item["sy_renjiao"] as? String, let d = Double(s) {
+                        syRenjiao = d
+                    } else {
+                        syRenjiao = 0.0
+                    }
+                    
                     let dateStr = item["createtime_txt"] as? String ?? ""
+                    
+                    // 对齐安卓：上市时间处理
+                    let listingDate: String
+                    if sgSsTag == 1 && !sgSsDate.isEmpty && sgSsDate != "0000-00-00" {
+                        listingDate = sgSsDate
+                    } else {
+                        listingDate = "未公布"
+                    }
                     
                     let model = NewStock(
                         id: idVal,
                         name: name,
                         code: code,
-                        status: NewStockStatus(rawValue: statusStr) ?? .successful,
+                        status: NewStockStatus(rawValue: statusStr) ?? .subscribing,
                         statusText: statusText,
                         issuePrice: issuePrice,
-                        quantity: quantity,
-                        lots: lots,
-                        listingTime: listingTime,
+                        quantity: zqNum,
+                        lots: zqNums,
+                        listingDate: listingDate,
+                        hasListingDate: sgSsTag == 1,
                         paidAmount: zqMoney,
+                        remainRenjiao: syRenjiao,
                         date: dateStr
                     )
                     newStocks.append(model)
@@ -191,10 +253,21 @@ class MyNewStocksViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.stocks = newStocks
                     self.tableView.reloadData()
+                    if newStocks.isEmpty {
+                        self.tableView.isHidden = true
+                        self.emptyLabel.isHidden = false
+                    } else {
+                        self.tableView.isHidden = false
+                        self.emptyLabel.isHidden = true
+                    }
                 }
                 
             case .failure(let err):
                 DispatchQueue.main.async {
+                    self.stocks = []
+                    self.tableView.reloadData()
+                    self.tableView.isHidden = true
+                    self.emptyLabel.isHidden = false
                     Toast.show("获取记录失败: \(err.localizedDescription)")
                 }
             }
@@ -204,264 +277,334 @@ class MyNewStocksViewController: ZQViewController {
     @objc private func tabButtonTapped(_ sender: UIButton) {
         let newIndex = sender.tag
         guard newIndex != selectedTabIndex else { return }
-        
         selectedTabIndex = newIndex
         updateTabSelection()
-        
-        // 重新调用接口拉取数据
         loadData()
     }
     
     private func updateTabSelection() {
-        // 安全检查
-        guard !tabButtons.isEmpty && selectedTabIndex < tabButtons.count else {
-            return
-        }
-        
         for (index, button) in tabButtons.enumerated() {
             if index == selectedTabIndex {
-                button.setTitleColor(UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0), for: .normal)
-                // 去掉边框
-                button.layer.borderWidth = 0
+                // 对齐安卓：选中红色粗体 + 红色边框 + 淡红背景
+                button.setTitleColor(themeRed, for: .normal)
+                button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 13)
+                button.layer.borderColor = themeRed.cgColor
+                button.backgroundColor = themeRed.withAlphaComponent(0.08)
             } else {
-                button.setTitleColor(Constants.Color.textSecondary, for: .normal)
-                button.layer.borderWidth = 0
+                // 对齐安卓：未选中灰色 + 灰色边框
+                button.setTitleColor(grayColor, for: .normal)
+                button.titleLabel?.font = UIFont.systemFont(ofSize: 13)
+                button.layer.borderColor = UIColor(white: 0.85, alpha: 1.0).cgColor
+                button.backgroundColor = .white
             }
         }
-        
-        // 更新指示器位置
-        if indicatorCenterXConstraint != nil {
-            indicatorCenterXConstraint.isActive = false
-        }
-        indicatorCenterXConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
-        indicatorCenterXConstraint.isActive = true
-        
-        UIView.animate(withDuration: 0.2) {
-            self.view.layoutIfNeeded()
+    }
+    
+    // MARK: - 认缴操作
+    private func handleRenjiao(stock: NewStock) {
+        let alert = UIAlertController(title: "确认认缴", message: "确定要认缴「\(stock.name)」吗？", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "认缴", style: .default) { [weak self] _ in
+            self?.performRenjiao(stockId: stock.id)
+        })
+        present(alert, animated: true)
+    }
+    
+    private func performRenjiao(stockId: String) {
+        loadingIndicator.startAnimating()
+        SecureNetworkManager.shared.request(
+            api: "/api/subscribe/renjiao_act",
+            method: .post,
+            params: ["id": Int(stockId) ?? 0]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.loadingIndicator.stopAnimating()
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let code = dict["code"] as? NSNumber, code == 1 {
+                        Toast.show("认缴成功")
+                        self.loadData()
+                    } else {
+                        let msg = (res.decrypted?["msg"] as? String) ?? "认缴失败，请重试"
+                        Toast.show(msg)
+                    }
+                case .failure:
+                    Toast.show("认缴失败，请重试")
+                }
+            }
         }
     }
 }
 
-// MARK: - UITableViewDataSource
-extension MyNewStocksViewController: UITableViewDataSource {
+// MARK: - UITableViewDataSource & UITableViewDelegate
+extension MyNewStocksViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return stocks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NewStockCell", for: indexPath) as! NewStockCell
-        cell.configure(with: stocks[indexPath.row])
+        let stock = stocks[indexPath.row]
+        cell.configure(with: stock)
+        cell.onRenjiaoTapped = { [weak self] in
+            self?.handleRenjiao(stock: stock)
+        }
         return cell
     }
-}
-
-// MARK: - UITableViewDelegate
-extension MyNewStocksViewController: UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
     
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 150
+        return 160
     }
 }
 
-// MARK: - NewStockCell
+// MARK: - Cell（对齐安卓 item_my_ipo.xml 布局）
 class NewStockCell: UITableViewCell {
     
-    private let containerView = UIView()
-    private let stockNameLabel = UILabel()
-    private let stockCodeLabel = UILabel()
+    // Row 1 - 名称 + 状态
+    private let nameLabel = UILabel()
     private let statusLabel = UILabel()
-    private let issuePriceLabel = UILabel()
-    private let issuePriceValueLabel = UILabel()
-    private let quantityLabel = UILabel()
-    private let quantityValueLabel = UILabel()
-    private let listingTimeLabel = UILabel()
-    private let listingTimeValueLabel = UILabel()
-    private let paidLabel = UILabel()
-    private let paidValueLabel = UILabel()
-    private let separatorLine = UIView()
+    
+    // Row 2 - 代码 + 日期
+    private let codeLabel = UILabel()
     private let dateLabel = UILabel()
+    
+    // Row 3 - 发行价 + 数量(股)（4列平分）
+    private let priceTitleLabel = UILabel()
+    private let priceValueLabel = UILabel()
+    private let qtyTitleLabel = UILabel()
+    private let qtyValueLabel = UILabel()
+    
+    // Row 4 - 上市时间 + 已认缴（4列平分）
+    private let listingTitleLabel = UILabel()
+    private let listingValueLabel = UILabel()
+    private let paidTitleLabel = UILabel()
+    private let paidValueLabel = UILabel()
+    
+    // 认缴按钮
+    private let renjiaoButton = UIButton(type: .system)
+    
+    // 分割线
+    private let separator = UIView()
+    
+    var onRenjiaoTapped: (() -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
     private func setupUI() {
         selectionStyle = .none
-        backgroundColor = .clear
+        backgroundColor = .white
         
-        containerView.backgroundColor = .white
-        contentView.addSubview(containerView)
-        containerView.translatesAutoresizingMaskIntoConstraints = false
+        let textBlack = UIColor(red: 0x30/255, green: 0x30/255, blue: 0x30/255, alpha: 1.0)
+        let textGray = UIColor(red: 0x99/255, green: 0x99/255, blue: 0x99/255, alpha: 1.0)
         
-        // 第一行：股票名称 + 代码 + 状态
-        stockNameLabel.font = UIFont.boldSystemFont(ofSize: 17)
-        stockNameLabel.textColor = Constants.Color.textPrimary
-        containerView.addSubview(stockNameLabel)
-        stockNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        stockCodeLabel.font = UIFont.systemFont(ofSize: 13)
-        stockCodeLabel.textColor = Constants.Color.textSecondary
-        containerView.addSubview(stockCodeLabel)
-        stockCodeLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Row 1
+        nameLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        nameLabel.textColor = .black
+        contentView.addSubview(nameLabel)
         
         statusLabel.font = UIFont.systemFont(ofSize: 13)
-        statusLabel.textColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0) // 橙色
+        statusLabel.textColor = Constants.Color.stockRise
         statusLabel.textAlignment = .right
-        containerView.addSubview(statusLabel)
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(statusLabel)
         
-        // 第二行：发行价 + 数量
-        issuePriceLabel.text = "发行价"
-        issuePriceLabel.font = UIFont.systemFont(ofSize: 13)
-        issuePriceLabel.textColor = Constants.Color.textSecondary
-        containerView.addSubview(issuePriceLabel)
-        issuePriceLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Row 2
+        codeLabel.font = UIFont.systemFont(ofSize: 12)
+        codeLabel.textColor = textGray
+        contentView.addSubview(codeLabel)
         
-        issuePriceValueLabel.font = UIFont.boldSystemFont(ofSize: 17)
-        issuePriceValueLabel.textColor = Constants.Color.textPrimary
-        containerView.addSubview(issuePriceValueLabel)
-        issuePriceValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        dateLabel.font = UIFont.systemFont(ofSize: 12)
+        dateLabel.textColor = textGray
+        dateLabel.textAlignment = .right
+        contentView.addSubview(dateLabel)
         
-        quantityLabel.text = "数量(股)"
-        quantityLabel.font = UIFont.systemFont(ofSize: 13)
-        quantityLabel.textColor = Constants.Color.textSecondary
-        quantityLabel.textAlignment = .right
-        containerView.addSubview(quantityLabel)
-        quantityLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Row 3 标题
+        priceTitleLabel.text = "发行价"
+        priceTitleLabel.font = UIFont.systemFont(ofSize: 12)
+        priceTitleLabel.textColor = textGray
+        contentView.addSubview(priceTitleLabel)
         
-        quantityValueLabel.font = UIFont.boldSystemFont(ofSize: 17)
-        quantityValueLabel.textColor = Constants.Color.textPrimary
-        quantityValueLabel.textAlignment = .right
-        containerView.addSubview(quantityValueLabel)
-        quantityValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        priceValueLabel.font = UIFont.systemFont(ofSize: 12)
+        priceValueLabel.textColor = .black
+        contentView.addSubview(priceValueLabel)
         
-        // 第三行：上市时间 + 已认缴
-        listingTimeLabel.text = "上市时间"
-        listingTimeLabel.font = UIFont.systemFont(ofSize: 13)
-        listingTimeLabel.textColor = Constants.Color.textSecondary
-        containerView.addSubview(listingTimeLabel)
-        listingTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+        qtyTitleLabel.text = "数量(股)"
+        qtyTitleLabel.font = UIFont.systemFont(ofSize: 12)
+        qtyTitleLabel.textColor = textGray
+        contentView.addSubview(qtyTitleLabel)
         
-        listingTimeValueLabel.font = UIFont.systemFont(ofSize: 13)
-        listingTimeValueLabel.textColor = Constants.Color.textSecondary
-        containerView.addSubview(listingTimeValueLabel)
-        listingTimeValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        qtyValueLabel.font = UIFont.systemFont(ofSize: 12)
+        qtyValueLabel.textColor = .black
+        qtyValueLabel.textAlignment = .right
+        contentView.addSubview(qtyValueLabel)
         
-        paidLabel.text = "已认缴"
-        paidLabel.font = UIFont.systemFont(ofSize: 13)
-        paidLabel.textColor = Constants.Color.textSecondary
-        paidLabel.textAlignment = .right
-        containerView.addSubview(paidLabel)
-        paidLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Row 4 标题
+        listingTitleLabel.text = "上市时间"
+        listingTitleLabel.font = UIFont.systemFont(ofSize: 12)
+        listingTitleLabel.textColor = textGray
+        contentView.addSubview(listingTitleLabel)
         
-        paidValueLabel.font = UIFont.boldSystemFont(ofSize: 17)
-        paidValueLabel.textColor = Constants.Color.textPrimary
+        listingValueLabel.font = UIFont.systemFont(ofSize: 12)
+        listingValueLabel.textColor = .black
+        contentView.addSubview(listingValueLabel)
+        
+        paidTitleLabel.text = "已认缴"
+        paidTitleLabel.font = UIFont.systemFont(ofSize: 12)
+        paidTitleLabel.textColor = textGray
+        contentView.addSubview(paidTitleLabel)
+        
+        paidValueLabel.font = UIFont.systemFont(ofSize: 12)
+        paidValueLabel.textColor = .black
         paidValueLabel.textAlignment = .right
-        containerView.addSubview(paidValueLabel)
-        paidValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(paidValueLabel)
         
-        // 分隔线
-        separatorLine.backgroundColor = Constants.Color.separator
-        containerView.addSubview(separatorLine)
-        separatorLine.translatesAutoresizingMaskIntoConstraints = false
+        // 认缴按钮（对齐安卓 btn_renjiao）
+        renjiaoButton.setTitle("去认缴", for: .normal)
+        renjiaoButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
+        renjiaoButton.setTitleColor(.white, for: .normal)
+        renjiaoButton.backgroundColor = UIColor(red: 226/255, green: 60/255, blue: 57/255, alpha: 1.0)
+        renjiaoButton.layer.cornerRadius = 4
+        renjiaoButton.isHidden = true
+        renjiaoButton.addTarget(self, action: #selector(renjiaoTapped), for: .touchUpInside)
+        contentView.addSubview(renjiaoButton)
         
-        // 日期
-        dateLabel.font = UIFont.systemFont(ofSize: 11)
-        dateLabel.textColor = Constants.Color.textSecondary
-        containerView.addSubview(dateLabel)
-        dateLabel.translatesAutoresizingMaskIntoConstraints = false
+        // 分割线
+        separator.backgroundColor = UIColor(white: 0.93, alpha: 1.0)
+        contentView.addSubview(separator)
+        
+        for v in contentView.subviews { v.translatesAutoresizingMaskIntoConstraints = false }
+        
+        let pad: CGFloat = 16
+        let screenW = UIScreen.main.bounds.width - pad * 2
+        let colW = screenW / 4
         
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            // Row 1：名称(左) + 状态(右)
+            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: pad),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: statusLabel.leadingAnchor, constant: -8),
             
-            // 第一行：股票名称 + 代码 + 状态
-            stockNameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            stockNameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            statusLabel.centerYAnchor.constraint(equalTo: nameLabel.centerYAnchor),
+            statusLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
             
-            stockCodeLabel.leadingAnchor.constraint(equalTo: stockNameLabel.trailingAnchor, constant: 6),
-            stockCodeLabel.centerYAnchor.constraint(equalTo: stockNameLabel.centerYAnchor),
+            // Row 2：代码(左) + 日期(右)
+            codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            codeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: pad),
             
-            statusLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            statusLabel.centerYAnchor.constraint(equalTo: stockNameLabel.centerYAnchor),
-            statusLabel.leadingAnchor.constraint(greaterThanOrEqualTo: stockCodeLabel.trailingAnchor, constant: 12),
+            dateLabel.centerYAnchor.constraint(equalTo: codeLabel.centerYAnchor),
+            dateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
             
-            // 第二行：发行价 + 数量(股)
-            issuePriceLabel.topAnchor.constraint(equalTo: stockNameLabel.bottomAnchor, constant: 16),
-            issuePriceLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            // Row 3：4列平分 - 发行价(标签) + 发行价(值) + 数量(标签) + 数量(值)
+            priceTitleLabel.topAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: 8),
+            priceTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: pad),
+            priceTitleLabel.widthAnchor.constraint(equalToConstant: colW),
             
-            issuePriceValueLabel.topAnchor.constraint(equalTo: issuePriceLabel.bottomAnchor, constant: 6),
-            issuePriceValueLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            priceValueLabel.centerYAnchor.constraint(equalTo: priceTitleLabel.centerYAnchor),
+            priceValueLabel.leadingAnchor.constraint(equalTo: priceTitleLabel.trailingAnchor),
+            priceValueLabel.widthAnchor.constraint(equalToConstant: colW),
             
-            quantityLabel.topAnchor.constraint(equalTo: stockNameLabel.bottomAnchor, constant: 16),
-            quantityLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            qtyTitleLabel.centerYAnchor.constraint(equalTo: priceTitleLabel.centerYAnchor),
+            qtyTitleLabel.leadingAnchor.constraint(equalTo: priceValueLabel.trailingAnchor),
+            qtyTitleLabel.widthAnchor.constraint(equalToConstant: colW),
             
-            quantityValueLabel.topAnchor.constraint(equalTo: quantityLabel.bottomAnchor, constant: 6),
-            quantityValueLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            qtyValueLabel.centerYAnchor.constraint(equalTo: priceTitleLabel.centerYAnchor),
+            qtyValueLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
             
-            // 第三行：上市时间 + 已认缴
-            listingTimeLabel.topAnchor.constraint(equalTo: issuePriceValueLabel.bottomAnchor, constant: 16),
-            listingTimeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            // Row 4：4列平分 - 上市时间(标签) + 上市时间(值) + 已认缴(标签) + 认缴金额(值)
+            listingTitleLabel.topAnchor.constraint(equalTo: priceTitleLabel.bottomAnchor, constant: 8),
+            listingTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: pad),
+            listingTitleLabel.widthAnchor.constraint(equalToConstant: colW),
             
-            listingTimeValueLabel.topAnchor.constraint(equalTo: listingTimeLabel.bottomAnchor, constant: 6),
-            listingTimeValueLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            listingValueLabel.centerYAnchor.constraint(equalTo: listingTitleLabel.centerYAnchor),
+            listingValueLabel.leadingAnchor.constraint(equalTo: listingTitleLabel.trailingAnchor),
+            listingValueLabel.widthAnchor.constraint(equalToConstant: colW),
             
-            paidLabel.topAnchor.constraint(equalTo: quantityValueLabel.bottomAnchor, constant: 16),
-            paidLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            paidTitleLabel.centerYAnchor.constraint(equalTo: listingTitleLabel.centerYAnchor),
+            paidTitleLabel.leadingAnchor.constraint(equalTo: listingValueLabel.trailingAnchor),
+            paidTitleLabel.widthAnchor.constraint(equalToConstant: colW),
             
-            paidValueLabel.topAnchor.constraint(equalTo: paidLabel.bottomAnchor, constant: 6),
-            paidValueLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            paidValueLabel.centerYAnchor.constraint(equalTo: listingTitleLabel.centerYAnchor),
+            paidValueLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
             
-            // 分隔线
-            separatorLine.topAnchor.constraint(equalTo: listingTimeValueLabel.bottomAnchor, constant: 16),
-            separatorLine.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            separatorLine.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            separatorLine.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
+            // 认缴按钮
+            renjiaoButton.topAnchor.constraint(equalTo: listingTitleLabel.bottomAnchor, constant: 8),
+            renjiaoButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
+            renjiaoButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 72),
+            renjiaoButton.heightAnchor.constraint(equalToConstant: 32),
             
-            // 日期
-            dateLabel.topAnchor.constraint(equalTo: separatorLine.bottomAnchor, constant: 10),
-            dateLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            dateLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+            // 分割线
+            separator.topAnchor.constraint(equalTo: renjiaoButton.bottomAnchor, constant: 12),
+            separator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: pad),
+            separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
+            separator.heightAnchor.constraint(equalToConstant: 1),
+            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
     
+    @objc private func renjiaoTapped() {
+        onRenjiaoTapped?()
+    }
+    
     func configure(with stock: NewStock) {
-        stockNameLabel.text = stock.name
-        stockCodeLabel.text = stock.code
-        
-        statusLabel.text = stock.statusText.isEmpty ? (stock.status == .subscribing ? "申购中" : (stock.status == .successful ? "中签" : "未中签")) : stock.statusText
-        
-        // 未中签不展示深色高亮状态
-        if stock.status == .unsuccessful {
-            statusLabel.textColor = Constants.Color.textSecondary
-        } else {
-            statusLabel.textColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)
-        }
-        
-        issuePriceValueLabel.text = stock.issuePrice
-        quantityValueLabel.text = stock.quantity
-        listingTimeValueLabel.text = stock.listingTime
-        
-        if let paidAmount = stock.paidAmount, !paidAmount.isEmpty && paidAmount != "0" {
-            paidValueLabel.text = paidAmount
-            paidLabel.isHidden = false
-            paidValueLabel.isHidden = false
-        } else {
-            paidLabel.isHidden = true
-            paidValueLabel.isHidden = true
-        }
-        
+        nameLabel.text = stock.name
+        codeLabel.text = stock.code
         dateLabel.text = stock.date
+        
+        // 对齐安卓：状态文字
+        if !stock.statusText.isEmpty {
+            statusLabel.text = stock.statusText
+        } else {
+            switch stock.status {
+            case .subscribing:
+                statusLabel.text = "申购中"
+            case .successful:
+                statusLabel.text = "中签\(stock.lots)(手)"
+            case .unsuccessful:
+                statusLabel.text = "未中签"
+            case .abandoned:
+                statusLabel.text = "已弃购"
+            }
+        }
+        
+        // 对齐安卓：状态颜色（中签红色，其他灰色）
+        if stock.status == .successful {
+            statusLabel.textColor = Constants.Color.stockRise
+        } else {
+            statusLabel.textColor = Constants.Color.textSecondary
+        }
+        
+        // 发行价
+        priceValueLabel.text = String(format: "%.2f", stock.issuePrice)
+        
+        // 数量(股)
+        qtyValueLabel.text = "\(stock.quantity)"
+        
+        // 上市时间
+        listingValueLabel.text = stock.listingDate
+        
+        // 对齐安卓：已认缴 / 剩余认缴
+        if stock.remainRenjiao > 0 {
+            paidTitleLabel.text = "剩余认缴"
+            paidValueLabel.text = String(format: "%.2f", stock.remainRenjiao)
+        } else {
+            paidTitleLabel.text = "已认缴"
+            paidValueLabel.text = String(format: "%.2f", stock.paidAmount)
+        }
+        
+        // 对齐安卓：认缴按钮（中签 + 剩余认缴 > 0 时显示）
+        if stock.status == .successful && stock.remainRenjiao > 0 {
+            renjiaoButton.isHidden = false
+        } else {
+            renjiaoButton.isHidden = true
+        }
     }
 }
-

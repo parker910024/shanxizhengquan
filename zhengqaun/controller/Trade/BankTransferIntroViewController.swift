@@ -6,11 +6,12 @@
 //
 
 import UIKit
+import SafariServices
 
 class BankTransferIntroViewController: ZQViewController {
 
     // MARK: - 颜色常量
-    private let themeBlue  = Constants.Color.themeBlue
+    // 主题色统一使用红色，与项目风格保持一致
     private let textPri    = Constants.Color.textPrimary
     private let textSec    = Constants.Color.textSecondary
     private let textTer    = Constants.Color.textTertiary
@@ -68,15 +69,15 @@ class BankTransferIntroViewController: ZQViewController {
         loadTransferOutData()
     }
 
-    // MARK: - 导航栏（蓝色）
+    // MARK: - 导航栏
     private func setupNavBar() {
-        gk_navBackgroundColor = themeBlue
-        gk_navTintColor       = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor       = Constants.Color.textPrimary
         gk_navTitleFont       = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor      = .white
+        gk_navTitleColor      = Constants.Color.textPrimary
         gk_navTitle           = "银证转账"
-        gk_navLineHidden      = true
-        gk_backStyle          = .white
+        gk_navLineHidden      = false
+        gk_backStyle          = .black
     }
 
     // MARK: - Tab 栏
@@ -95,7 +96,7 @@ class BankTransferIntroViewController: ZQViewController {
         tabOutBtn.translatesAutoresizingMaskIntoConstraints = false
 
         // 指示线
-        tabIndicator.backgroundColor = themeBlue
+        tabIndicator.backgroundColor = redColor
         tabIndicator.layer.cornerRadius = 1.5
         tabBar.addSubview(tabIndicator)
         tabIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -106,9 +107,8 @@ class BankTransferIntroViewController: ZQViewController {
         tabBar.addSubview(sep)
         sep.translatesAutoresizingMaskIntoConstraints = false
 
-        let navH = Constants.Navigation.totalNavigationHeight
         NSLayoutConstraint.activate([
-            tabBar.topAnchor.constraint(equalTo: view.topAnchor, constant: navH),
+            tabBar.topAnchor.constraint(equalTo: gk_navigationBar.bottomAnchor),
             tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tabBar.heightAnchor.constraint(equalToConstant: 48),
@@ -138,16 +138,13 @@ class BankTransferIntroViewController: ZQViewController {
         ])
 
         // 两个 ScrollView 共用同一区域
-        let contentTop = navH + 48
         for sv in [transferInView, transferOutView] {
             sv.showsVerticalScrollIndicator = false
-            sv.delaysContentTouches = false
-            sv.canCancelContentTouches = false
             sv.keyboardDismissMode = .onDrag
             view.addSubview(sv)
             sv.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                sv.topAnchor.constraint(equalTo: view.topAnchor, constant: contentTop),
+                sv.topAnchor.constraint(equalTo: tabBar.bottomAnchor),
                 sv.leadingAnchor.constraint(equalTo: view.leadingAnchor),
                 sv.trailingAnchor.constraint(equalTo: view.trailingAnchor),
                 sv.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -187,8 +184,8 @@ class BankTransferIntroViewController: ZQViewController {
         transferInView.isHidden  = !isIn
         transferOutView.isHidden = isIn
 
-        tabInBtn.setTitleColor(isIn ? themeBlue : textSec, for: .normal)
-        tabOutBtn.setTitleColor(isIn ? textSec : themeBlue, for: .normal)
+        tabInBtn.setTitleColor(isIn ? redColor : textSec, for: .normal)
+        tabOutBtn.setTitleColor(isIn ? textSec : redColor, for: .normal)
         tabInBtn.titleLabel?.font  = UIFont.systemFont(ofSize: 15, weight: isIn  ? .bold : .medium)
         tabOutBtn.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: isIn ? .medium : .bold)
 
@@ -248,7 +245,7 @@ class BankTransferIntroViewController: ZQViewController {
         introLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            listContainer.topAnchor.constraint(equalTo: transferInContent.topAnchor, constant: 16),
+            listContainer.topAnchor.constraint(equalTo: transferInContent.topAnchor, constant: 0),
             listContainer.leadingAnchor.constraint(equalTo: transferInContent.leadingAnchor, constant: pad),
             listContainer.trailingAnchor.constraint(equalTo: transferInContent.trailingAnchor, constant: -pad),
 
@@ -289,12 +286,13 @@ class BankTransferIntroViewController: ZQViewController {
         hintLabel.translatesAutoresizingMaskIntoConstraints = false
 
         // 转出按钮
-        let submitBtn = UIButton(type: .system)
+        let submitBtn = UIButton(type: .custom)
         submitBtn.setTitle("转出", for: .normal)
         submitBtn.setTitleColor(.white, for: .normal)
         submitBtn.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        submitBtn.backgroundColor = themeBlue
+        submitBtn.backgroundColor = redColor
         submitBtn.layer.cornerRadius = 8
+        submitBtn.isUserInteractionEnabled = true
         submitBtn.addTarget(self, action: #selector(transferOutTapped), for: .touchUpInside)
         transferOutContent.addSubview(submitBtn)
         submitBtn.translatesAutoresizingMaskIntoConstraints = false
@@ -494,7 +492,7 @@ class BankTransferIntroViewController: ZQViewController {
 
         // 蓝色小图标
         let icon = UIImageView(image: UIImage(systemName: "rectangle.fill"))
-        icon.tintColor = themeBlue
+        icon.tintColor = redColor
         icon.contentMode = .scaleAspectFit
         row.addSubview(icon)
         icon.translatesAutoresizingMaskIntoConstraints = false
@@ -546,6 +544,7 @@ class BankTransferIntroViewController: ZQViewController {
         vc.maxLimit = Double("\(channel["maxhigh"] ?? 0)") ?? 0
         vc.channelName = channel["tdname"] as? String ?? "银证转入"
         vc.yzmima = channel["yzmima"] as? String ?? ""
+        vc.urlType = channel["url_type"] as? Int ?? 2
         navigationController?.pushViewController(vc, animated: true)
     }
 
@@ -647,6 +646,17 @@ class BankTransferIntroViewController: ZQViewController {
             emptyLabel.textAlignment = .center
             channelStack.addArrangedSubview(emptyLabel)
             NSLayoutConstraint.activate([emptyLabel.heightAnchor.constraint(equalToConstant: 44)])
+            
+            // 对齐安卓：无支付渠道时显示联系在线客服按钮
+            let serviceBtn = UIButton(type: .system)
+            serviceBtn.setTitle("联系在线客服", for: .normal)
+            serviceBtn.setTitleColor(.white, for: .normal)
+            serviceBtn.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            serviceBtn.backgroundColor = orangeRed
+            serviceBtn.layer.cornerRadius = 22
+            serviceBtn.addTarget(self, action: #selector(contactServiceTapped), for: .touchUpInside)
+            channelStack.addArrangedSubview(serviceBtn)
+            NSLayoutConstraint.activate([serviceBtn.heightAnchor.constraint(equalToConstant: 44)])
             return
         }
 
@@ -656,6 +666,37 @@ class BankTransferIntroViewController: ZQViewController {
             let maxHigh = channel["maxhigh"] as? Int ?? Int(Double("\(channel["maxhigh"] ?? 0)") ?? 0)
             let row = makeChannelRow(name: name, minAmount: minLow, maxAmount: maxHigh, index: i)
             channelStack.addArrangedSubview(row)
+        }
+    }
+
+    // 联系在线客服按钮点击事件
+    @objc private func contactServiceTapped() {
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/getconfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      var kfUrl = data["kf_url"] as? String,
+                      !kfUrl.isEmpty else {
+                    DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+                    return
+                }
+                if !kfUrl.hasPrefix("http") {
+                    kfUrl = "https://" + kfUrl
+                }
+                guard let url = URL(string: kfUrl) else { return }
+                DispatchQueue.main.async {
+                    let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
+                }
+            case .failure(_):
+                DispatchQueue.main.async { Toast.show("获取客服地址失败") }
+            }
         }
     }
 
@@ -763,7 +804,7 @@ class BankTransferIntroViewController: ZQViewController {
             let timeStr = fmt.string(from: date)
 
             // 状态颜色
-            var sColor: UIColor = themeBlue
+            var sColor: UIColor = redColor
             if txtColor == "red" { sColor = redColor }
             else if txtColor == "green" { sColor = UIColor(red: 0.2, green: 0.7, blue: 0.3, alpha: 1) }
 
@@ -779,8 +820,10 @@ class BankTransferIntroViewController: ZQViewController {
 
     // MARK: - 提交转出
     @objc private func transferOutTapped() {
+        print("【银证转出】转出按钮被点击")
         guard let text = amountField.text, let amount = Double(text), amount > 0 else {
             Toast.show("请输入有效的转出金额")
+            print("【银证转出】金额无效: \(amountField.text ?? "nil")")
             return
         }
         if amount > availableBalance {
@@ -789,6 +832,11 @@ class BankTransferIntroViewController: ZQViewController {
         }
         if amount < 100 {
             Toast.show("最小转出金额为100")
+            return
+        }
+        // 对齐安卓：检查银行卡绑定
+        if bankCards.isEmpty {
+            Toast.show("请先绑定银行卡")
             return
         }
 
@@ -811,7 +859,7 @@ class BankTransferIntroViewController: ZQViewController {
         let cardId = bankCards.isEmpty ? "1" : "\(bankCards[selectedCardIndex]["id"] ?? 1)"
         SecureNetworkManager.shared.request(
             api: "/api/user/applyWithdraw",
-            method: .post,
+            method: .get,
             params: ["account_id": cardId, "money": "\(amount)", "pass": password]
         ) { [weak self] result in
             guard let self = self else { return }
@@ -834,144 +882,3 @@ class BankTransferIntroViewController: ZQViewController {
     }
 }
 
-// MARK: - 支付密码输入视图
-class PaymentPasswordInputView: UIView {
-
-    private let dimView = UIView()
-    private let containerView = UIView()
-    var onComplete: ((String) -> Void)?
-    private var dotLabels: [UILabel] = []
-    private var password: String = "" {
-        didSet { updateDots() }
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupUI()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    private func setupUI() {
-        dimView.backgroundColor = UIColor.black.withAlphaComponent(0.4)
-        addSubview(dimView)
-        dimView.translatesAutoresizingMaskIntoConstraints = false
-
-        containerView.backgroundColor = .white
-        containerView.layer.cornerRadius = 12
-        containerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        containerView.clipsToBounds = true
-        addSubview(containerView)
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            dimView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            dimView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            dimView.topAnchor.constraint(equalTo: topAnchor),
-            dimView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 360)
-        ])
-
-        let titleLabel = UILabel()
-        titleLabel.text = "请输入支付密码"
-        titleLabel.font = UIFont.systemFont(ofSize: 16)
-        titleLabel.textColor = Constants.Color.textPrimary
-        titleLabel.textAlignment = .center
-        containerView.addSubview(titleLabel)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let dotsStack = UIStackView()
-        dotsStack.axis = .horizontal
-        dotsStack.alignment = .center
-        dotsStack.distribution = .fillEqually
-        dotsStack.spacing = 18
-        containerView.addSubview(dotsStack)
-        dotsStack.translatesAutoresizingMaskIntoConstraints = false
-
-        for _ in 0..<6 {
-            let underline = UIView()
-            underline.backgroundColor = Constants.Color.separator
-            underline.heightAnchor.constraint(equalToConstant: 2).isActive = true
-            let dot = UILabel()
-            dot.text = ""
-            dot.font = UIFont.systemFont(ofSize: 22)
-            dot.textAlignment = .center
-            dot.textColor = Constants.Color.textPrimary
-            let wrapper = UIStackView(arrangedSubviews: [dot, underline])
-            wrapper.axis = .vertical
-            wrapper.alignment = .fill
-            wrapper.distribution = .fill
-            wrapper.spacing = 10
-            dotsStack.addArrangedSubview(wrapper)
-            dotLabels.append(dot)
-        }
-
-        let keypad = createKeypad()
-        containerView.addSubview(keypad)
-        keypad.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
-            titleLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-            dotsStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 28),
-            dotsStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 50),
-            dotsStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -50),
-            keypad.topAnchor.constraint(equalTo: dotsStack.bottomAnchor, constant: 32),
-            keypad.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            keypad.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            keypad.bottomAnchor.constraint(equalTo: containerView.safeAreaLayoutGuide.bottomAnchor)
-        ])
-    }
-
-    private func createKeypad() -> UIView {
-        let grid = UIStackView()
-        grid.axis = .vertical
-        grid.distribution = .fillEqually
-        grid.spacing = 0
-        let numbers = [["1","2","3"],["4","5","6"],["7","8","9"],["取消","0","⌫"]]
-        for row in numbers {
-            let rowStack = UIStackView()
-            rowStack.axis = .horizontal
-            rowStack.distribution = .fillEqually
-            rowStack.spacing = 0
-            for title in row {
-                let btn = UIButton(type: .system)
-                btn.setTitle(title, for: .normal)
-                btn.titleLabel?.font = UIFont.systemFont(ofSize: 24)
-                btn.setTitleColor(Constants.Color.textPrimary, for: .normal)
-                btn.addTarget(self, action: #selector(keyTapped(_:)), for: .touchUpInside)
-                rowStack.addArrangedSubview(btn)
-            }
-            grid.addArrangedSubview(rowStack)
-        }
-        return grid
-    }
-
-    private func updateDots() {
-        for (i, label) in dotLabels.enumerated() {
-            label.text = i < password.count ? "•" : ""
-        }
-        if password.count == 6 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self = self else { return }
-                let pwd = self.password
-                self.removeFromSuperview()
-                self.onComplete?(pwd)
-            }
-        }
-    }
-
-    @objc private func keyTapped(_ sender: UIButton) {
-        guard let title = sender.currentTitle else { return }
-        switch title {
-        case "取消": removeFromSuperview()
-        case "⌫": if !password.isEmpty { password.removeLast() }
-        default: if password.count < 6, Int(title) != nil { password.append(title) }
-        }
-    }
-}

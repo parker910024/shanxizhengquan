@@ -34,19 +34,20 @@ class BlockTradingViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = navBlue
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "大宗交易"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
         gk_navItemLeftSpace = 15
         gk_navItemRightSpace = 15
+        gk_backStyle = .black
         
         // 右上角「交易记录」按钮
         let recordButton = UIButton(type: .system)
         recordButton.setTitle("交易记录", for: .normal)
-        recordButton.setTitleColor(.white, for: .normal)
+        recordButton.setTitleColor(Constants.Color.textPrimary, for: .normal)
         recordButton.titleLabel?.font = UIFont.systemFont(ofSize: 15)
         recordButton.addTarget(self, action: #selector(openTradingRecords), for: .touchUpInside)
         gk_navRightBarButtonItem = UIBarButtonItem(customView: recordButton)

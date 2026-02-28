@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contract_title_online">\u7EBF\u4E0A\u5408\u540C</string>
+    <string name="contract_header_name">\u5408\u540C\u540D\u79F0</string>
+    <string name="contract_header_status">\u5408\u540C\u72B6\u6001</string>
+    <string name="contract_header_action">\u64CD\u4F5C</string>
+    <string name="contract_empty">\u6682\u65E0\u5408\u540C</string>
+
+    <string name="contract_search_not_open">\u641C\u7D22\u529F\u80FD\u6682\u672A\u5F00\u653E</string>
+    <string name="contract_load_failed">\u52A0\u8F7D\u5931\u8D25</string>
+    <string name="contract_already_signed">\u8BE5\u5408\u540C\u5DF2\u7B7E\u8BA2</string>
+    <string name="contract_input_name_hint">\u8BF7\u8F93\u5165\u771F\u5B9E\u59D3\u540D</string>
+    <string name="contract_input_id_hint">\u8BF7\u8F93\u5165\u8EAB\u4EFD\u8BC1\u53F7</string>
+    <string name="contract_input_address_hint">\u8BF7\u8F93\u5165\u5C45\u4F4F\u5730\u5740</string>
+    <string name="contract_upload_sign_failed">\u4E0A\u4F20\u7B7E\u540D\u5931\u8D25</string>
+    <string name="contract_create_failed">\u521B\u5EFA\u5408\u540C\u5931\u8D25</string>
+    <string name="contract_invalid_id">\u5408\u540C\u7F16\u53F7\u65E0\u6548</string>
+    <string name="contract_sign_success">\u7B7E\u7EA6\u6210\u529F</string>
+    <string name="contract_sign_failed">\u7B7E\u7EA6\u5931\u8D25</string>
+    <string name="contract_sign_invalid_retry">\u7B7E\u540D\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5</string>
+
+    <string name="contract_status_signed">\u5DF2\u7B7E\u8BA2</string>
+    <string name="contract_status_unsigned">\u672A\u7B7E\u8BA2</string>
+    <string name="contract_action_signed">\u5DF2\u7B7E</string>
+    <string name="contract_action_sign">\u7B7E\u8BA2</string>
+
+    <string name="contract_info_title">\u5408\u540C\u4FE1\u606F</string>
+    <string name="contract_field_real_name">\u771F\u5B9E\u59D3\u540D</string>
+    <string name="contract_field_id_number">\u8EAB\u4EFD\u8BC1\u53F7</string>
+    <string name="contract_field_address">\u5C45\u4F4F\u5730\u5740</string>
+    <string name="contract_btn_back">\u8FD4\u56DE</string>
+    <string name="contract_btn_confirm">\u786E\u8BA4</string>
+    <string name="contract_detail_title">\u5408\u540C\u8BE6\u60C5</string>
+    <string name="contract_sign_section_title">\u7B7E\u540D</string>
+    <string name="contract_btn_resign">\u91CD\u65B0\u7B7E\u540D</string>
+    <string name="contract_btn_submit">\u786E\u8BA4\u63D0\u4EA4</string>
+    <string name="contract_sign_date_format">\u7B7E\u7EA6\u65E5\u671F: %1$s</string>
+
+    <string name="signature_title">\u624B\u5199\u7B7E\u540D</string>
+    <string name="signature_hint">\u8BF7\u5728\u6B64\u533A\u57DF\u7B7E\u540D</string>
+    <string name="signature_clear">\u6E05\u7A7A</string>
+    <string name="signature_confirm">\u786E\u8BA4\u7B7E\u540D</string>
+    <string name="signature_please_first">\u8BF7\u5148\u7B7E\u540D</string>
+    <string name="signature_get_failed">\u83B7\u53D6\u7B7E\u540D\u5931\u8D25</string>
+    <string name="signature_save_failed">\u4FDD\u5B58\u7B7E\u540D\u5931\u8D25</string>
+</resources>

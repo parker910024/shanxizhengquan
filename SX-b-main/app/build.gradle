@@ -1,0 +1,126 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.yanshu.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.yanshu.app"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        buildConfigField "String", "REGISTER_TYPE", "\"1\""
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField "String", "BASE_URL", "\"https://13.231.202.103:51000/\""
+            buildConfigField "String", "IMAGE_BASE_URL", "\"https://snake-stk-test5.baihemeiye.top\""
+            buildConfigField "boolean", "ENABLE_CRYPTO_LOG", "true"
+        }
+        release {
+            buildConfigField "String", "BASE_URL", "\"https://13.231.202.103:51000/\""
+            buildConfigField "String", "IMAGE_BASE_URL", "\"https://snake-stk-test5.baihemeiye.top\""
+            buildConfigField "boolean", "ENABLE_CRYPTO_LOG", "false"
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    flavorDimensions += "registerMode"
+    productFlavors {
+        username {
+            dimension "registerMode"
+            buildConfigField "String", "REGISTER_TYPE", "\"1\""
+        }
+        phone {
+            dimension "registerMode"
+            buildConfigField "String", "REGISTER_TYPE", "\"2\""
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    packagingOptions {
+        pickFirst '**/*.so'
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation(name: 'libbox', ext: 'aar')
+
+    implementation(libs.core.ktx)
+    implementation(libs.appcompat)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.gridlayout)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.fragment)
+    implementation(libs.material)
+    implementation(libs.androidx.lifecycle.common)
+    implementation(libs.androidx.lifecycle.livedata)
+    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.service)
+    implementation(libs.mmkv)
+    implementation(libs.mpandroidchart)
+    implementation(libs.okhttp3)
+    implementation(libs.okhttp3.logging)
+    implementation(libs.retrofit2)
+    implementation(libs.retrofit2.converter.gson)
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
+    implementation(libs.coil)
+    implementation(libs.noties.core)
+    implementation(libs.noties.image)
+    implementation(libs.agentweb.core)
+    implementation(libs.agentweb.filechooser)
+    implementation(libs.agentweb.downloader)
+    implementation(libs.zxing)
+    implementation(libs.walle)
+    implementation(libs.chat.window.android)
+    implementation(libs.alipaysdk.android)
+    implementation(libs.umsdk.common)
+    implementation(libs.umsdk.asms)
+//    implementation(libs.androidx.annotation)
+
+    implementation(libs.banner)
+    implementation(libs.captcha)
+    implementation project(':libs:lib-tools')
+    implementation project(':libs:lib-net')
+    implementation project(':libs:lib-components')
+    implementation project(':libs:lib-base')
+
+    testImplementation 'junit:junit:4.13.2'
+
+    androidTestImplementation 'androidx.test:core-ktx:1.6.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+}

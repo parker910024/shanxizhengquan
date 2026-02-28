@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:gravity="center"
+    android:minWidth="100dp"
+    android:orientation="vertical">
+
+    <!-- 指数名称 -->
+    <TextView
+        android:id="@+id/tv_index_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#393232"
+        android:textSize="14sp"
+        tools:text="上证指数" />
+
+    <!-- 指数数值 -->
+    <TextView
+        android:id="@+id/tv_index_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="3968.84"
+        tools:textColor="@color/hq_rise_color" />
+
+    <!-- 涨跌值 + 涨跌幅 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_index_change"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            tools:text="+3.72"
+            tools:textColor="@color/hq_rise_color" />
+
+        <TextView
+            android:id="@+id/tv_index_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textSize="15sp"
+            tools:text="0.09%"
+            tools:textColor="@color/hq_rise_color" />
+
+    </LinearLayout>
+
+</LinearLayout>

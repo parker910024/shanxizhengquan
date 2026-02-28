@@ -14,7 +14,7 @@ class RealNameAuthViewController: ZQViewController {
     private let contentView = UIView()
     
     // 信息区
-    private let nationalityLabel = UILabel() // 国籍，点击选择
+    private let nationalityTextField = UITextField() // 国籍，改为键盘输入
     private let nameTextField = UITextField() // 真实姓名
     private let idTypeLabel = UILabel() // 证件类型，显示「身份证」
     private let idCardTextField = UITextField()
@@ -40,18 +40,21 @@ class RealNameAuthViewController: ZQViewController {
     private var frontImage: UIImage?
     private var backImage: UIImage?
     
-    // 选中国籍
-    private var selectedCountry: CountryCode = .defaultCountry
+    // 状态记录
+    private var currentAuditStatus: String = ""
+    private var currentRejectReason: String = ""
+    private var isLoading = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
+        loadData()
     }
     
     private func setupNavigationBar() {
         gk_navBackgroundColor = .white
-        gk_navTintColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
         gk_navTitleColor = .black
         gk_navTitle = "实名认证"
@@ -83,65 +86,52 @@ class RealNameAuthViewController: ZQViewController {
         setupCertificateInfo()
         setupImageUpload()
         setupSubmitButton()
-        setupNotice()
     }
     
-    // 信息区容器（用于约束）
-    private var infoSectionContainer: UIView!
+    // 信息区锚点（用于后续排列）
+    private var lastInfoRowBottomAnchor: NSLayoutYAxisAnchor!
     
     // MARK: - 证件信息（国籍 / 真实姓名 / 证件类型 / 身份证号码，表格式+分隔线）
 
     private func setupCertificateInfo() {
-        let card = UIView()
-        card.backgroundColor = .white
-        contentView.addSubview(card)
-        card.translatesAutoresizingMaskIntoConstraints = false
-        
-        let rowH: CGFloat = 50
-        let margin: CGFloat = 16
-        let sepColor = Constants.Color.separator
+        let rowH: CGFloat = 56
+        let sepColor = UIColor(hexString: "E5E5E5") ?? Constants.Color.separator
+        let labelColor = UIColor(hexString: "191919") ?? .black
+        let hintColor = UIColor(hexString: "999999") ?? .gray
         
         // 国籍
-        nationalityLabel.text = selectedCountry.name
-        nationalityLabel.font = UIFont.systemFont(ofSize: 15)
-        nationalityLabel.textColor = Constants.Color.textPrimary
-        let nationalityRow = addInfoRow(to: card, label: "国籍", rightView: nationalityLabel, top: 0, height: rowH, showSeparator: true, sepColor: sepColor)
-        nationalityLabel.text = "请输入"
-        nationalityLabel.textColor = Constants.Color.textTertiary
-        let nationalityTap = UITapGestureRecognizer(target: self, action: #selector(showCountryPicker))
-        nationalityRow.addGestureRecognizer(nationalityTap)
-        nationalityRow.isUserInteractionEnabled = true
+        nationalityTextField.setZqPlaceholder("请输入")
+        nationalityTextField.font = UIFont.systemFont(ofSize: 15)
+        nationalityTextField.textColor = labelColor
+        nationalityTextField.textAlignment = .right
+        nationalityTextField.borderStyle = .none
+        let _ = addInfoRow(to: contentView, label: "国籍", rightView: nationalityTextField, top: 0, height: rowH, showSeparator: true, sepColor: sepColor)
         
         // 真实姓名
-        nameTextField.placeholder = "请输入真实姓名"
+        nameTextField.setZqPlaceholder("请输入真实姓名")
         nameTextField.font = UIFont.systemFont(ofSize: 15)
-        nameTextField.textColor = Constants.Color.textPrimary
+        nameTextField.textColor = labelColor
+        nameTextField.textAlignment = .right
         nameTextField.borderStyle = .none
-        // nameRow
-        _ = addInfoRow(to: card, label: "真实姓名", rightView: nameTextField, top: rowH, height: rowH, showSeparator: true, sepColor: sepColor)
+        let nameRow = addInfoRow(to: contentView, label: "真实姓名", rightView: nameTextField, top: rowH, height: rowH, showSeparator: true, sepColor: sepColor)
         
         // 证件类型
         idTypeLabel.text = "身份证"
         idTypeLabel.font = UIFont.systemFont(ofSize: 15)
-        idTypeLabel.textColor = Constants.Color.textPrimary
-        // idTypeRow
-        _ = addInfoRow(to: card, label: "证件类型", rightView: idTypeLabel, top: rowH * 2, height: rowH, showSeparator: true, sepColor: sepColor)
+        idTypeLabel.textColor = labelColor
+        idTypeLabel.textAlignment = .right
+        let idTypeRow = addInfoRow(to: contentView, label: "证件类型", rightView: idTypeLabel, top: rowH * 2, height: rowH, showSeparator: true, sepColor: sepColor)
         
         // 身份证号码
-        idCardTextField.placeholder = "请输入身份证号码"
+        idCardTextField.setZqPlaceholder("请输入身份证号码")
         idCardTextField.font = UIFont.systemFont(ofSize: 15)
-        idCardTextField.textColor = Constants.Color.textPrimary
+        idCardTextField.textColor = labelColor
+        idCardTextField.textAlignment = .right
         idCardTextField.borderStyle = .none
-        idCardTextField.keyboardType = .numberPad
-        _ = addInfoRow(to: card, label: "身份证号码", rightView: idCardTextField, top: rowH * 3, height: rowH, showSeparator: false, sepColor: sepColor)
+        idCardTextField.keyboardType = .asciiCapable
+        let idCardRow = addInfoRow(to: contentView, label: "身份证号码", rightView: idCardTextField, top: rowH * 3, height: rowH, showSeparator: true, sepColor: sepColor)
         
-        infoSectionContainer = card
-        NSLayoutConstraint.activate([
-            card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
-            card.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
-            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
-            card.heightAnchor.constraint(equalToConstant: rowH * 4)
-        ])
+        lastInfoRowBottomAnchor = idCardRow.bottomAnchor
     }
     
     private func addInfoRow(to container: UIView, label: String, rightView: UIView, top: CGFloat, height: CGFloat, showSeparator: Bool, sepColor: UIColor) -> UIView {
@@ -153,7 +143,7 @@ class RealNameAuthViewController: ZQViewController {
         let leftLabel = UILabel()
         leftLabel.text = label
         leftLabel.font = UIFont.systemFont(ofSize: 15)
-        leftLabel.textColor = Constants.Color.textPrimary
+        leftLabel.textColor = UIColor(hexString: "191919") ?? .black
         row.addSubview(leftLabel)
         leftLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -167,7 +157,7 @@ class RealNameAuthViewController: ZQViewController {
             row.heightAnchor.constraint(equalToConstant: height),
             leftLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
             leftLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
-            leftLabel.widthAnchor.constraint(equalToConstant: 80),
+            leftLabel.widthAnchor.constraint(equalToConstant: 100),
             rightView.leadingAnchor.constraint(equalTo: leftLabel.trailingAnchor, constant: 12),
             rightView.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
             rightView.centerYAnchor.constraint(equalTo: row.centerYAnchor)
@@ -190,18 +180,7 @@ class RealNameAuthViewController: ZQViewController {
         return row
     }
     
-    @objc private func showCountryPicker() {
-        let picker = CountryCodePickerViewController()
-        picker.selectedCountry = selectedCountry
-        picker.onCountrySelected = { [weak self] country in
-            self?.selectedCountry = country
-            self?.nationalityLabel.text = country.name
-            self?.nationalityLabel.textColor = Constants.Color.textPrimary
-            self?.presentedViewController?.dismiss(animated: true)
-        }
-        let nav = UINavigationController(rootViewController: picker)
-        present(nav, animated: true)
-    }
+    
     
     // MARK: - 图片上传
 
@@ -215,7 +194,7 @@ class RealNameAuthViewController: ZQViewController {
             title: "头像面",
             text: "上传身份证头像面",
             placeholderImageName: "touxiangmian",
-            topAnchor: infoSectionContainer.bottomAnchor,
+            topAnchor: lastInfoRowBottomAnchor,
             topConstant: 24
         )
         
@@ -229,7 +208,7 @@ class RealNameAuthViewController: ZQViewController {
             text: "上传身份证国徽面",
             placeholderImageName: "guohuimian",
             topAnchor: frontImageContainer.bottomAnchor,
-            topConstant: 16
+            topConstant: 24
         )
     }
     
@@ -244,65 +223,77 @@ class RealNameAuthViewController: ZQViewController {
         topAnchor: NSLayoutYAxisAnchor,
         topConstant: CGFloat
     ) {
-        // 整行卡片：左文字 + 右图片，圆角浅灰底
-        container.backgroundColor = Constants.Color.backgroundMain
+        // 整行样式：左文字 + 右图片
+        container.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0) // 浅灰色底
         container.layer.cornerRadius = 12
+        container.clipsToBounds = true
         container.isUserInteractionEnabled = true
         let tapGesture = UITapGestureRecognizer(target: self, action: container == frontImageContainer ? #selector(frontImageTapped) : #selector(backImageTapped))
         container.addGestureRecognizer(tapGesture)
         contentView.addSubview(container)
         container.translatesAutoresizingMaskIntoConstraints = false
         
-        // 左侧：标题 + 说明
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = UIFont.systemFont(ofSize: 15)
-        titleLabel.textColor = Constants.Color.textPrimary
+        titleLabel.textColor = UIColor(hexString: "191919") ?? .black
         container.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         label.text = text
         label.font = UIFont.systemFont(ofSize: 13)
-        label.textColor = Constants.Color.textSecondary
-        label.numberOfLines = 2
+        label.textColor = UIColor(hexString: "999999") ?? .gray
+        label.numberOfLines = 0
         container.addSubview(label)
         label.translatesAutoresizingMaskIntoConstraints = false
         
-        // 右侧：占位图（touxiangmian / guohuimian），点击可上传替换
+        // 右侧上传框
+        let uploadBox = UIView()
+        uploadBox.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        uploadBox.layer.cornerRadius = 4
+        uploadBox.clipsToBounds = true
+        container.addSubview(uploadBox)
+        uploadBox.translatesAutoresizingMaskIntoConstraints = false
+        
         imageView.image = UIImage(named: placeholderImageName)
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 8
-        imageView.backgroundColor = .clear
-        container.addSubview(imageView)
+        uploadBox.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
-        cameraIcon.isHidden = true
-        container.addSubview(cameraIcon)
+        cameraIcon.image = UIImage(systemName: "camera.fill")
+        cameraIcon.tintColor = .lightGray
+        cameraIcon.isHidden = false // 默认显示相机图标在中间
+        uploadBox.addSubview(cameraIcon)
         cameraIcon.translatesAutoresizingMaskIntoConstraints = false
         
-        let rightImageW: CGFloat = 120
-        let rightImageH: CGFloat = 90
-        let padding: CGFloat = 16
         NSLayoutConstraint.activate([
             container.topAnchor.constraint(equalTo: topAnchor, constant: topConstant),
             container.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             container.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            container.heightAnchor.constraint(equalToConstant: rightImageH + padding * 2),
+            container.heightAnchor.constraint(equalToConstant: 120),
             
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: padding),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: padding),
-            titleLabel.heightAnchor.constraint(equalToConstant: 20),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 24),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
             
             label.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: padding),
-            label.trailingAnchor.constraint(lessThanOrEqualTo: imageView.leadingAnchor, constant: -12),
-            label.heightAnchor.constraint(greaterThanOrEqualToConstant: 18),
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            label.trailingAnchor.constraint(equalTo: uploadBox.leadingAnchor, constant: -12),
             
-            imageView.topAnchor.constraint(equalTo: container.topAnchor, constant: padding),
-            imageView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -padding),
-            imageView.widthAnchor.constraint(equalToConstant: rightImageW),
-            imageView.heightAnchor.constraint(equalToConstant: rightImageH)
+            uploadBox.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            uploadBox.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
+            uploadBox.widthAnchor.constraint(equalToConstant: 120),
+            uploadBox.heightAnchor.constraint(equalToConstant: 80),
+            
+            imageView.topAnchor.constraint(equalTo: uploadBox.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: uploadBox.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: uploadBox.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: uploadBox.bottomAnchor),
+            
+            cameraIcon.centerXAnchor.constraint(equalTo: uploadBox.centerXAnchor),
+            cameraIcon.centerYAnchor.constraint(equalTo: uploadBox.centerYAnchor),
+            cameraIcon.widthAnchor.constraint(equalToConstant: 32),
+            cameraIcon.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
     
@@ -312,36 +303,71 @@ class RealNameAuthViewController: ZQViewController {
         submitButton.setTitle("确定", for: .normal)
         submitButton.setTitleColor(.white, for: .normal)
         submitButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        submitButton.backgroundColor = Constants.Color.stockRise
-        submitButton.layer.cornerRadius = 8
+        submitButton.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.15, alpha: 1.0)
+        submitButton.layer.cornerRadius = 4
         submitButton.addTarget(self, action: #selector(submitTapped), for: .touchUpInside)
         contentView.addSubview(submitButton)
         submitButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            submitButton.topAnchor.constraint(equalTo: backImageContainer.bottomAnchor, constant: 24),
-            submitButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            submitButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            submitButton.heightAnchor.constraint(equalToConstant: 44)
+            submitButton.topAnchor.constraint(equalTo: backImageContainer.bottomAnchor, constant: 48),
+            submitButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 32),
+            submitButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -32),
+            submitButton.heightAnchor.constraint(equalToConstant: 48),
+            submitButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
         ])
     }
     
     // MARK: - 注意事项
 
-    private func setupNotice() {
-        noticeLabel.text = "注意事项:\n务必使用真实的本人姓名、身份证号码信息进行填写。系统会校验信息的真实性,如果信息有误将直接会影响到山西证券为您提供的服务的正常使用。"
-        noticeLabel.font = UIFont.systemFont(ofSize: 12)
-        noticeLabel.textColor = Constants.Color.stockRise // 红色
-        noticeLabel.numberOfLines = 0
-        contentView.addSubview(noticeLabel)
-        noticeLabel.translatesAutoresizingMaskIntoConstraints = false
+    // MARK: - API 交互
+    
+    private func loadData() {
+        Task {
+            do {
+                let result = try await SecureNetworkManager.shared.request(api: Api.authenticationDetail_api, method: .get, params: [:])
+                let dict = result.decrypted
+                if let data = dict?["data"] as? [String: Any], let detail = data["detail"] as? [String: Any] {
+                    DispatchQueue.main.async {
+                        self.handleAuthenticationDetail(detail)
+                    }
+                }
+            } catch {
+                debugPrint("load authentication detail error =", error)
+            }
+        }
+    }
+    
+    private func handleAuthenticationDetail(_ detail: [String: Any]) {
+        let name = detail["name"] as? String ?? ""
+        let idCard = detail["id_card"] as? String ?? ""
+        let auditStatus = detail["is_audit"] as? String ?? ""
+        let reject = detail["reject"] as? String ?? ""
         
-        NSLayoutConstraint.activate([
-            noticeLabel.topAnchor.constraint(equalTo: submitButton.bottomAnchor, constant: 20),
-            noticeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            noticeLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            noticeLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
-        ])
+        self.currentAuditStatus = auditStatus
+        self.currentRejectReason = reject
+        
+        // 0=pending (未提交), 1=approved (通过), 2=rejected (驳回), 3=reviewing (正在审核)
+        if auditStatus == "1" || auditStatus == "3" || auditStatus == "2" {
+            // 跳转至结果页
+            let resultVC = RealNameAuthResultViewController()
+            resultVC.name = name
+            resultVC.idCard = idCard
+            if auditStatus == "1" {
+                resultVC.authStatus = .approved
+            } else if auditStatus == "3" {
+                resultVC.authStatus = .pending
+            } else {
+                resultVC.authStatus = .rejected
+                resultVC.rejectReason = reject
+            }
+            resultVC.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(resultVC, animated: false)
+        }
+        
+        // 即使跳转了也回填一下，万一用户从结果页点“重新认证”回来可以看到
+        nameTextField.text = name
+        idCardTextField.text = idCard
     }
     
     // MARK: - Actions
@@ -355,6 +381,30 @@ class RealNameAuthViewController: ZQViewController {
     }
     
     private func showImagePicker(isFront: Bool) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "拍照", style: .default, handler: { _ in
+            self.openCamera(isFront: isFront)
+        }))
+        alert.addAction(UIAlertAction(title: "从相册选择", style: .default, handler: { _ in
+            self.openPhotoPicker(isFront: isFront)
+        }))
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        present(alert, animated: true)
+    }
+    
+    private func openCamera(isFront: Bool) {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            Toast.showError("当前设备不支持相机")
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.sourceType = .camera
+        picker.view.tag = isFront ? 1 : 2
+        present(picker, animated: true)
+    }
+    
+    private func openPhotoPicker(isFront: Bool) {
         var config = PHPickerConfiguration()
         config.filter = .images
         config.selectionLimit = 1
@@ -362,66 +412,113 @@ class RealNameAuthViewController: ZQViewController {
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = self
         picker.modalPresentationStyle = .fullScreen
-        
-        // 使用tag来区分正反面
         picker.view.tag = isFront ? 1 : 2
-        
         present(picker, animated: true)
     }
     
     @objc private func submitTapped() {
+        if isLoading { return }
+        
         // 验证输入
-        guard let name = nameTextField.text, !name.isEmpty else {
-            Toast.showInfo("请输入姓名")
+        guard let name = nameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
+            Toast.showInfo("请输入真实姓名")
             return
         }
 
-        guard let idCard = idCardTextField.text, !idCard.isEmpty else {
-            Toast.showInfo("请输入证件号")
+        guard let nationality = nationalityTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !nationality.isEmpty else {
+            Toast.showInfo("请输入国籍")
             return
         }
 
-        guard let frontImage else {
-            Toast.showInfo("请上传证件正面")
+        guard let idCard = idCardTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !idCard.isEmpty else {
+            Toast.showInfo("请输入身份证号码")
+            return
+        }
+        
+        if idCard.count != 15 && idCard.count != 18 {
+            Toast.showInfo("请输入正确的身份证号码")
             return
         }
 
-        guard let backImage else {
-            Toast.showInfo("请上传证件反面")
+        guard let _ = frontImage else {
+            Toast.showInfo("请上传身份证人像面")
+            return
+        }
+
+        guard let _ = backImage else {
+            Toast.showInfo("请上传身份证国徽面")
             return
         }
         
         Task {
             do {
-                SVProgressHUD.show()
-                if let frontPath = await SecureNetworkManager.shared.upload(image: frontImage),
-                   let backPath = await SecureNetworkManager.shared.upload(image: backImage)
+                setLoading(true, text: "上传照片中...")
+                if let frontPath = await SecureNetworkManager.shared.upload(image: frontImage!),
+                   let backPath = await SecureNetworkManager.shared.upload(image: backImage!)
                 {
+                    setLoading(true, text: "提交中...")
                     let result = try await SecureNetworkManager.shared.request(api: Api.authentication_api, method: .post, params: ["name": name, "id_card": idCard, "f": frontPath, "b": backPath])
                     let dict = result.decrypted
                     debugPrint(dict ?? "nil")
-                    if dict?["code"] as? NSNumber != 1 {
+                    if dict?["code"] as? NSNumber != 1 && dict?["code"] as? String != "1" {
                         DispatchQueue.main.async {
                             Toast.showInfo(dict?["msg"] as? String ?? "")
-                            SVProgressHUD.dismiss()
+                            self.setLoading(false)
                         }
                         return
                     }
-                    await SVProgressHUD.dismiss()
-                    // 跳转到结果页面（等待审核状态）
+                    SVProgressHUD.showSuccess(withStatus: "提交成功，等待审核")
+                    try await Task.sleep(nanoseconds: 1 * 1_000_000_000)
+                    setLoading(false)
+                    
+                    // 跳转到结果页面
                     let resultVC = RealNameAuthResultViewController()
                     resultVC.name = name
                     resultVC.idCard = idCard
+                    resultVC.authStatus = .pending
                     resultVC.hidesBottomBarWhenPushed = true
                     navigationController?.pushViewController(resultVC, animated: true)
                 } else {
-                     await SVProgressHUD.dismiss()
-                    Toast.showError("上传图片失败,请稍候再试")
+                    setLoading(false)
+                    Toast.showError("图片上传失败")
                 }
             } catch {
-                await SVProgressHUD.dismiss()
+                setLoading(false)
                 debugPrint("error =", error.localizedDescription)
-                Toast.showError(error.localizedDescription)
+                Toast.showError("提交失败，请稍后重试")
+            }
+        }
+    }
+    
+    private func setLoading(_ loading: Bool, text: String = "加载中...") {
+        isLoading = loading
+        if loading {
+            SVProgressHUD.show(withStatus: text)
+        } else {
+            SVProgressHUD.dismiss()
+        }
+        submitButton.isEnabled = !loading
+        frontImageContainer.isUserInteractionEnabled = !loading
+        backImageContainer.isUserInteractionEnabled = !loading
+        nationalityTextField.isEnabled = !loading
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate
+
+extension RealNameAuthViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+        if let image = info[.originalImage] as? UIImage {
+            let isFront = picker.view.tag == 1
+            if isFront {
+                self.frontImage = image
+                self.frontImageView.image = image
+                self.frontCameraIcon.isHidden = true
+            } else {
+                self.backImage = image
+                self.backImageView.image = image
+                self.backCameraIcon.isHidden = true
             }
         }
     }

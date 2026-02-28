@@ -54,31 +54,59 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate , FloatViewDelegate{
             window.rootViewController = next
         }, completion: nil)
         
-        let floatView = FloatView(radius: 30, point: CGPointMake(window.frame.size.width-70, 120), image: UIImage(named: "logoIcon"), in: window)
+        let floatView = FloatView(radius: 26, point: CGPointMake(window.frame.size.width-60, window.frame.size.height/3), image: UIImage(named: "logoIcon"), in: window)
+        // 使用水平展开模式
         floatView?.subViewShowType = .horizontal
         floatView?.delegate = self
         self.floatView = floatView
         window.addSubview(floatView!)
+        window.bringSubviewToFront(floatView!)
         
         updateDataModel()
     }
     
-    func updateDataModel(){
+    func updateDataModel() {
+        // 清理所有旧的子控件
+        self.floatView?.deleteAllSubFloatViews()
+        
+        let currentAddress = vpnDataModel.shared.selectAddress ?? ""
         var index = 0
         for item in vpnDataModel.shared.ipDataArray ?? [] {
             guard let dic = item as? Dictionary<String, Any> else { continue }
-            // 使用 str
+            let name = dic["name"] as? String ?? ""
             let value = dic["value"] as? String ?? ""
-            self.floatView?.addSubFloatView(with: .lightGray, url: value, title: String(format: "线路%d", index), titleColor: .black, tag: 100+index)
+            
+            // 当前选中的项如果和节点 value 相等，改用主色调红色高亮展现
+            let titleColor = (value == currentAddress) ? UIColor.red : UIColor.black
+            
+            // 优先填 name，如果没有 name 则显示类似 "线路0"，同时 tag 指定为 index + 100 以便回调区分
+            let displayName = name.isEmpty ? String(format: "线路%d", index) : name
+            self.floatView?.addSubFloatView(with: UIColor(white: 0.9, alpha: 1.0),
+                                            url: value,
+                                            title: displayName,
+                                            titleColor: titleColor,
+                                            tag: 100 + index)
             index += 1
         }
     }
 
 
     func floatViewSubViewClicked(withTag tag: Int) {
-        let dic = vpnDataModel.shared.ipDataArray?[tag-100]
-        guard let dict = dic as? Dictionary<String, Any> else {return}
-        vpnDataModel.shared.selectAddress = dict["value"] as? String ?? ""
+        let index = tag - 100
+        guard let ipDataArray = vpnDataModel.shared.ipDataArray,
+              index >= 0, index < ipDataArray.count else { return }
+        
+        guard let dic = ipDataArray[index] as? Dictionary<String, Any>,
+              let value = dic["value"] as? String else { return }
+        
+        // 变更当前选项
+        vpnDataModel.shared.selectAddress = value
+        
+        // 给予 Toast 提示并重绘悬浮球的底层节点，即令新选中的变红
+        DispatchQueue.main.async {
+            Toast.show("切换线路成功")
+            self.updateDataModel()
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -113,6 +141,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate , FloatViewDelegate{
         let loginViewController = LoginViewController()
         window?.rootViewController = loginViewController
         window?.makeKeyAndVisible()
+        if let fv = self.floatView {
+            window?.bringSubviewToFront(fv)
+        }
     }
 
     /// 登录/注册成功后切换到主界面 TabBar（由 SceneDelegate 持有 window，保证能切到）
@@ -122,6 +153,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate , FloatViewDelegate{
         UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
             window.rootViewController = tabBarController
         }, completion: nil)
+        if let fv = self.floatView {
+            window.bringSubviewToFront(fv)
+        }
     }
 }
 

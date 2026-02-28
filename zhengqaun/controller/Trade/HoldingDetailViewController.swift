@@ -11,14 +11,18 @@ import UIKit
 struct HoldingDetail {
     let stockCode: String
     let stockName: String
-    let exchange: String // 交易所标识，如"深"、"沪"
-    let shares: String // 持股数
-    let purchasePrice: String // 买入价格
-    let purchaseValue: String // 买入市值
-    let transactionFee: String // 手续费
-    let profitLoss: String // 盈亏
-    let profitLossPercent: String // 盈亏比例
+    let exchange: String
+    let shares: String
+    let purchasePrice: String
+    let purchaseValue: String
+    let transactionFee: String
+    let profitLoss: String
+    let plRate: String // 盈亏比例
     let purchaseTime: String // 买入时间
+    // 历史特有字段
+    var sellPrice: String? = nil
+    var stampDuty: String? = nil
+    var sellTime: String? = nil
 }
 
 class HoldingDetailViewController: ZQViewController {
@@ -28,6 +32,7 @@ class HoldingDetailViewController: ZQViewController {
     private let closePositionButton = UIButton(type: .system)
     private var detail: HoldingDetail?
     
+    var isHistorical: Bool = false
     var hiddingButton: Bool = false
     
     /// 调用方传入的持仓原始数据（来自 API 返回）
@@ -41,10 +46,12 @@ class HoldingDetailViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navTitle = "持仓详情"
-        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
-        gk_navTitleColor = .white
-        gk_statusBarStyle = .lightContent
+        gk_navTitle = isHistorical ? "历史持仓详情" : "持仓详情"
+        gk_navBackgroundColor = isHistorical ? UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0) : .white
+        gk_navTitleColor = isHistorical ? .white : Constants.Color.textPrimary
+        gk_statusBarStyle = isHistorical ? .lightContent : .default
+        gk_navTintColor = isHistorical ? .white : Constants.Color.textPrimary
+        gk_backStyle = isHistorical ? .white : .black
     }
     
     private func setupUI() {
@@ -59,11 +66,14 @@ class HoldingDetailViewController: ZQViewController {
         scrollView.addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
         
-        // 平仓按钮
-        closePositionButton.setTitle("平仓", for: .normal)
+        // 按钮处理
+        let btnTitle = isHistorical ? "返回" : "平仓"
+        let btnColor = isHistorical ? UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0) : UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0)
+        
+        closePositionButton.setTitle(btnTitle, for: .normal)
         closePositionButton.setTitleColor(.white, for: .normal)
         closePositionButton.titleLabel?.font = UIFont.systemFont(ofSize: 17)
-        closePositionButton.backgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
+        closePositionButton.backgroundColor = btnColor
         closePositionButton.layer.cornerRadius = 8
         closePositionButton.addTarget(self, action: #selector(closePositionTapped), for: .touchUpInside)
         closePositionButton.isHidden = hiddingButton
@@ -98,13 +108,33 @@ class HoldingDetailViewController: ZQViewController {
         let code = holdingData["code"] as? String ?? "--"
         let title = holdingData["title"] as? String ?? "--"
         let allcode = holdingData["allcode"] as? String ?? ""
-        let number = holdingData["number"] as? String ?? "\(holdingData["number"] as? Int ?? 0)"
-        let buyPrice = holdingData["buyprice"] as? Double ?? 0
-        let citycc = holdingData["citycc"] as? Double ?? (holdingData["citycc"] as? Int).map { Double($0) } ?? 0
-        let allMoney = holdingData["allMoney"] as? String ?? "0"
-        let profitLose = holdingData["profitLose"] as? String ?? "0"
-        let plRate = holdingData["profitLose_rate"] as? String ?? "--"
-        let createTime = holdingData["createtime_name"] as? String ?? "--"
+        // 兼容 String/Int 类型
+        let number = "\(holdingData["number"] ?? "0")"
+        let number_val = Double(number) ?? 0
+        let buyPrice = holdingData["buyprice"] as? Double ?? Double("\(holdingData["buyprice"] ?? 0)") ?? 0
+        
+        // 修复买入市值
+        var citycc = holdingData["citycc"] as? Double ?? Double("\(holdingData["citycc"] ?? 0)") ?? 0
+        if isHistorical && citycc == 0 {
+            citycc = buyPrice * number_val
+        }
+        // 金额字段：对齐安卓 HoldingItem.money
+        let moneyVal = Double("\(holdingData["money"] ?? "0")") ?? 0
+        // 历史记录用 money（金额）显示，当前持仓用 citycc（市值）
+        let displayValue = isHistorical ? (moneyVal > 0 ? moneyVal : citycc) : citycc
+        
+        // 手续费：兼容 String/Double/Int
+        let allMoney = "\(holdingData["allMoney"] ?? "0")"
+        
+        // 盈亏：支持 Double 和 String 两种返回格式
+        let profitLose: String
+        if let plDouble = holdingData["profitLose"] as? Double {
+            profitLose = String(format: "%.2f", plDouble)
+        } else {
+            profitLose = "\(holdingData["profitLose"] ?? "0")"
+        }
+        let plRate = "\(holdingData["profitLose_rate"] ?? "--")"
+        let createTime = "\(holdingData["createtime_name"] ?? "--")"
         
         // 推导交易所
         let typeVal = holdingData["type"] as? Int ?? 0
@@ -119,19 +149,27 @@ class HoldingDetailViewController: ZQViewController {
             else { exchangeStr = "深" }
         }
         
-        
         detail = HoldingDetail(
             stockCode: code,
             stockName: title,
             exchange: exchangeStr,
             shares: number,
             purchasePrice: String(format: "%.2f", buyPrice),
-            purchaseValue: String(format: "%.2f", citycc),
+            purchaseValue: String(format: "%.2f", displayValue),
             transactionFee: allMoney,
             profitLoss: profitLose,
-            profitLossPercent: plRate,
+            plRate: plRate,
             purchaseTime: createTime
         )
+        
+        if isHistorical {
+            // 对齐安卓：卖出价使用 cai_buy 字段
+            let sellPrice = Double("\(holdingData["cai_buy"] ?? 0)") ?? 0
+            detail?.sellPrice = String(format: "%.2f", sellPrice)
+            // 对齐安卓：印花税使用 yhfee 字段，兼容 String/Double
+            detail?.stampDuty = "\(holdingData["yhfee"] ?? "0.00")"
+            detail?.sellTime = "\(holdingData["outtime_name"] ?? "--")"
+        }
         setupDetailContent()
     }
     
@@ -142,17 +180,27 @@ class HoldingDetailViewController: ZQViewController {
         contentView.subviews.forEach { $0.removeFromSuperview() }
         
         var previousView: UIView?
-        let items: [(String, String, Bool)] = [
-            ("股票", "\(detail.exchange) \(detail.stockCode)", false),
+        // 判断盈亏正负，用于颜色标记
+        let plValue = Double(detail.profitLoss) ?? 0
+        let isProfit = plValue >= 0
+        
+        // 对齐安卓截图字段顺序：股票代码→股票名称→持股数→买入价格→买入市值→手续费→盈亏→买入时间→(历史)卖出价格→印花税→卖出时间
+        var items: [(String, String, Bool)] = [
+            ("股票代码", "\(detail.exchange) \(detail.stockCode)", false),
             ("股票名称", detail.stockName, false),
             ("持股数", detail.shares, false),
             ("买入价格", detail.purchasePrice, false),
             ("买入市值", detail.purchaseValue, false),
             ("手续费", detail.transactionFee, false),
-            ("盈亏", detail.profitLoss, true), // 红色
-            ("盈亏比例", detail.profitLossPercent, true), // 红色
-            ("买入时间", detail.purchaseTime, false)
+            ("盈亏", detail.profitLoss, true),
+            ("买入时间", detail.purchaseTime, false),
         ]
+        
+        if isHistorical {
+            if let sp = detail.sellPrice { items.append(("卖出价格", sp, false)) }
+            if let sd = detail.stampDuty { items.append(("印花税", sd, false)) }
+            if let st = detail.sellTime { items.append(("卖出时间", st, false)) }
+        }
         
         for (index, item) in items.enumerated() {
             let row = createDetailRow(title: item.0, value: item.1, isRed: item.2, isFirst: index == 0)
@@ -277,6 +325,10 @@ class HoldingDetailViewController: ZQViewController {
     }
     
     @objc private func closePositionTapped() {
+        if isHistorical {
+            navigationController?.popViewController(animated: true)
+            return
+        }
         guard let detail = detail else { return }
         Task {
             do {

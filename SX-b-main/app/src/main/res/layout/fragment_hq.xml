@@ -1,0 +1,709 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/hq_page_bg">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 状态栏占位 -->
+            <ex.ss.lib.base.view.ImmersiveStatusBarHolder
+                android:id="@+id/imm_status_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <!-- 顶部Tab栏 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/hq_section_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="12dp">
+
+                <TextView
+                    android:id="@+id/tv_tab_market"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hq_tab_market"
+                    android:textColor="@color/hq_title_color"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_tab_ipo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="@string/hq_tab_ipo"
+                    android:textColor="@color/hq_subtitle_color"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tv_tab_strategy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="@string/hq_tab_strategy"
+                    android:textColor="@color/hq_subtitle_color"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tv_tab_protection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="@string/hq_tab_protection"
+                    android:textColor="@color/hq_subtitle_color"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <!-- ========== 行情内容区域 ========== -->
+            <LinearLayout
+                android:id="@+id/layout_market_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/hq_section_bg"
+                    android:orientation="vertical"
+                    android:paddingBottom="16dp">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_index"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="8dp"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        tools:listitem="@layout/item_hq_index" />
+
+                </LinearLayout>
+
+                <!-- 市场概括区域 - 已隐藏 -->
+            <LinearLayout
+                android:id="@+id/layout_market_overview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_hq_section_card"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/hq_market_overview"
+                        android:textColor="@color/hq_title_color"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="24dp"
+                        android:clipChildren="true">
+
+                        <LinearLayout
+                            android:id="@+id/layout_fund_info"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_fund_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/hq_south_fund"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tv_fund_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="4373.61亿"
+                                android:textColor="@color/hq_rise_color"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </FrameLayout>
+
+                </LinearLayout>
+
+                <!-- 涨跌分布柱状图 -->
+                <com.yanshu.app.ui.hq.view.MarketDistributionView
+                    android:id="@+id/view_market_distribution"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_marginTop="8dp" />
+
+                <!-- 汇总行：上涨数 [进度条] 下跌数 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- 上涨汇总 -->
+                    <TextView
+                        android:id="@+id/tv_total_rise"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="上涨1716"
+                        android:textColor="@color/hq_rise_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <!-- 涨跌分布进度条 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="8dp"
+                        android:layout_marginHorizontal="12dp"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/view_rise_bar"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="33"
+                            android:background="@color/hq_rise_color" />
+
+                        <View
+                            android:id="@+id/view_fall_bar"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="67"
+                            android:background="@color/hq_fall_color" />
+
+                    </LinearLayout>
+
+                    <!-- 下跌汇总 -->
+                    <TextView
+                        android:id="@+id/tv_total_fall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="下跌3405"
+                        android:textColor="@color/hq_fall_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 行业板块 - 已隐藏 -->
+            <LinearLayout
+                android:id="@+id/layout_industry_sector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_hq_section_card"
+                android:orientation="vertical"
+                android:paddingTop="12dp"
+                android:paddingBottom="4dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:text="@string/hq_industry_sector"
+                    android:textColor="@color/hq_title_color"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_industry_sector"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:nestedScrollingEnabled="false"
+                    app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                    app:spanCount="3"
+                    tools:listitem="@layout/item_hq_sector" />
+
+            </LinearLayout>
+
+            <!-- 概念板块 - 已隐藏 -->
+            <LinearLayout
+                android:id="@+id/layout_concept_sector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_hq_section_card"
+                android:orientation="vertical"
+                android:paddingTop="12dp"
+                android:paddingBottom="4dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:text="@string/hq_concept_sector"
+                    android:textColor="@color/hq_title_color"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_concept_sector"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:nestedScrollingEnabled="false"
+                    app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                    app:spanCount="3"
+                    tools:listitem="@layout/item_hq_sector" />
+
+            </LinearLayout>
+
+            <!-- 股票排行榜 - 白色背景卡片 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_hq_section_card"
+                android:orientation="vertical">
+
+                <!-- 标题 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/hq_stock_ranking"
+                    android:textColor="@color/hq_title_color"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- 股票排行榜Tab栏 - 使用固定宽度与数据列对齐 -->
+                <HorizontalScrollView
+                    android:id="@+id/hsv_ranking_tabs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:scrollbars="none">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:id="@+id/layout_ranking_tabs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingBottom="8dp">
+
+                            <!-- 现价 - 80dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_price"
+                                android:layout_width="80dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_price"
+                                android:textColor="@color/hq_title_color"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <!-- 涨跌 - 70dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_change"
+                                android:layout_width="70dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_change"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                            <!-- 涨跌幅 - 70dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_change_pct"
+                                android:layout_width="70dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_change_pct"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                            <!-- 成交额 - 100dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_volume"
+                                android:layout_width="100dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_volume"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                            <!-- 换手率 - 70dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_turnover"
+                                android:layout_width="70dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_turnover"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                            <!-- 昨收价 - 80dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_prev_close"
+                                android:layout_width="80dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_prev_close"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                            <!-- 今开价 - 80dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_open"
+                                android:layout_width="80dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_open"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                            <!-- 最高价 - 80dp -->
+                            <TextView
+                                android:id="@+id/tv_rank_high"
+                                android:layout_width="80dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:paddingVertical="8dp"
+                                android:text="@string/hq_col_high"
+                                android:textColor="@color/hq_text_gray"
+                                android:textSize="13sp" />
+
+                        </LinearLayout>
+
+                        <!-- Tab指示器 - 在底部，通过 translationX 定位 -->
+                        <View
+                            android:id="@+id/view_ranking_indicator"
+                            android:layout_width="24dp"
+                            android:layout_height="3dp"
+                            android:layout_gravity="bottom|start"
+                            android:layout_marginBottom="2dp"
+                            android:background="@drawable/bg_hq_tab_indicator" />
+
+                    </FrameLayout>
+
+                </HorizontalScrollView>
+
+                <!-- 分割线 -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/hq_divider_color" />
+
+                <!-- 股票列表表头 -->
+                <include
+                    android:id="@+id/layout_stock_header"
+                    layout="@layout/item_hq_stock_header" />
+
+                <!-- 分割线 -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/hq_divider_color" />
+
+                <!-- 股票列表 -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_stock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_hq_stock" />
+
+                <!-- 加载更多状态 -->
+                <FrameLayout
+                    android:id="@+id/layout_load_more"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:visibility="gone">
+
+                    <ProgressBar
+                        android:id="@+id/pb_loading"
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tv_no_more"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="— 没有更多数据了 —"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+            </LinearLayout>
+            <!-- ========== 行情内容区域结束 ========== -->
+
+            <!-- ========== 新股申购内容区域 ========== -->
+            <LinearLayout
+                android:id="@+id/layout_ipo_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- 标题行：今日申购 + 日期 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="16dp">
+
+                    <!-- 红色指示器 -->
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="16dp"
+                        android:background="@color/hq_rise_color" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="今日申购"
+                        android:textColor="@color/hq_title_color"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_ipo_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="2026-02-02 周一"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- IPO 列表 -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_ipo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/hq_page_bg"
+                    android:clipToPadding="false"
+                    android:paddingTop="8dp"
+                    android:nestedScrollingEnabled="false"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_hq_ipo" />
+
+            </LinearLayout>
+            <!-- ========== 新股申购内容区域结束 ========== -->
+
+            <!-- ========== 战略配售内容区域 ========== -->
+            <LinearLayout
+                android:id="@+id/layout_strategy_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- 列表表头 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/hq_page_bg"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.2"
+                        android:text="名称"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="配售价"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="配售数量"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="操作"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_placement"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+                <TextView
+                    android:id="@+id/tv_strategy_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingVertical="40dp"
+                    android:text="暂无数据"
+                    android:textColor="@color/hq_text_gray"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+            <!-- ========== 战略配售内容区域结束 ========== -->
+
+            <!-- ========== 天启护盘内容区域 ========== -->
+            <LinearLayout
+                android:id="@+id/layout_protection_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- 列表表头 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/hq_page_bg"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.2"
+                        android:text="名称"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="折扣价"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="总股额（股）"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="操作"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_block_trade"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+                <TextView
+                    android:id="@+id/tv_protection_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingVertical="40dp"
+                    android:text="暂无数据"
+                    android:textColor="@color/hq_text_gray"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+            <!-- ========== 天启护盘内容区域结束 ========== -->
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

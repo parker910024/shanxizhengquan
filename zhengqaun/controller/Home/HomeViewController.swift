@@ -49,16 +49,37 @@ class HomeViewController: ZQViewController {
 
     /// 新股申购提醒弹框容器（每次进入首页显示）
     private var newStockReminderOverlay: UIView?
+    /// 预加载的新闻数据
+    private var preloadedNewsData: [[(String, String, String)]] = []
+    /// 涨平跌家数
+    private var riseCount = 0
+    private var flatCount = 0
+    private var fallCount = 0
+    /// A股主力净流入（亿）
+    private var mainFundFlowText = ""
+    private var mainFundFlowPositive = false
+    /// 今日大盘
+    private var marketIndexName = ""
+    private var marketIndexPrice = ""
+    private var marketIndexChange = ""
+    private var marketIndexPct = ""
+    private var marketIndexIsDown = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        // 南向/北向资金
-        capitalInflow()
+        // 加载市场数据（北向/南向 + 涨平跌 + 主力净流入）
+        loadMarketData()
+        // 今日大盘
+        loadIndexMarket()
         showNewStockReminderPopupIfNeeded()
+        // 中签弹窗
+        loadBallotPopup()
         // 加载功能开关配置
         FeatureSwitchManager.shared.loadConfig()
         NotificationCenter.default.addObserver(self, selector: #selector(featureSwitchDidUpdate), name: FeatureSwitchManager.didUpdateNotification, object: nil)
+        // 提前加载新闻数据
+        preloadNewsData()
         
         SecureNetworkManager.shared.request(api: "/api/index/banner", method: .get, params: [:]) { res in
             switch res {
@@ -113,6 +134,54 @@ class HomeViewController: ZQViewController {
         tableView.reloadData()
     }
 
+    /// 在 viewDidLoad 时提前加载新闻数据
+    private func preloadNewsData() {
+        // Tab 配置与安卓保持一致：动态/7X24/盘面/投顾/要闻
+        let newsTypes = [
+            ["type": "1", "name": "动态"],
+            ["type": "2", "name": "7X24"],
+            ["type": "3", "name": "盘面"],
+            ["type": "3", "name": "投顾"],
+            ["type": "4", "name": "要闻"],
+        ]
+        // 去重 type，避免重复请求
+        let uniqueTypes = Array(Set(newsTypes.map { $0["type"] ?? "" }))
+        let group = DispatchGroup()
+        var allNews = [(String, String, String, String)]()
+        for type in uniqueTypes {
+            group.enter()
+            SecureNetworkManager.shared.request(api: "/api/Indexnew/getGuoneinews", method: .get, params: ["page": "1", "size": "20", "type": type]) { res in
+                defer { group.leave() }
+                if case .success(let success) = res,
+                   let root = success.decrypted?["data"] as? [String: Any],
+                   let list = root["list"] as? [[String: Any]] {
+                    for item in list {
+                        let title = item["news_title"] as? String ?? ""
+                        // 优先使用 news_time_text（友好时间），为空则回退 news_time
+                        let timeText = item["news_time_text"] as? String ?? ""
+                        let time = timeText.isEmpty ? (item["news_time"] as? String ?? "") : timeText
+                        let content = item["news_content"] as? String ?? ""
+                        allNews.append((type, title, time, content))
+                    }
+                }
+            }
+        }
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            var result = [[(String, String, String)]]()
+            for newsType in newsTypes {
+                let t = newsType["type"] ?? ""
+                result.append(allNews.filter { $0.0 == t }.map { ($0.1, $0.2, $0.3) })
+            }
+            self.preloadedNewsData = result
+            // 刷新直击热点/盘面 (row 4) 和 新闻列表 (row 5)
+            self.tableView.reloadRows(at: [
+                IndexPath(row: 4, section: 0),
+                IndexPath(row: 5, section: 0)
+            ], with: .none)
+        }
+    }
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
     }
@@ -165,6 +234,11 @@ class HomeViewController: ZQViewController {
         cardBgImageView.contentMode = .scaleToFill
         cardBgImageView.clipsToBounds = true
         cardBgImageView.translatesAutoresizingMaskIntoConstraints = false
+        // 降低优先级，防止背景图的固有尺寸撑大卡片
+        cardBgImageView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        cardBgImageView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        cardBgImageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        cardBgImageView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         card.insertSubview(cardBgImageView, at: 0)
         NSLayoutConstraint.activate([
             cardBgImageView.topAnchor.constraint(equalTo: card.topAnchor),
@@ -245,7 +319,6 @@ class HomeViewController: ZQViewController {
         overlay.addSubview(closeBtn)
 
         let cardW: CGFloat = 315
-        let cardH: CGFloat = 335
         let bellW: CGFloat = 136
         let bellH: CGFloat = 109
         let cardPadding: CGFloat = 20
@@ -259,7 +332,7 @@ class HomeViewController: ZQViewController {
             card.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
             card.centerYAnchor.constraint(equalTo: overlay.centerYAnchor, constant: -20),
             card.widthAnchor.constraint(equalToConstant: cardW),
-            card.heightAnchor.constraint(equalToConstant: cardH),
+            // 不设固定高度，由内容自动撑开
 
             titleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: cardPadding),
             titleLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: titleTop),
@@ -390,7 +463,12 @@ class HomeViewController: ZQViewController {
         searchIcon.translatesAutoresizingMaskIntoConstraints = false
         
         // 搜索文本框
-        searchTextField.placeholder = "输入股票代码/简拼"
+        let placeholderText = "输入股票代码/简拼"
+        let placeholderAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0),
+            .font: UIFont.systemFont(ofSize: 14)
+        ]
+        searchTextField.attributedPlaceholder = NSAttributedString(string: placeholderText, attributes: placeholderAttributes)
         searchTextField.font = UIFont.systemFont(ofSize: 14)
         searchTextField.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
         searchTextField.isUserInteractionEnabled = false // 禁用输入，只能点击跳转
@@ -529,42 +607,264 @@ class HomeViewController: ZQViewController {
     
     var totalSouth = ""
     var totalNorth = ""
-    // MARK: 北向/南向资金流入
-    func capitalInflow() {
-        guard let url = URL(string: "https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f56,f60,f61,f62,f63,f65,f66&ut=fa5fd1943c7b386f172d6893dbfba10b&cb=jQuery112304419911490366253_1771774863303&_=1771774863305") else { return }
-        let request = URLRequest(url: url)
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, err in
+
+    // MARK: - 市场数据加载（北向/南向 + 涨平跌 + A股主力净流入）
+    private func loadMarketData() {
+        let group = DispatchGroup()
+
+        // 1. 北向/南向资金（东方财富 kamt，直接 JSON 请求）
+        group.enter()
+        let kamtUrlStr = "https://push2delay.eastmoney.com/api/qt/kamt/get?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f56,f62,f63,f65,f66"
+        if let url = URL(string: kamtUrlStr) {
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                defer { group.leave() }
+                guard let self = self, let data = data,
+                      let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let res = root["data"] as? [String: Any] else { return }
+                // 北向 = 沪股通 + 深股通
+                let hk2sh = res["hk2sh"] as? [String: Any]
+                let hk2sz = res["hk2sz"] as? [String: Any]
+                let northAmt = ((hk2sh?["netBuyAmt"] as? Double) ?? 0) + ((hk2sz?["netBuyAmt"] as? Double) ?? 0)
+                self.totalNorth = String(format: "%.2f", northAmt / 10000.0)
+                // 南向 = 港股通沪 + 港股通深
+                let sh2hk = res["sh2hk"] as? [String: Any]
+                let sz2hk = res["sz2hk"] as? [String: Any]
+                let southAmt = ((sh2hk?["netBuyAmt"] as? Double) ?? 0) + ((sz2hk?["netBuyAmt"] as? Double) ?? 0)
+                self.totalSouth = String(format: "%.2f", southAmt / 10000.0)
+            }.resume()
+        } else { group.leave() }
+
+        // 2. 涨平跌分布（东方财富 clist 拉全 A 股涨跌幅并计算）
+        group.enter()
+        fetchAllStockChangePcts { [weak self] pcts in
+            defer { group.leave() }
             guard let self = self else { return }
-            let res = response as? HTTPURLResponse
-            if res?.statusCode != 200 { return }
-            // 网络请求成功
-            guard let data = data else { return }
-            guard let string = String(data: data, encoding: .utf8) else { return }
-            let temp = string.replacingOccurrences(of: "jQuery112304419911490366253_1771774863303(", with: "")
-            let jsonString = temp[temp.startIndex ..< temp.index(temp.endIndex, offsetBy: -2)]
-            guard let jsonData = jsonString.data(using: .utf8) else { return }
-            guard let root = try? JSONSerialization.jsonObject(with: jsonData, options: .mutableContainers) else { return }
-            guard let dict = root as? NSDictionary else { return }
-            guard let res = dict.safeValueForKey("data") as? NSDictionary else { return }
-            // 南向
-            if let south1 = res.safeValueForKey("hk2sh") as? NSDictionary, let south2 = res.safeValueForKey("hk2sz") as? NSDictionary {
-                if let sfunds1 = south1.safeValueForKey("buySellAmt") as? Double, let sfunds2 = south2.safeValueForKey("buySellAmt") as? Double {
-                    totalSouth = String(format: "%.2f", sfunds1 / 10000.0 + sfunds2 / 10000.0)
-                }
+            var rise = 0; var fall = 0; var flat = 0
+            for p in pcts {
+                if p > 0 { rise += 1 }
+                else if p < 0 { fall += 1 }
+                else { flat += 1 }
             }
-            // 北向
-            if let north1 = res.safeValueForKey("hk2sh") as? NSDictionary, let north2 = res.safeValueForKey("hk2sz") as? NSDictionary {
-                if let nfunds1 = north1.safeValueForKey("buySellAmt") as? Double, let nfunds2 = north2.safeValueForKey("buySellAmt") as? Double {
-                    totalNorth = String(format: "%.2f", nfunds1/10000.0 + nfunds2/10000.0)
+            self.riseCount = rise
+            self.fallCount = fall
+            self.flatCount = flat
+        }
+
+        // 3. A股主力净流入（东方财富 ulist f62 字段，元→亿）
+        group.enter()
+        let mainFundUrl = "https://push2delay.eastmoney.com/api/qt/ulist/get?fltt=2&invt=2&secids=1.000001,0.399001&fields=f62,f184"
+        if let url = URL(string: mainFundUrl) {
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                defer { group.leave() }
+                guard let self = self, let data = data,
+                      let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let dataObj = root["data"] as? [String: Any] else { return }
+                let diff = self.parseDiffItems(dataObj["diff"])
+                var totalYuan = 0.0
+                for item in diff {
+                    totalYuan += (item["f62"] as? Double) ?? 0
                 }
+                let yi = totalYuan / 100_000_000.0
+                self.mainFundFlowPositive = totalYuan >= 0
+                self.mainFundFlowText = (totalYuan < 0 ? "-" : "") + String(format: "%.2f亿", abs(yi))
+            }.resume()
+        } else { group.leave() }
+
+        group.notify(queue: .main) { [weak self] in
+            self?.tableView.reloadData()
+        }
+    }
+
+    /// 解析东方财富 diff 字段（兼容数组和字典两种格式）
+    private func parseDiffItems(_ raw: Any?) -> [[String: Any]] {
+        if let arr = raw as? [[String: Any]] { return arr }
+        if let dict = raw as? [String: Any] {
+            // 字典格式 {"0": {...}, "1": {...}}，提取所有值
+            return dict.values.compactMap { $0 as? [String: Any] }
+        }
+        return []
+    }
+
+    /// 分页拉取全 A 股涨跌幅（东方财富 clist API）
+    private func fetchAllStockChangePcts(completion: @escaping ([Double]) -> Void) {
+        let pageSize = 5000
+        let baseUrl = "https://push2delay.eastmoney.com/api/qt/clist/get?pn=1&pz=\(pageSize)&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:0+t:81&fields=f3,f12&ut=fa5fd1943c7b386f172d6893dbfba10b"
+        guard let url = URL(string: baseUrl) else { completion([]); return }
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+            guard let self = self, let data = data,
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let dataObj = root["data"] as? [String: Any] else {
+                completion([]); return
             }
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                tableView.reloadData()
+            let diff = self.parseDiffItems(dataObj["diff"])
+            if diff.isEmpty { completion([]); return }
+
+            let total = (dataObj["total"] as? Int) ?? diff.count
+            var pcts = diff.compactMap { $0["f3"] as? Double }
+            let totalPages = (total + pageSize - 1) / pageSize
+            if totalPages <= 1 { completion(pcts); return }
+
+            let remainGroup = DispatchGroup()
+            let lock = NSLock()
+            for page in 2...totalPages {
+                remainGroup.enter()
+                let pageUrl = "https://push2delay.eastmoney.com/api/qt/clist/get?pn=\(page)&pz=\(pageSize)&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:0+t:81&fields=f3,f12&ut=fa5fd1943c7b386f172d6893dbfba10b"
+                guard let u = URL(string: pageUrl) else { remainGroup.leave(); continue }
+                URLSession.shared.dataTask(with: u) { [weak self] d, _, _ in
+                    defer { remainGroup.leave() }
+                    guard let self = self, let d = d,
+                          let r = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+                          let dd = r["data"] as? [String: Any] else { return }
+                    let df = self.parseDiffItems(dd["diff"])
+                    let pagePcts = df.compactMap { $0["f3"] as? Double }
+                    lock.lock()
+                    pcts.append(contentsOf: pagePcts)
+                    lock.unlock()
+                }.resume()
+            }
+            remainGroup.notify(queue: .global()) {
+                completion(pcts)
             }
         }.resume()
     }
+
+    // MARK: - 今日大盘（后端接口）
+    private func loadIndexMarket() {
+        SecureNetworkManager.shared.request(
+            api: "/api/Indexnew/sandahangqing_new",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            if case .success(let res) = result,
+               let dict = res.decrypted,
+               let data = dict["data"] as? [String: Any],
+               let list = data["list"] as? [[String: Any]],
+               let first = list.first,
+               let arr = first["allcodes_arr"] as? [String], arr.count >= 6 {
+                self.marketIndexName = arr[1]
+                self.marketIndexPrice = arr[3]
+                self.marketIndexChange = arr[4]
+                self.marketIndexPct = arr[5]
+                self.marketIndexIsDown = arr[4].hasPrefix("-")
+                DispatchQueue.main.async {
+                    self.tableView.reloadRows(at: [IndexPath(row: 4, section: 0)], with: .none)
+                }
+            }
+        }
+    }
+
+    // MARK: - 中签弹窗
+    private func loadBallotPopup() {
+        SecureNetworkManager.shared.request(
+            api: "/api/stock/ballot",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            if case .success(let res) = result,
+               let dict = res.decrypted,
+               let data = dict["data"] as? [String: Any],
+               let infoArr = data["info"] as? [[String: Any]],
+               !infoArr.isEmpty {
+                let pending = infoArr.filter {
+                    let syRenjiao = $0["sy_renjiao"] as? Double ?? 0
+                    let renjiao = $0["renjiao"] as? String ?? "1"
+                    return syRenjiao > 0 || renjiao == "0"
+                }
+                guard !pending.isEmpty else { return }
+                let first = pending[0]
+                let name = first["name"] as? String ?? ""
+                let code = first["code"] as? String ?? ""
+                let zqNums = first["zq_nums"] as? Int ?? 0
+                let syRenjiao = first["sy_renjiao"] as? Double ?? 0
+                let sgPrice = first["sg_fx_price"] as? Double ?? 0
+                let zqNum = first["zq_num"] as? Int ?? 0
+                let amount = syRenjiao > 0 ? syRenjiao : sgPrice * Double(zqNum)
+                DispatchQueue.main.async {
+                    self.showBallotPopup(name: name, code: code, quantity: "\(zqNums)手", amount: String(format: "￥%.2f", amount), count: pending.count)
+                }
+            }
+        }
+    }
+
+    /// 显示中签弹窗
+    private func showBallotPopup(name: String, code: String, quantity: String, amount: String, count: Int) {
+        let overlay = UIView(frame: view.bounds)
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        view.addSubview(overlay)
+
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 16
+        overlay.addSubview(card)
+        card.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLbl = UILabel()
+        titleLbl.text = "🎉 恭喜中签"
+        titleLbl.font = .boldSystemFont(ofSize: 20)
+        titleLbl.textAlignment = .center
+        card.addSubview(titleLbl)
+        titleLbl.translatesAutoresizingMaskIntoConstraints = false
+
+        let infoLbl = UILabel()
+        infoLbl.text = "\(name)(\(code))\n中签数量：\(quantity)\n待缴金额：\(amount)"
+        if count > 1 { infoLbl.text! += "\n共 \(count) 只中签股票" }
+        infoLbl.numberOfLines = 0
+        infoLbl.font = .systemFont(ofSize: 15)
+        infoLbl.textColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1)
+        infoLbl.textAlignment = .center
+        card.addSubview(infoLbl)
+        infoLbl.translatesAutoresizingMaskIntoConstraints = false
+
+        let goBtn = UIButton(type: .system)
+        goBtn.setTitle("去认缴", for: .normal)
+        goBtn.titleLabel?.font = .boldSystemFont(ofSize: 16)
+        goBtn.setTitleColor(.white, for: .normal)
+        goBtn.backgroundColor = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1)
+        goBtn.layer.cornerRadius = 22
+        card.addSubview(goBtn)
+        goBtn.translatesAutoresizingMaskIntoConstraints = false
+
+        let closeBtn = UIButton(type: .system)
+        closeBtn.setTitle("关闭", for: .normal)
+        closeBtn.setTitleColor(.gray, for: .normal)
+        card.addSubview(closeBtn)
+        closeBtn.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
+            card.leadingAnchor.constraint(equalTo: overlay.leadingAnchor, constant: 40),
+            card.trailingAnchor.constraint(equalTo: overlay.trailingAnchor, constant: -40),
+            titleLbl.topAnchor.constraint(equalTo: card.topAnchor, constant: 24),
+            titleLbl.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            infoLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor, constant: 16),
+            infoLbl.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            infoLbl.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+            goBtn.topAnchor.constraint(equalTo: infoLbl.bottomAnchor, constant: 20),
+            goBtn.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            goBtn.widthAnchor.constraint(equalToConstant: 180),
+            goBtn.heightAnchor.constraint(equalToConstant: 44),
+            closeBtn.topAnchor.constraint(equalTo: goBtn.bottomAnchor, constant: 10),
+            closeBtn.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            closeBtn.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+        ])
+
+        closeBtn.addAction(UIAction { _ in overlay.removeFromSuperview() }, for: .touchUpInside)
+        goBtn.addAction(UIAction { [weak self] _ in
+            overlay.removeFromSuperview()
+            // 对齐安卓：跳转到我的新股页面，默认选中"中签" Tab
+            let vc = MyNewStocksViewController()
+            vc.initialTab = 1 // 1=中签
+            vc.hidesBottomBarWhenPushed = true
+            self?.navigationController?.pushViewController(vc, animated: true)
+        }, for: .touchUpInside)
+    }
 }
+
+
+
 
 extension NSDictionary {
     func safeValueForKey(_ key: String) -> Any? {
@@ -622,10 +922,55 @@ extension HomeViewController: UITableViewDataSource {
                 
                 switch title {
                 case "极速开户":
-                    let vc = RegisterViewController()
-                    let nav = UINavigationController(rootViewController: vc)
-                    nav.modalPresentationStyle = .fullScreen
-                    self?.present(nav, animated: true)
+                    // 对齐个人中心实名认证逻辑：先查询认证状态再决定跳转
+                    Task { @MainActor in
+                        do {
+                            let userResult = try await SecureNetworkManager.shared.request(api: Api.user_info_api, method: .get, params: [:])
+                            if let dict = userResult.decrypted, let data = dict["data"] as? [String: Any], let info = data["list"] as? [String: Any] {
+                                let isAuth = info["is_auth"] as? Int ?? 0
+                                if isAuth == 1 {
+                                    // 已认证：跳转认证结果页
+                                    let resultVC = RealNameAuthResultViewController()
+                                    resultVC.hidesBottomBarWhenPushed = true
+                                    self?.navigationController?.pushViewController(resultVC, animated: true)
+                                    return
+                                }
+                            }
+                            // 未认证：查询认证详情
+                            let detailResult = try await SecureNetworkManager.shared.request(api: Api.authenticationDetail_api, method: .get, params: ["page": 1, "size": 10])
+                            if let dict = detailResult.decrypted, let detail = dict["data"] as? [String: Any], let json = detail["detail"] {
+                                if dict["msg"] as? String != "success" {
+                                    Toast.showInfo(dict["msg"] as? String ?? "")
+                                    return
+                                }
+                                let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
+                                let model = try JSONDecoder().decode(AuthenticationDetailModel.self, from: jsonData)
+                                if model.isAudit == "1" {
+                                    let resultVC = RealNameAuthResultViewController()
+                                    resultVC.name = model.name
+                                    resultVC.idCard = "\(model.idCard)"
+                                    resultVC.hidesBottomBarWhenPushed = true
+                                    self?.navigationController?.pushViewController(resultVC, animated: true)
+                                } else if model.isAudit == "3" {
+                                    Toast.showInfo("审核中...")
+                                } else {
+                                    let vc = RealNameAuthViewController()
+                                    vc.hidesBottomBarWhenPushed = true
+                                    self?.navigationController?.pushViewController(vc, animated: true)
+                                }
+                            } else {
+                                // 无认证记录：直接跳转认证页面
+                                let vc = RealNameAuthViewController()
+                                vc.hidesBottomBarWhenPushed = true
+                                self?.navigationController?.pushViewController(vc, animated: true)
+                            }
+                        } catch {
+                            // 请求失败：兜底跳转认证页面
+                            let vc = RealNameAuthViewController()
+                            vc.hidesBottomBarWhenPushed = true
+                            self?.navigationController?.pushViewController(vc, animated: true)
+                        }
+                    }
                 case "市场行情":
                     if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
                        let marketNav = vcs[1] as? UINavigationController,
@@ -649,13 +994,21 @@ extension HomeViewController: UITableViewDataSource {
                 case "场外撮合交易":
                     fallthrough
                 case _ where !mgr.nameDzjy.isEmpty && title == mgr.nameDzjy:
-                    let vc = BlockTradingListViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
+                    // 对齐安卓：跳转到行情页面的天启护盘 tab（index 3）
+                    if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
+                       let marketNav = vcs[1] as? UINavigationController,
+                       let marketVC = marketNav.viewControllers.first as? MarketViewController {
+                        tabBar.selectedIndex = 1
+                        marketVC.switchToTab(index: 3)
+                    }
                 case "线下配售":
-                    let vc = AllotmentRecordsViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
+                    // 对齐安卓：跳转到行情页面的战略配售 tab（index 2）
+                    if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
+                       let marketNav = vcs[1] as? UINavigationController,
+                       let marketVC = marketNav.viewControllers.first as? MarketViewController {
+                        tabBar.selectedIndex = 1
+                        marketVC.switchToTab(index: 2)
+                    }
                 case "AI智投":
                     let vc = SmartStockSelectionViewController()
                     vc.hidesBottomBarWhenPushed = true
@@ -677,17 +1030,30 @@ extension HomeViewController: UITableViewDataSource {
             return cell
         case 3:
             let cell = tableView.dequeueReusableCell(withIdentifier: "FundFlowCell", for: indexPath) as! FundFlowTableViewCell
-            cell.bindData(totalNorth, totalSouth)
+            cell.bindData(totalNorth, totalSouth, mainFund: mainFundFlowText, mainFundIsPositive: mainFundFlowPositive)
             return cell
         case 4:
             
             let cell = tableView.dequeueReusableCell(withIdentifier: "HotSpotMarketCell", for: indexPath) as! HotSpotMarketTableViewCell
             cell.onHotspotTap = { [weak self] in
-                let detailVC = NewsDetailViewController()
-                detailVC.htmlContent = self?.getNewsContent(for: "今夜突发公告!多只大牛股紧急提示风险!")
-                detailVC.hidesBottomBarWhenPushed = true
-                self?.navigationController?.pushViewController(detailVC, animated: true)
+                guard let self = self else { return }
+                // 点击直击热点跳到当前 tab 第一条新闻详情
+                if !self.preloadedNewsData.isEmpty, let firstNews = self.preloadedNewsData.first?.first {
+                    let detailVC = NewsDetailViewController()
+                    detailVC.htmlContent = firstNews.2
+                    detailVC.hidesBottomBarWhenPushed = true
+                    self.navigationController?.pushViewController(detailVC, animated: true)
+                }
             }
+            // 绑定直击热点新闻（取第一条）
+            if !preloadedNewsData.isEmpty, let firstNews = preloadedNewsData.first?.first {
+                cell.bindHotspot(title: firstNews.0, time: firstNews.1)
+            }
+            // 绑定涨平跌和今日大盘数据
+            cell.bindMarketData(rise: riseCount, flat: flatCount, fall: fallCount,
+                                indexName: marketIndexName, indexPrice: marketIndexPrice,
+                                indexChange: marketIndexChange, indexPct: marketIndexPct,
+                                isDown: marketIndexIsDown)
             return cell
         case 5:
             let cell = tableView.dequeueReusableCell(withIdentifier: "NewsCell", for: indexPath) as! NewsTableViewCell
@@ -704,6 +1070,10 @@ extension HomeViewController: UITableViewDataSource {
                 guard let self = self else { return }
                 self.tableView.reloadRows(at: [IndexPath(row: 5, section: 0)], with: .none)
             }
+            // 如果已有预加载数据，直接绑定
+            if !preloadedNewsData.isEmpty {
+                cell.bindPreloadedData(preloadedNewsData)
+            }
             return cell
         default:
             return UITableViewCell()
@@ -716,7 +1086,8 @@ extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.row {
         case 0:
-            return 152
+            // Banner 高度按屏幕宽度比例自适应，确保图片完整显示
+            return UIScreen.main.bounds.width * 318.0 / 787.0
         case 1:
             return 188
         case 2:
@@ -803,10 +1174,11 @@ class BannerTableViewCell: UITableViewCell {
         self.images = images.isEmpty ? [createDefaultBannerImage()] : images
         
         let screenWidth = UIScreen.main.bounds.width
+        let bannerHeight = screenWidth * 318.0 / 787.0
         
         for (index, image) in self.images.enumerated() {
             let imageView = UIImageView(image: image)
-            imageView.contentMode = .scaleAspectFill
+            imageView.contentMode = .scaleToFill
             imageView.clipsToBounds = true
             imageView.isUserInteractionEnabled = true
             scrollView.addSubview(imageView)
@@ -816,14 +1188,14 @@ class BannerTableViewCell: UITableViewCell {
                 imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
                 imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: CGFloat(index) * screenWidth),
                 imageView.widthAnchor.constraint(equalToConstant: screenWidth),
-                imageView.heightAnchor.constraint(equalToConstant: 140),
+                imageView.heightAnchor.constraint(equalToConstant: bannerHeight),
                 imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
             ])
             
             bannerViews.append(imageView)
         }
         
-        scrollView.contentSize = CGSize(width: screenWidth * CGFloat(self.images.count), height: 140)
+        scrollView.contentSize = CGSize(width: screenWidth * CGFloat(self.images.count), height: bannerHeight)
         currentPage = 0
         
         // 如果有多张图片，启动自动滚动
@@ -845,11 +1217,12 @@ class BannerTableViewCell: UITableViewCell {
         }
 
         let screenWidth = UIScreen.main.bounds.width
+        let bannerHeight = screenWidth * 318.0 / 787.0
         let placeholder = createDefaultBannerImage()
-
+        
         for (index, urlString) in imageUrls.enumerated() {
             let imageView = UIImageView(image: placeholder)
-            imageView.contentMode = .scaleAspectFill
+            imageView.contentMode = .scaleToFill
             imageView.clipsToBounds = true
             imageView.isUserInteractionEnabled = true
             scrollView.addSubview(imageView)
@@ -859,7 +1232,7 @@ class BannerTableViewCell: UITableViewCell {
                 imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
                 imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: CGFloat(index) * screenWidth),
                 imageView.widthAnchor.constraint(equalToConstant: screenWidth),
-                imageView.heightAnchor.constraint(equalToConstant: 140),
+                imageView.heightAnchor.constraint(equalToConstant: bannerHeight),
                 imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
             ])
             bannerViews.append(imageView)
@@ -874,7 +1247,7 @@ class BannerTableViewCell: UITableViewCell {
         }
 
         self.images = [UIImage](repeating: placeholder, count: imageUrls.count)
-        scrollView.contentSize = CGSize(width: screenWidth * CGFloat(imageUrls.count), height: 140)
+        scrollView.contentSize = CGSize(width: screenWidth * CGFloat(imageUrls.count), height: bannerHeight)
         currentPage = 0
         if imageUrls.count > 1 {
             startAutoScroll()
@@ -1239,15 +1612,19 @@ class FundFlowTableViewCell: UITableViewCell {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
-    func bindData(_ north: String, _ south: String) {
+    func bindData(_ north: String, _ south: String, mainFund: String = "", mainFundIsPositive: Bool = false) {
         stack.arrangedSubviews.forEach({ $0.removeFromSuperview() })
         
         let themeRed = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
         let themeGreen = UIColor(red: 0, green: 0.6, blue: 0.2, alpha: 1.0)
+        let northColor: UIColor = north.hasPrefix("-") ? themeGreen : themeRed
+        let southColor: UIColor = south.hasPrefix("-") ? themeGreen : themeRed
+        let mainFundColor: UIColor = mainFundIsPositive ? themeRed : themeGreen
+        let mainFundText = mainFund.isEmpty ? "--" : mainFund
         let items: [(String, String, UIColor)] = [
-            ("北上资金净流入", "\(north)亿", themeRed),
-            ("南向资金流入", "-\(south)亿", themeGreen),
-            ("A股主力净流入", "-1344.81亿", themeGreen)
+            ("北上资金净流入", "\(north)亿", northColor),
+            ("南向资金流入", "\(south)亿", southColor),
+            ("A股主力净流入", mainFundText, mainFundColor)
         ]
         for item in items {
             let v = makeFundColumn(title: item.0, value: item.1, valueColor: item.2)
@@ -1275,6 +1652,10 @@ class HotSpotMarketTableViewCell: UITableViewCell {
     private let zhijiredianImageView = UIImageView()
     private let riseFlatFallCard = UIView()
     private let marketCard = UIView()
+    private let riseNumbersLabel = UILabel()
+    private let marketPointsLabel = UILabel()
+    private let marketPctLabel = UILabel()
+    private let marketIndexLabel = UILabel()
     var onHotspotTap: (() -> Void)?
 
     private let themeRed = UIColor(red: 224/255, green: 92/255, blue: 92/255, alpha: 1.0)   // #E05C5C
@@ -1335,18 +1716,18 @@ class HotSpotMarketTableViewCell: UITableViewCell {
             tagView.heightAnchor.constraint(equalToConstant: 28)
         ])
 
-        hotspotHeadlineLabel.text = "今夜突发公告!\n多只大牛股紧..."
-        hotspotHeadlineLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        hotspotHeadlineLabel.text = "加载中..."
+        hotspotHeadlineLabel.font = UIFont.boldSystemFont(ofSize: 14)
         hotspotHeadlineLabel.textColor = textDark
-        hotspotHeadlineLabel.numberOfLines = 2
+        hotspotHeadlineLabel.numberOfLines = 3
         hotspotHeadlineLabel.lineBreakMode = .byTruncatingTail
         hotspotHeadlineLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         hotspotHeadlineLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         leftCard.addSubview(hotspotHeadlineLabel)
         hotspotHeadlineLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        hotspotTimeLabel.text = "2026-01-28 21:25:26"
-        hotspotTimeLabel.font = UIFont.systemFont(ofSize: 14)
+        hotspotTimeLabel.text = ""
+        hotspotTimeLabel.font = UIFont.systemFont(ofSize: 11)
         hotspotTimeLabel.textColor = textSecondary
         leftCard.addSubview(hotspotTimeLabel)
         hotspotTimeLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -1379,14 +1760,13 @@ class HotSpotMarketTableViewCell: UITableViewCell {
         riseTitle.text = "涨平跌分布"
         riseTitle.font = UIFont.boldSystemFont(ofSize: 18)
         riseTitle.textColor = themeBlue
-        let riseNumbers = UILabel()
-        riseNumbers.font = UIFont.boldSystemFont(ofSize: 18)
-        let riseStr = "1636 : 79 : 3485"
+        riseNumbersLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        let riseStr = "-- : -- : --"
         let riseAttr = NSMutableAttributedString(string: riseStr)
-        riseAttr.addAttribute(.foregroundColor, value: themeRed, range: NSRange(location: 0, length: 4))
-        riseAttr.addAttribute(.foregroundColor, value: textDark, range: NSRange(location: 5, length: 5))
-        riseAttr.addAttribute(.foregroundColor, value: themeGreen, range: NSRange(location: 10, length: 4))
-        riseNumbers.attributedText = riseAttr
+        riseAttr.addAttribute(.foregroundColor, value: themeRed, range: NSRange(location: 0, length: 2))
+        riseAttr.addAttribute(.foregroundColor, value: textDark, range: NSRange(location: 5, length: 2))
+        riseAttr.addAttribute(.foregroundColor, value: themeGreen, range: NSRange(location: 10, length: 2))
+        riseNumbersLabel.attributedText = riseAttr
         let riseLabels = UILabel()
         riseLabels.font = UIFont.systemFont(ofSize: 18)
         let labStr = "涨 : 平 : 跌"
@@ -1395,7 +1775,7 @@ class HotSpotMarketTableViewCell: UITableViewCell {
         labAttr.addAttribute(.foregroundColor, value: textDark, range: NSRange(location: 4, length: 1))
         labAttr.addAttribute(.foregroundColor, value: themeGreen, range: NSRange(location: 8, length: 1))
         riseLabels.attributedText = labAttr
-        let riseStack = UIStackView(arrangedSubviews: [riseTitle, riseNumbers, riseLabels])
+        let riseStack = UIStackView(arrangedSubviews: [riseTitle, riseNumbersLabel, riseLabels])
         riseStack.axis = .vertical
         riseStack.spacing = 10
         riseStack.alignment = .leading
@@ -1423,34 +1803,31 @@ class HotSpotMarketTableViewCell: UITableViewCell {
         marketRow.axis = .horizontal
         marketRow.spacing = 10
         marketRow.alignment = .center
-        let marketPoints = UILabel()
-        marketPoints.text = "-2.49"
-        marketPoints.font = UIFont.boldSystemFont(ofSize: 22)
-        marketPoints.textColor = themeGreen
-        let marketPct = UILabel()
-        marketPct.text = "-0.16%"
-        marketPct.font = UIFont.boldSystemFont(ofSize: 22)
-        marketPct.textColor = themeGreen
-        let marketIndex = UILabel()
-        marketIndex.text = "北证50 1562.45"
-        marketIndex.font = UIFont.systemFont(ofSize: 14)
-        marketIndex.textColor = textDark
-        marketRow.addArrangedSubview(marketPoints)
-        marketRow.addArrangedSubview(marketPct)
+        marketPointsLabel.text = "--"
+        marketPointsLabel.font = UIFont.boldSystemFont(ofSize: 22)
+        marketPointsLabel.textColor = textSecondary
+        marketPctLabel.text = "--%"
+        marketPctLabel.font = UIFont.boldSystemFont(ofSize: 22)
+        marketPctLabel.textColor = textSecondary
+        marketIndexLabel.text = "加载中..."
+        marketIndexLabel.font = UIFont.systemFont(ofSize: 14)
+        marketIndexLabel.textColor = textDark
+        marketRow.addArrangedSubview(marketPointsLabel)
+        marketRow.addArrangedSubview(marketPctLabel)
         marketCard.addSubview(marketTitle)
         marketCard.addSubview(marketRow)
-        marketCard.addSubview(marketIndex)
+        marketCard.addSubview(marketIndexLabel)
         marketTitle.translatesAutoresizingMaskIntoConstraints = false
         marketRow.translatesAutoresizingMaskIntoConstraints = false
-        marketIndex.translatesAutoresizingMaskIntoConstraints = false
+        marketIndexLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             marketTitle.topAnchor.constraint(equalTo: marketCard.topAnchor, constant: 12),
             marketTitle.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
             marketRow.topAnchor.constraint(equalTo: marketTitle.bottomAnchor, constant: 8),
             marketRow.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
-            marketIndex.topAnchor.constraint(equalTo: marketRow.bottomAnchor, constant: 4),
-            marketIndex.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
-            marketIndex.bottomAnchor.constraint(lessThanOrEqualTo: marketCard.bottomAnchor, constant: -12)
+            marketIndexLabel.topAnchor.constraint(equalTo: marketRow.bottomAnchor, constant: 4),
+            marketIndexLabel.leadingAnchor.constraint(equalTo: marketCard.leadingAnchor, constant: 12),
+            marketIndexLabel.bottomAnchor.constraint(lessThanOrEqualTo: marketCard.bottomAnchor, constant: -12)
         ])
         rightStack.addArrangedSubview(marketCard)
 
@@ -1490,6 +1867,38 @@ class HotSpotMarketTableViewCell: UITableViewCell {
 
     @objc private func hotspotTapped() {
         onHotspotTap?()
+    }
+
+    /// 绑定直击热点新闻
+    func bindHotspot(title: String, time: String) {
+        hotspotHeadlineLabel.text = title
+        hotspotTimeLabel.text = time
+    }
+
+    /// 绑定真实市场数据
+    func bindMarketData(rise: Int, flat: Int, fall: Int,
+                        indexName: String, indexPrice: String,
+                        indexChange: String, indexPct: String, isDown: Bool) {
+        // 涨平跌
+        let rStr = "\(rise)"
+        let fltStr = "\(flat)"
+        let fallStr = "\(fall)"
+        let full = "\(rStr) : \(fltStr) : \(fallStr)"
+        let attr = NSMutableAttributedString(string: full)
+        attr.addAttribute(.foregroundColor, value: themeRed, range: NSRange(location: 0, length: rStr.count))
+        let flatLoc = rStr.count + 3
+        attr.addAttribute(.foregroundColor, value: textDark, range: NSRange(location: flatLoc, length: fltStr.count))
+        let fallLoc = flatLoc + fltStr.count + 3
+        attr.addAttribute(.foregroundColor, value: themeGreen, range: NSRange(location: fallLoc, length: fallStr.count))
+        riseNumbersLabel.attributedText = attr
+
+        // 今日大盘
+        let priceColor = isDown ? themeGreen : themeRed
+        marketPointsLabel.text = indexChange
+        marketPointsLabel.textColor = priceColor
+        marketPctLabel.text = "\(indexPct)%"
+        marketPctLabel.textColor = priceColor
+        marketIndexLabel.text = "\(indexName) \(indexPrice)"
     }
 }
 
@@ -1565,41 +1974,43 @@ class NewsTableViewCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
-        loadData()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // Tab 配置与安卓保持一致：动态/7X24/盘面/投顾/要闻
     private let newsTypeModels = [
-        ["type": "1", "name": "国内经济"],
-        ["type": "2", "name": "国际经济"],
-        ["type": "3", "name": "证券要闻"],
-        ["type": "4", "name": "公司咨询"],
+        ["type": "1", "name": "动态"],
+        ["type": "2", "name": "7X24"],
+        ["type": "3", "name": "盘面"],
+        ["type": "3", "name": "投顾"],
+        ["type": "4", "name": "要闻"],
     ]
 
     private func loadData() {
-        
+        // 去重 type，避免重复请求
+        let uniqueTypes = Array(Set(newsTypeModels.map { $0["type"] ?? "" }))
         let group = DispatchGroup()
         var news = [(String, String, String, String)]()
-        newsTypeModels.forEach {
+        for type in uniqueTypes {
             group.enter()
-            let type: String = $0["type"] ?? ""
-            SecureNetworkManager.shared.request(api: "/api/Indexnew/getGuoneinews", method: .get, params: ["page": "1", "size":"50", "type": type]) { res in
+            SecureNetworkManager.shared.request(api: "/api/Indexnew/getGuoneinews", method: .get, params: ["page": "1", "size": "20", "type": type]) { res in
+                defer { group.leave() }
                 switch res {
                 case .success(let success):
-                    guard let root = success.decrypted?["data"] as? [String: Any] else { return }
-                    guard let list = root["list"] as? [[String: Any]] else { return }
+                    guard let root = success.decrypted?["data"] as? [String: Any],
+                          let list = root["list"] as? [[String: Any]] else { return }
                     for item in list {
-                        let news_time = item["news_time"] as? String
-                        let news_title = item["news_title"] as? String
-                        let news_content = item["news_content"] as? String
-                        news.append((type, news_title ?? "", news_time ?? "", news_content ?? ""))
+                        let news_title = item["news_title"] as? String ?? ""
+                        // 优先使用 news_time_text（友好时间），为空则回退 news_time
+                        let timeText = item["news_time_text"] as? String ?? ""
+                        let news_time = timeText.isEmpty ? (item["news_time"] as? String ?? "") : timeText
+                        let news_content = item["news_content"] as? String ?? ""
+                        news.append((type, news_title, news_time, news_content))
                     }
-                    group.leave()
                 case .failure(let failure):
-                    group.leave()
                     DispatchQueue.main.async {
                         Toast.showInfo(failure.localizedDescription)
                     }
@@ -1609,7 +2020,7 @@ class NewsTableViewCell: UITableViewCell {
         
         group.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
-            /// 新闻按分类处理
+            /// 新闻按分类处理（同 type 的 Tab 共享数据）
             newsTypeModels.forEach({ [weak self] newType in
                 guard let self = self else { return }
                 newsData.append(news.filter({ $0.0 == newType["type"]}).map({($0.1, $0.2, $0.3)}))
@@ -1618,6 +2029,15 @@ class NewsTableViewCell: UITableViewCell {
             updateNewsList()
             onNewsDataLoaded?()
         }
+    }
+
+    /// 接收外部预加载好的新闻数据，直接渲染
+    func bindPreloadedData(_ data: [[(String, String, String)]]) {
+        guard !data.isEmpty else { return }
+        newsData = data
+        updateTabSelection()
+        updateNewsList()
+        onNewsDataLoaded?()
     }
     
     private func setupUI() {
@@ -1678,9 +2098,8 @@ class NewsTableViewCell: UITableViewCell {
             newsStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10)
         ])
         
-        // 初始化选中状态和新闻列表
+        // 初始化选中状态
         updateTabSelection()
-        updateNewsList()
     }
     
     @objc private func tabButtonTapped(_ sender: UIButton) {
@@ -1733,22 +2152,28 @@ class NewsTableViewCell: UITableViewCell {
                 separator.backgroundColor = UIColor(hex: 0xF6F6F6) // 浅灰色分隔线
                 newsStackView.addArrangedSubview(separator)
                 separator.translatesAutoresizingMaskIntoConstraints = false
-                let sepH = separator.heightAnchor.constraint(equalToConstant: 1)
-                sepH.priority = UILayoutPriority(999)
-                sepH.isActive = true
+                separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
             }
         }
+        
+        // 底部弹性间距，吸收 stackView .fill 分布产生的多余空间，防止新闻条目被拉伸
+        let bottomSpacer = UIView()
+        bottomSpacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        newsStackView.addArrangedSubview(bottomSpacer)
     }
     
     private func createNewsItemView(title: String, time: String, content: String, index: Int = 0) -> UIView {
         let container = UIView()
         container.backgroundColor = .white
         container.isUserInteractionEnabled = true
+        // 防止被 stackView 拉伸导致标题和时间之间出现大间隔
+        container.setContentHuggingPriority(.required, for: .vertical)
+        container.setContentCompressionResistancePriority(.required, for: .vertical)
 
         let badgeLabel = UILabel()
         if index < 4 {
             badgeLabel.text = "\(index + 1)"
-            badgeLabel.font = UIFont.boldSystemFont(ofSize: 12)
+            badgeLabel.font = UIFont.boldSystemFont(ofSize: 11)
             badgeLabel.textColor = .white
             badgeLabel.backgroundColor = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
             badgeLabel.textAlignment = .center
@@ -1760,18 +2185,17 @@ class NewsTableViewCell: UITableViewCell {
 
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = UIFont.systemFont(ofSize: 18)
-        titleLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0) // #2B2C31
+        titleLabel.font = UIFont.systemFont(ofSize: 15)
+        titleLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0)
         titleLabel.numberOfLines = 2
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.isUserInteractionEnabled = false
-        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         container.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let timeLabel = UILabel()
         timeLabel.text = time
-        timeLabel.font = UIFont.systemFont(ofSize: 12)
+        timeLabel.font = UIFont.systemFont(ofSize: 11)
         timeLabel.textColor = UIColor(hex: 0xADADAD)
         timeLabel.isUserInteractionEnabled = false
         container.addSubview(timeLabel)
@@ -1788,22 +2212,20 @@ class NewsTableViewCell: UITableViewCell {
         
         let hasBadge = index < 4
         var constraints: [NSLayoutConstraint] = [
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
             titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             timeLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             timeLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            timeLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+            timeLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -6),
+            timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2)
         ]
-        let titleToTime = timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6)
-        titleToTime.priority = UILayoutPriority(999)
-        constraints.append(titleToTime)
         if hasBadge {
             constraints += [
                 badgeLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                badgeLabel.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-                badgeLabel.widthAnchor.constraint(equalToConstant: 22),
-                badgeLabel.heightAnchor.constraint(equalToConstant: 22),
-                titleLabel.leadingAnchor.constraint(equalTo: badgeLabel.trailingAnchor, constant: 10)
+                badgeLabel.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+                badgeLabel.widthAnchor.constraint(equalToConstant: 18),
+                badgeLabel.heightAnchor.constraint(equalToConstant: 18),
+                titleLabel.leadingAnchor.constraint(equalTo: badgeLabel.trailingAnchor, constant: 8)
             ]
         } else {
             constraints.append(titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor))

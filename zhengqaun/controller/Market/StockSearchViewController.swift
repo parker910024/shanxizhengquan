@@ -7,12 +7,12 @@
 
 import UIKit
 
-/// 股票搜索结果数据模型
-struct StockSearchResult {
-    let exchange: String      // 交易所类型："深"、"沪"、"京"等
+/// 股票搜索结果数据模型（对齐安卓 StockSearchResult）
+struct StockSearchResult: Equatable {
     let name: String          // 股票名称
-    let code: String          // 股票代码
-    let abbreviation: String  // 简拼
+    let code: String          // 股票代码（纯数字）
+    let displayCode: String   // 完整代码（如 sz000001）
+    let latter: String        // 简拼
 }
 
 class StockSearchViewController: ZQViewController {
@@ -23,6 +23,9 @@ class StockSearchViewController: ZQViewController {
         case sell
     }
     var tradeType: TradeType = .buy
+    
+    /// 对齐安卓 buyMode：是否为买入模式（仅从交易页点击买入时设为 true）
+    var buyMode: Bool = false
     
     private let tableView = UITableView(frame: .zero, style: .plain)
     
@@ -46,18 +49,25 @@ class StockSearchViewController: ZQViewController {
     private let emptyStateView = UIView()
     private let emptyIcon = UIImageView()
 
-    // 热门搜索数据（6 条，初始占位待替换）
+    // 热门搜索数据（对齐安卓 buildHotStocks：code 含 sh/sz 前缀）
     private var hotStocks: [(name: String, code: String)] = [
-        ("平安电工", "001856"),
-        ("天溯计量", "301449"),
-        ("江天科技", "920121"),
-        ("超颖电子", "603175"),
-        ("赛力斯", "601127"),
-        ("中芯国际", "688981")
+        ("平安银行", "sz000001"),
+        ("贵州茅台", "sh600519"),
+        ("东方财富", "sz300059"),
+        ("比亚迪", "sz002594"),
+        ("宁德时代", "sz300750"),
+        ("中芯国际", "sh688981")
     ]
     
     // 搜索结果数据源（动态更新）
     private var searchResults: [StockSearchResult] = []
+    
+    // 分页相关（对齐安卓）
+    private var activeKeyword: String = ""
+    private var currentPage = 0
+    private var hasMore = true
+    private var isSearching = false
+    private let pageSize = 20
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,33 +81,7 @@ class StockSearchViewController: ZQViewController {
     }
     
     private func loadHotStocks() {
-        EastMoneyAPI.shared.fetchHotSearchStocks(count: 6) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let items):
-                if items.count > 0 {
-                    // 更新数据源
-                    for (index, item) in items.enumerated() {
-                        if index < self.hotStocks.count {
-                            self.hotStocks[index] = item
-                        } else if self.hotStocks.count < 6 {
-                            self.hotStocks.append(item)
-                        }
-                    }
-                    
-                    // 刷新UI
-                    for (idx, views) in self.hotItemViews.enumerated() {
-                        if idx < self.hotStocks.count {
-                            let stock = self.hotStocks[idx]
-                            views.nameLabel.text = stock.name
-                            views.codeLabel.text = stock.code
-                        }
-                    }
-                }
-            case .failure(let error):
-                print("加载东方财富热搜失败: \(error.localizedDescription)")
-            }
-        }
+        // 对齐安卓：热门搜索使用写死数据，不调用接口
     }
     
     private func setupNavigationBar() {
@@ -164,7 +148,7 @@ class StockSearchViewController: ZQViewController {
         searchBar.addSubview(searchIconView)
         searchIconView.translatesAutoresizingMaskIntoConstraints = false
 
-        searchTextField.placeholder = "请输入股票代码/名称"
+        searchTextField.setZqPlaceholder("请输入股票代码/名称")
         searchTextField.font = UIFont.systemFont(ofSize: 14)
         searchTextField.textColor = Constants.Color.textPrimary
         searchTextField.returnKeyType = .search
@@ -430,8 +414,31 @@ class StockSearchViewController: ZQViewController {
     @objc private func hotItemTapped(_ g: UITapGestureRecognizer) {
         guard let cell = g.view, cell.tag < hotStocks.count else { return }
         let item = hotStocks[cell.tag]
-        searchTextField.text = item.name
-        performSearch()
+        
+        // 去掉前缀得到纯数字代码
+        let pureCode = item.code
+            .replacingOccurrences(of: "sh", with: "", options: .caseInsensitive)
+            .replacingOccurrences(of: "sz", with: "", options: .caseInsensitive)
+            .replacingOccurrences(of: "bj", with: "", options: .caseInsensitive)
+        
+        // 对齐安卓 buyMode：交易模式直接跳转买入页
+        if buyMode {
+            let vc = StockTradeViewController()
+            vc.stockName = item.name
+            vc.stockCode = pureCode
+            vc.stockAllcode = item.code
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
+            return
+        }
+        
+        // 普通模式：跳转详情页
+        let vc = IndexDetailViewController()
+        vc.indexName = item.name
+        vc.indexCode = pureCode
+        vc.indexAllcode = item.code
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
     
     private func setupEmptyState() {
@@ -472,55 +479,99 @@ class StockSearchViewController: ZQViewController {
     
     private func performSearch() {
         guard let keyword = searchTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !keyword.isEmpty else {
-            // 输入框为空时清空tableview
-            searchResults = []
+            // 输入框为空时清空（对齐安卓 clearSearchState）
+            clearSearchState()
             updateUI()
             return
         }
-        
-        // 发送真实搜索请求
+        startSearch(keyword: keyword, reset: true)
+    }
+
+    /// 分页加载更多（对齐安卓 loadMore）
+    private func loadMore() {
+        guard !activeKeyword.isEmpty, hasMore, !isSearching else { return }
+        startSearch(keyword: activeKeyword, reset: false)
+    }
+
+    /// 对齐安卓 startSearch：支持分页和去重
+    private func startSearch(keyword: String, reset: Bool) {
+        if isSearching && !reset { return }
+
+        if reset {
+            activeKeyword = keyword
+            currentPage = 0
+            hasMore = true
+            searchResults.removeAll()
+        }
+
+        let requestPage = reset ? 1 : currentPage + 1
+        isSearching = true
+
         SecureNetworkManager.shared.request(
             api: "/api/user/searchstrategy",
             method: .get,
-            params: ["key": keyword, "page": "1", "size": "20"]
+            params: ["key": keyword, "page": "\(requestPage)", "size": "\(pageSize)"]
         ) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let res):
-                    
-                    guard let dict = res.decrypted,
-                          let data = dict["data"] as? [String: Any],
-                          let list = data["list"] as? [[String: Any]] else {
-                        self?.searchResults = []
-                        self?.updateUI()
-                        return
+            guard let self = self else { return }
+            self.isSearching = false
+
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let list = data["list"] as? [[String: Any]] else {
+                    if reset {
+                        self.searchResults = []
+                        self.updateUI()
                     }
-                    self?.searchResults = list.map { item in
-                        let name = item["name"] as? String ?? (item["title"] as? String ?? "")
-                        let code = item["code"] as? String ?? ""
-                        // API 中叫 latter，映射为简拼
-                        let abbreviation = item["latter"] as? String ?? ""
-                        
-                        let type = item["type"] as? Int ?? 2
-                        var exchangeStr = "深"
-                        
-                        switch type {
-                        case 1, 5: exchangeStr = "沪"
-                        case 4: exchangeStr = "京"
-                        case 6: exchangeStr = "基"
-                        default: exchangeStr = "深"
-                        }
-                        
-                        return StockSearchResult(exchange: exchangeStr, name: name, code: code, abbreviation: abbreviation)
-                    }
-                    self?.updateUI()
-                case .failure(let err):
-                    Toast.show("搜索失败: \(err.localizedDescription)")
-                    self?.searchResults = []
-                    self?.updateUI()
+                    return
+                }
+
+                if reset && list.isEmpty {
+                    self.searchResults = []
+                    self.updateUI()
+                    Toast.showInfo("未找到匹配的股票")
+                    return
+                }
+
+                self.hasMore = list.count >= self.pageSize
+                self.currentPage = requestPage
+
+                let pageResults: [StockSearchResult] = list.map { item in
+                    let name = item["name"] as? String ?? (item["title"] as? String ?? "")
+                    let code = item["code"] as? String ?? ""
+                    let allcode = item["allcode"] as? String ?? ""
+                    let latter = item["latter"] as? String ?? ""
+                    return StockSearchResult(name: name, code: code, displayCode: allcode, latter: latter)
+                }
+
+                if reset {
+                    self.searchResults = pageResults
+                } else {
+                    // 去重追加（对齐安卓 appendUniqueResults）
+                    let existing = Set(self.searchResults.map { $0.displayCode.lowercased() })
+                    let unique = pageResults.filter { !existing.contains($0.displayCode.lowercased()) }
+                    self.searchResults.append(contentsOf: unique)
+                }
+                self.updateUI()
+
+            case .failure(let err):
+                Toast.show("搜索失败: \(err.localizedDescription)")
+                if reset {
+                    self.searchResults = []
+                    self.updateUI()
                 }
             }
         }
+    }
+
+    /// 清空搜索状态（对齐安卓 clearSearchState）
+    private func clearSearchState() {
+        activeKeyword = ""
+        currentPage = 0
+        hasMore = true
+        isSearching = false
+        searchResults.removeAll()
     }
 }
 
@@ -551,6 +602,11 @@ extension StockSearchViewController: UITableViewDataSource, UITableViewDelegate 
         
         cell.configure(with: searchResults[indexPath.row])
         cell.selectionStyle = .none
+
+        // 分页加载更多（对齐安卓 LOAD_MORE_THRESHOLD=5）
+        if indexPath.row >= searchResults.count - 5 && hasMore && !isSearching {
+            loadMore()
+        }
         return cell
     }
     
@@ -562,34 +618,66 @@ extension StockSearchViewController: UITableViewDataSource, UITableViewDelegate 
         tableView.deselectRow(at: indexPath, animated: true)
         guard indexPath.row < searchResults.count else { return }
         let result = searchResults[indexPath.row]
+        let allcode = result.displayCode.isEmpty
+            ? buildAllcode(from: result.code) : result.displayCode
         
-        // 根据 exchange 推导 allcode 前缀
-        let pfx: String
-        switch result.exchange {
-        case "沪": pfx = "sh"
-        case "深": pfx = "sz"
-        case "北", "京": pfx = "bj"
-        default: pfx = result.code.hasPrefix("6") ? "sh" : "sz"
+        // 对齐安卓 buyMode：交易模式直接跳转买入页
+        if buyMode {
+            let vc = StockTradeViewController()
+            vc.stockName = result.name
+            vc.stockCode = result.code
+            vc.stockAllcode = allcode
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
+            return
         }
         
-        // 跳转到行情详情页
+        // 普通模式：跳转详情页
         let vc = IndexDetailViewController()
         vc.indexName = result.name
         vc.indexCode = result.code
-        vc.indexAllcode = "\(pfx)\(result.code)"
-        vc.tradeType = (tradeType == .sell) ? .sell : .buy
+        vc.indexAllcode = allcode
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
+
+    /// 对齐安卓 inferMarketHint：根据 allcode 前缀判断市场
+    private func inferMarketHint(displayCode: String, code: String) -> String {
+        let lower = displayCode.lowercased().replacingOccurrences(of: " ", with: "")
+        if lower.hasPrefix("sh") { return "沪" }
+        if lower.hasPrefix("sz") { return "深" }
+        if lower.hasPrefix("bj") { return "京" }
+        // 对齐安卓 isBeiJingCode
+        if isBeiJingCode(code) { return "京" }
+        if code.hasPrefix("6") || code.hasPrefix("5") || code.hasPrefix("9") { return "沪" }
+        return "深"
+    }
+
+    /// 对齐安卓 isBeiJingCode
+    private func isBeiJingCode(_ code: String) -> Bool {
+        let digits = code.filter { $0.isNumber }
+        return digits.hasPrefix("4")
+            || digits.hasPrefix("8")
+            || digits.hasPrefix("92")
+            || digits.hasPrefix("83")
+            || digits.hasPrefix("87")
+            || digits.hasPrefix("43")
+    }
+
+    /// 根据纯数字代码构建 allcode（当 API 返回的 allcode 为空时用）
+    private func buildAllcode(from code: String) -> String {
+        if isBeiJingCode(code) { return "bj\(code)" }
+        if code.hasPrefix("6") || code.hasPrefix("5") || code.hasPrefix("9") { return "sh\(code)" }
+        return "sz\(code)"
+    }
 }
 
-// MARK: - StockSearchCell
+// MARK: - StockSearchCell（对齐安卓 item_stock_search_result.xml：3 列布局）
 class StockSearchCell: UITableViewCell {
     
-    private let exchangeLabel = UILabel()
     private let nameLabel = UILabel()
     private let codeLabel = UILabel()
-    private let abbreviationLabel = UILabel()
+    private let latterLabel = UILabel()
     private let separatorLine = UIView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -604,83 +692,57 @@ class StockSearchCell: UITableViewCell {
     private func setupUI() {
         contentView.backgroundColor = .white
         
-        // 交易所标签（图标样式）
-        exchangeLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        exchangeLabel.textColor = .white
-        exchangeLabel.textAlignment = .center
-        exchangeLabel.layer.cornerRadius = 4
-        exchangeLabel.layer.masksToBounds = true
-        contentView.addSubview(exchangeLabel)
-        exchangeLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 股票名称
-        nameLabel.font = UIFont.systemFont(ofSize: 15)
-        nameLabel.textColor = Constants.Color.textPrimary
+        // 股票名称（左对齐，对齐安卓 tv_stock_name）
+        nameLabel.font = UIFont.systemFont(ofSize: 14)
+        nameLabel.textColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0)
         nameLabel.textAlignment = .left
+        nameLabel.lineBreakMode = .byTruncatingTail
         contentView.addSubview(nameLabel)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 股票代码
-        codeLabel.font = UIFont.systemFont(ofSize: 15)
-        codeLabel.textColor = Constants.Color.textPrimary
+        // 股票代码（居中，对齐安卓 tv_stock_code）
+        codeLabel.font = UIFont.systemFont(ofSize: 14)
+        codeLabel.textColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0)
         codeLabel.textAlignment = .center
         contentView.addSubview(codeLabel)
         codeLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 简拼
-        abbreviationLabel.font = UIFont.systemFont(ofSize: 15)
-        abbreviationLabel.textColor = Constants.Color.textPrimary
-        abbreviationLabel.textAlignment = .right
-        contentView.addSubview(abbreviationLabel)
-        abbreviationLabel.translatesAutoresizingMaskIntoConstraints = false
+        // 简拼（右对齐灰色，对齐安卓 tv_stock_latter #8B8B8B）
+        latterLabel.font = UIFont.systemFont(ofSize: 14)
+        latterLabel.textColor = UIColor(red: 0.545, green: 0.545, blue: 0.545, alpha: 1.0)
+        latterLabel.textAlignment = .right
+        contentView.addSubview(latterLabel)
+        latterLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 分隔线
-        separatorLine.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        // 分隔线（对齐安卓 #F0F0F0）
+        separatorLine.backgroundColor = UIColor(red: 0.94, green: 0.94, blue: 0.94, alpha: 1.0)
         contentView.addSubview(separatorLine)
         separatorLine.translatesAutoresizingMaskIntoConstraints = false
         
+        // 3 列等宽布局（对齐安卓 layout_weight=1）
         NSLayoutConstraint.activate([
-            exchangeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            exchangeLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            exchangeLabel.widthAnchor.constraint(equalToConstant: 15),
-            exchangeLabel.heightAnchor.constraint(equalToConstant: 15),
-            
-            nameLabel.leadingAnchor.constraint(equalTo: exchangeLabel.trailingAnchor, constant: 8),
+            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             nameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            nameLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.4, constant: -40),
+            nameLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1.0/3.0, constant: -16),
             
             codeLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             codeLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            codeLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3),
+            codeLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1.0/3.0),
             
-            abbreviationLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            abbreviationLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            abbreviationLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3),
+            latterLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            latterLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            latterLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1.0/3.0, constant: -16),
             
-            separatorLine.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            separatorLine.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            separatorLine.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            separatorLine.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             separatorLine.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             separatorLine.heightAnchor.constraint(equalToConstant: 1)
         ])
     }
     
     func configure(with result: StockSearchResult) {
-        exchangeLabel.text = result.exchange
-        
-        // 根据交易所类型设置不同的背景色
-        switch result.exchange {
-        case "深":
-            exchangeLabel.backgroundColor = UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0) // 浅蓝色
-        case "沪":
-            exchangeLabel.backgroundColor = UIColor(red: 1.0, green: 0.7, blue: 0.5, alpha: 1.0) // 浅橙色/红色
-        case "京":
-            exchangeLabel.backgroundColor = UIColor(red: 0.85, green: 0.7, blue: 1.0, alpha: 1.0) // 浅紫色
-        default:
-            exchangeLabel.backgroundColor = UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0) // 默认浅蓝色
-        }
-        
         nameLabel.text = result.name
         codeLabel.text = result.code
-        abbreviationLabel.text = result.abbreviation
+        latterLabel.text = result.latter
     }
 }

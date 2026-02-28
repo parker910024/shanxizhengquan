@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="10dp">
+
+    <!-- 板块名称 -->
+    <TextView
+        android:id="@+id/tv_sector_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/hq_title_color"
+        android:textSize="14sp"
+        tools:text="其他数字媒体" />
+
+    <!-- 涨跌幅 -->
+    <TextView
+        android:id="@+id/tv_sector_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/hq_rise_color"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        tools:text="+5.00%" />
+
+    <!-- 领涨股信息 -->
+    <TextView
+        android:id="@+id/tv_top_stock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/hq_text_light_gray"
+        android:textSize="11sp"
+        tools:text="风语筑 +9.98%" />
+
+</LinearLayout>

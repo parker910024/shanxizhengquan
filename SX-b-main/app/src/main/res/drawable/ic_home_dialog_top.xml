@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="171dp"
+    android:height="110dp"
+    android:viewportWidth="171"
+    android:viewportHeight="110">
+
+    <!-- Trophy cup body -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M85.5,15 C72,15 60,25 58,38 L56,52 C55,60 62,67 70,67 L101,67 C109,67 116,60 115,52 L113,38 C111,25 99,15 85.5,15 Z" />
+
+    <!-- Trophy cup shine -->
+    <path
+        android:fillColor="#FFF3B0"
+        android:pathData="M78,25 C74,28 72,34 71,40 L70,48 C70,51 72,53 75,53 L80,53 C82,53 83,51 83,48 L84,34 C84,30 82,26 78,25 Z"
+        android:fillAlpha="0.6" />
+
+    <!-- Left handle -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M56,35 C50,35 44,40 44,47 C44,54 50,59 56,59 L58,59 L57,35 Z" />
+
+    <!-- Right handle -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M115,35 L114,59 L116,59 C122,59 128,54 128,47 C128,40 122,35 115,35 Z" />
+
+    <!-- Trophy stem -->
+    <path
+        android:fillColor="#DAA520"
+        android:pathData="M80,67 L80,78 L91,78 L91,67 Z" />
+
+    <!-- Trophy base -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M68,78 L103,78 C105,78 107,80 107,82 L107,86 C107,88 105,90 103,90 L68,90 C66,90 64,88 64,86 L64,82 C64,80 66,78 68,78 Z" />
+
+    <!-- Star on trophy -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M85.5,30 L88,37 L95,37 L89.5,42 L91.5,49 L85.5,45 L79.5,49 L81.5,42 L76,37 L83,37 Z" />
+
+    <!-- Left sparkle -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M38,20 L40,25 L42,20 L40,15 Z" />
+
+    <!-- Right sparkle -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M130,22 L132,27 L134,22 L132,17 Z" />
+
+    <!-- Top sparkle -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M85.5,3 L87,8 L89,3 L87,0 Z" />
+
+    <!-- Left small sparkle -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M45,10 L46.5,13 L48,10 L46.5,7 Z" />
+
+    <!-- Right small sparkle -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M123,12 L124.5,15 L126,12 L124.5,9 Z" />
+
+</vector>

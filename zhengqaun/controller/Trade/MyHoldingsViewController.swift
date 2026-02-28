@@ -2,7 +2,7 @@
 //  MyHoldingsViewController.swift
 //  zhengqaun
 //
-//  我的持仓：红底导航+四 Tab（当前持仓/历史持仓/新股持仓/申购记录），表头 名称/代码、市值/数量、现价/买入、盈亏/盈亏比。
+//  我的持仓：红底导航+三 Tab（当前持仓/历史持仓/申购记录），表头 名称/代码、市值/数量、现价/买入、盈亏。
 //
 
 import UIKit
@@ -17,6 +17,9 @@ class MyHoldingsViewController: ZQViewController {
     private var underlineLeading: NSLayoutConstraint?
     private var emptyLabel: UILabel!
     private var selectedTabIndex: Int = 0
+    
+    /// 外部可设置初始 tab（0=当前持仓, 1=历史持仓, 2=申购记录）
+    var initialTab: Int = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,10 +38,15 @@ class MyHoldingsViewController: ZQViewController {
         setupTableView()
         setupEmptyView()
         
-        updateTabSelection(0)
+        // 如果外部指定了初始 tab，使用它
+        if initialTab > 0 && initialTab < 3 {
+            selectedTabIndex = initialTab
+        }
+        updateTabSelection(selectedTabIndex)
     }
 
     private func setupNavigationBar() {
+        let navRed = UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0)
         gk_navBackgroundColor = navRed
         gk_navTintColor = .white
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
@@ -47,7 +55,7 @@ class MyHoldingsViewController: ZQViewController {
         gk_navLineHidden = true
         gk_statusBarStyle = .lightContent
         gk_navItemRightSpace = 15
-       
+        gk_backStyle = .white
     }
 
     @objc private func searchTapped() {
@@ -63,7 +71,7 @@ class MyHoldingsViewController: ZQViewController {
         wrap.translatesAutoresizingMaskIntoConstraints = false
         segmentContainer = wrap
 
-        let titles = ["当前持仓", "历史持仓", "新股持仓", "申购记录"]
+        let titles = ["当前持仓", "历史持仓", "申购记录"]
         for (i, t) in titles.enumerated() {
             let btn = UIButton(type: .system)
             btn.setTitle(t, for: .normal)
@@ -83,7 +91,7 @@ class MyHoldingsViewController: ZQViewController {
         let navH = Constants.Navigation.totalNavigationHeight
         let w = Constants.Screen.width / CGFloat(titles.count)
         NSLayoutConstraint.activate([
-            wrap.topAnchor.constraint(equalTo: view.topAnchor, constant: navH),
+            wrap.topAnchor.constraint(equalTo: gk_navigationBar.bottomAnchor),
             wrap.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             wrap.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             wrap.heightAnchor.constraint(equalToConstant: 44),
@@ -118,8 +126,7 @@ class MyHoldingsViewController: ZQViewController {
         switch idx {
         case 0: hasData = !holdings.isEmpty
         case 1: hasData = !historicalHoldings.isEmpty
-        case 2: hasData = !newStockHoldings.isEmpty
-        case 3: hasData = !subscriptionRecords.isEmpty
+        case 2: hasData = !subscriptionNewStocks.isEmpty
         default: hasData = false
         }
         emptyLabel.isHidden = hasData
@@ -147,6 +154,7 @@ class MyHoldingsViewController: ZQViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.register(MyHoldingsHoldingCell.self, forCellReuseIdentifier: "HoldingCell")
         tableView.register(MyHoldingsHistoryRowCell.self, forCellReuseIdentifier: "MyHoldingsHistoryRowCell")
+        tableView.register(NewStockCell.self, forCellReuseIdentifier: "SubscriptionCell")
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -161,7 +169,7 @@ class MyHoldingsViewController: ZQViewController {
 
     private func setupEmptyView() {
         emptyLabel = UILabel()
-        emptyLabel.text = "没有数据了"
+        emptyLabel.text = "暂无数据"
         emptyLabel.font = UIFont.systemFont(ofSize: 15)
         emptyLabel.textColor = Constants.Color.textTertiary
         emptyLabel.textAlignment = .center
@@ -173,16 +181,17 @@ class MyHoldingsViewController: ZQViewController {
         ])
     }
 
-    // 持仓数据模型
+    // 当前持仓数据模型（对齐安卓 toCurrentRecord）
     struct Holding {
         let name: String
-        let code: String
-        let marketValue: String
-        let marketValueDetail: String
-        let currentPrice: String
-        let currentPriceDetail: String
-        let profitLoss: String
-        let profitLossPercent: String
+        let code: String          // 交易所+代码
+        let col2Top: String       // 第二列上：市值(citycc)
+        let col2Bottom: String    // 第二列下：数量(number)
+        let col3Top: String       // 第三列上：现价(cai_buy)
+        let col3Bottom: String    // 第三列下：买入价(buyprice)
+        let profitLoss: String    // 盈亏
+        let profitLossPercent: String // 盈亏%
+        let date: String          // 日期
     }
 
     /// 历史持仓单条（左侧竖条「普通交易」+ 名称/交易所/日期左对齐 + 三列数据 + 底部详情/行情/盈利）
@@ -191,10 +200,10 @@ class MyHoldingsViewController: ZQViewController {
         let name: String       // "N 至信"
         let marketLine: String // "沪 8.75"
         let date: String       // "2026-01-15"
-        let marketValue: String
+        let buyPrice: String
         let quantity: String
         let currentPrice: String
-        let buyPrice: String?
+        let totalCost: String
         let profitLoss: String
         let profitLossPercent: String
     }
@@ -213,7 +222,7 @@ class MyHoldingsViewController: ZQViewController {
         let statusColor: UIColor
     }
     private var newStockHoldings: [NewStockItem] = []
-    private var subscriptionRecords: [NewStockItem] = []
+    private var subscriptionNewStocks: [NewStock] = []
     
     /// 缓存 API 原始返回数据，供跳转详情页时传入
     private var rawHoldingsData: [[String: Any]] = []
@@ -262,23 +271,36 @@ class MyHoldingsViewController: ZQViewController {
                         else { exchangeStr = "深" }
                     }
                     
-                    let citycc = item["citycc"] as? Double ?? (item["citycc"] as? Int).map { Double($0) } ?? 0
-                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
-                    let caiBuy = item["cai_buy"] as? Double ?? Double("\(item["cai_buy"] ?? 0)") ?? 0
-                    let buyPrice = item["buyprice"] as? Double ?? 0
-                    let pl = item["profitLose"] as? String ?? "0"
-                    let plRate = item["profitLose_rate"] as? String ?? "0"
+                    // 对齐安卓：所有字段兼容 Double/String/Int
+                    let numberStr = "\(item["number"] ?? "0")"
+                    let number = Double(numberStr) ?? 0
+                    let buyPrice = Double("\(item["buyprice"] ?? 0)") ?? 0
+                    let caiBuy = Double("\(item["cai_buy"] ?? 0)") ?? 0
+                    let citycc = Double("\(item["citycc"] ?? 0)") ?? 0
+                    let createTime = "\(item["createtime_name"] ?? "--")"
                     
-//                    let sign = pl >= 0 ? "+" : ""
+                    // 盈亏：兼容 Double/String
+                    let pl: String
+                    if let plDouble = item["profitLose"] as? Double {
+                        pl = String(format: "%.2f", plDouble)
+                    } else {
+                        pl = "\(item["profitLose"] ?? "0")"
+                    }
+                    let plRate = "\(item["profitLose_rate"] ?? "0")"
+                    
+                    // 对齐安卓 toCurrentRecord:
+                    // value2 = "${citycc.toLong()}/$number" → 市值/数量
+                    // value3 = "$cai_buy/$buyprice"        → 现价/买入
                     return Holding(
                         name: name,
                         code: "\(exchangeStr) \(code)",
-                        marketValue: String(format: "%.0f", citycc),
-                        marketValueDetail: number,
-                        currentPrice: String(format: "%.2f", caiBuy),
-                        currentPriceDetail: String(format: "%.2f", buyPrice),
-                        profitLoss: pl,//String(format: "%@%.2f", sign, pl),
-                        profitLossPercent: plRate
+                        col2Top: String(format: "%.0f", citycc),
+                        col2Bottom: String(format: "%.0f", number),
+                        col3Top: String(format: "%.2f", caiBuy),
+                        col3Bottom: String(format: "%.2f", buyPrice),
+                        profitLoss: pl,
+                        profitLossPercent: plRate,
+                        date: createTime
                     )
                 }
                 if self.selectedTabIndex == 0 {
@@ -325,6 +347,7 @@ class MyHoldingsViewController: ZQViewController {
                     let name = item["title"] as? String ?? "--"
                     let code = item["code"] as? String ?? "--"
                     let allcode = item["allcode"] as? String ?? ""
+                    let buytype = "\(item["buytype"] ?? "1")"
                     
                     let typeVal = item["type"] as? Int ?? 0
                     let exchangeStr: String
@@ -338,29 +361,38 @@ class MyHoldingsViewController: ZQViewController {
                         else { exchangeStr = "深" }
                     }
                     
-                    let buyPrice = item["buyprice"] as? Double ?? 0
+                    // 对齐安卓：所有字段兼容 Double/String/Int
+                    let buyPrice = Double("\(item["buyprice"] ?? 0)") ?? 0
                     let sellPrice = Double("\(item["cai_buy"] ?? 0)") ?? 0
-                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
-                    let money = item["money"] as? String ?? "--"
-                    let pl = item["profitLose"] as? String ?? "0"
-                    let createTime = item["createtime_name"] as? String ?? "--"
-                    let outTime = item["outtime_name"] as? String ?? "--"
-                    // 取日期部分
-                    let dateStr = String(outTime.prefix(10))
+                    let numberStr = "\(item["number"] ?? "0")"
+                    let number = Double(numberStr) ?? 0
+                    // 对齐安卓：金额用 money 字段，不是本地计算
+                    let money = "\(item["money"] ?? "0")"
                     
-                    let pl_double = Double(pl) ?? 0
-                    let plRate = buyPrice > 0 ? String(format: "%.2f%%", pl_double / (buyPrice * Double(Int(number) ?? 1)) * 100) : "--"
+                    // 盈亏：兼容 Double/String
+                    let profitLose: String
+                    if let plDouble = item["profitLose"] as? Double {
+                        profitLose = String(format: "%.2f", plDouble)
+                    } else {
+                        profitLose = "\(item["profitLose"] ?? "0")"
+                    }
+                    let plRate = "\(item["profitLose_rate"] ?? "--")"
+                    
+                    let createTime = "\(item["createtime_name"] ?? "--")"
+                    
+                    // 对齐安卓：交易类型用 buytype 判断
+                    let typeLabel = buytype == "7" ? "大宗交易" : "普通交易"
                     
                     return HistoricalHolding(
-                        typeLabel: "普通交易",
+                        typeLabel: typeLabel,
                         name: name,
-                        marketLine: "\(exchangeStr) \(String(format: "%.2f", sellPrice))",
-                        date: dateStr,
-                        marketValue: String(format: "%.2f", sellPrice),
-                        quantity: "\(number)股 / 本金\(money)",
-                        currentPrice: String(format: "%.2f", sellPrice),
+                        marketLine: "\(exchangeStr) \(code)",
+                        date: createTime,
                         buyPrice: String(format: "%.2f", buyPrice),
-                        profitLoss: pl,
+                        quantity: String(format: "%.0f", number),
+                        currentPrice: String(format: "%.2f", sellPrice),
+                        totalCost: money,
+                        profitLoss: profitLose,
                         profitLossPercent: plRate
                     )
                 }
@@ -377,59 +409,10 @@ class MyHoldingsViewController: ZQViewController {
         }
     }
     
-    // MARK: - 新股持仓（Tab 2）
-    private func loadNewStockHoldings() {
-        SecureNetworkManager.shared.request(
-            api: "/api/subscribe/getsgnewgu0",
-            method: .get,
-            params: ["page": "1", "size": "50"]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let res):
-                guard let dict = res.decrypted,
-                      let data = dict["data"] as? [String: Any],
-                      let list = data["dxlog_list"] as? [[String: Any]] else { return }
-                
-                self.newStockHoldings = list.compactMap { item in
-                    let name = item["name"] as? String ?? "--"
-                    let code = item["code"] as? String ?? "--"
-                    let price = item["sg_fx_price"] as? Double ?? 0
-                    let zqNum = item["zq_num"] as? Int ?? 0
-                    let statusTxt = item["status_txt"] as? String ?? "--"
-                    let date = item["createtime_txt"] as? String ?? "--"
-                    let status = "\(item["status"] ?? "0")"
-                    
-                    let color: UIColor
-                    switch status {
-                    case "1": color = Constants.Color.stockRise  // 中签→红
-                    case "2": color = Constants.Color.stockFall  // 未中签→绿
-                    case "3": color = Constants.Color.textTertiary // 弃购→灰
-                    default:  color = Constants.Color.orange      // 申购中→橙
-                    }
-                    
-                    return NewStockItem(
-                        name: name,
-                        code: code,
-                        price: String(format: "%.2f", price),
-                        quantity: "\(zqNum)股",
-                        statusText: statusTxt,
-                        date: date,
-                        statusColor: color
-                    )
-                }
-                
-                if self.selectedTabIndex == 2 {
-                    self.tableView.reloadData()
-                    self.emptyLabel.isHidden = !self.newStockHoldings.isEmpty
-                }
-                
-            case .failure(_): break
-            }
-        }
-    }
+    // 新股持仓 tab 已隐藏（对齐安卓），不再加载
+    private func loadNewStockHoldings() { }
     
-    // MARK: - 申购记录（Tab 3）
+    // MARK: - 申购记录（Tab 2）
     private func loadSubscriptionRecords() {
         SecureNetworkManager.shared.request(
             api: "/api/subscribe/getsgnewgu",
@@ -443,37 +426,58 @@ class MyHoldingsViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let list = data["dxlog_list"] as? [[String: Any]] else { return }
                 
-                self.subscriptionRecords = list.compactMap { item in
+                self.subscriptionNewStocks = list.compactMap { item in
                     let name = item["name"] as? String ?? "--"
                     let code = item["code"] as? String ?? "--"
-                    let price = item["sg_fx_price"] as? Double ?? 0
-                    let sgNums = item["sg_nums"] as? Int ?? 0
-                    let statusTxt = item["status_txt"] as? String ?? "--"
-                    let date = item["createtime_txt"] as? String ?? "--"
-                    let status = "\(item["status"] ?? "0")"
+                    let statusStr = "\(item["status"] ?? "0")"
+                    let statusText = item["status_txt"] as? String ?? ""
+                    let dateStr = item["createtime_txt"] as? String ?? ""
                     
-                    let color: UIColor
-                    switch status {
-                    case "1": color = Constants.Color.stockRise
-                    case "2": color = Constants.Color.stockFall
-                    case "3": color = Constants.Color.textTertiary
-                    default:  color = Constants.Color.orange
-                    }
+                    let issuePrice: Double
+                    if let d = item["sg_fx_price"] as? Double { issuePrice = d }
+                    else if let n = item["sg_fx_price"] as? NSNumber { issuePrice = n.doubleValue }
+                    else if let s = item["sg_fx_price"] as? String, let d = Double(s) { issuePrice = d }
+                    else { issuePrice = 0.0 }
                     
-                    return NewStockItem(
+                    let zqNum = item["zq_num"] as? Int ?? (Int("\(item["zq_num"] ?? "0")") ?? 0)
+                    let zqNums = item["zq_nums"] as? Int ?? (Int("\(item["zq_nums"] ?? "0")") ?? 0)
+                    
+                    let sgSsDate = item["sg_ss_date"] as? String ?? ""
+                    let sgSsTag = item["sg_ss_tag"] as? Int ?? (Int("\(item["sg_ss_tag"] ?? "0")") ?? 0)
+                    let listingDate = (sgSsTag == 1 && !sgSsDate.isEmpty && sgSsDate != "0000-00-00") ? sgSsDate : "未公布"
+                    
+                    let zqMoney: Double
+                    if let d = item["zq_money"] as? Double { zqMoney = d }
+                    else if let n = item["zq_money"] as? NSNumber { zqMoney = n.doubleValue }
+                    else if let s = item["zq_money"] as? String, let d = Double(s) { zqMoney = d }
+                    else { zqMoney = 0.0 }
+                    
+                    let syRenjiao: Double
+                    if let d = item["sy_renjiao"] as? Double { syRenjiao = d }
+                    else if let n = item["sy_renjiao"] as? NSNumber { syRenjiao = n.doubleValue }
+                    else if let s = item["sy_renjiao"] as? String, let d = Double(s) { syRenjiao = d }
+                    else { syRenjiao = 0.0 }
+                    
+                    return NewStock(
+                        id: "\(item["id"] ?? "")",
                         name: name,
                         code: code,
-                        price: String(format: "%.2f", price),
-                        quantity: "\(sgNums)股",
-                        statusText: statusTxt,
-                        date: date,
-                        statusColor: color
+                        status: NewStockStatus(rawValue: statusStr) ?? .successful,
+                        statusText: statusText,
+                        issuePrice: issuePrice,
+                        quantity: zqNum,
+                        lots: zqNums,
+                        listingDate: listingDate,
+                        hasListingDate: sgSsTag == 1,
+                        paidAmount: zqMoney,
+                        remainRenjiao: syRenjiao,
+                        date: dateStr
                     )
                 }
                 
-                if self.selectedTabIndex == 3 {
+                if self.selectedTabIndex == 2 {
                     self.tableView.reloadData()
-                    self.emptyLabel.isHidden = !self.subscriptionRecords.isEmpty
+                    self.emptyLabel.isHidden = !self.subscriptionNewStocks.isEmpty
                 }
                 
             case .failure(_): break
@@ -490,7 +494,6 @@ extension MyHoldingsViewController: UITableViewDataSource {
         case 0: return 1
         case 1: return historicalHoldings.count
         case 2: return 1
-        case 3: return 1
         default: return 0
         }
     }
@@ -499,8 +502,7 @@ extension MyHoldingsViewController: UITableViewDataSource {
         switch selectedTabIndex {
         case 0: return holdings.count
         case 1: return 1
-        case 2: return newStockHoldings.count
-        case 3: return subscriptionRecords.count
+        case 2: return subscriptionNewStocks.count
         default: return 0
         }
     }
@@ -515,40 +517,65 @@ extension MyHoldingsViewController: UITableViewDataSource {
                 if indexPath.section < self.rawHistoricalData.count {
                     vc.holdingData = self.rawHistoricalData[indexPath.section]
                 }
-                vc.hiddingButton = true
+                vc.isHistorical = true
+                vc.hiddingButton = false // 历史记录显示“返回”按钮，不应隐藏
                 vc.hidesBottomBarWhenPushed = true
                 self.navigationController?.pushViewController(vc, animated: true)
             }
-            cell.onMarket = { [unowned self] in
+            cell.onMarket = { [weak self] in
                 // 行情
             }
-            cell.onProfit = { [unowned self] in
+            cell.onProfit = { [weak self] in
                 // 盈利
             }
             return cell
         }
         
-        if selectedTabIndex == 2 || selectedTabIndex == 3 {
-            let items = selectedTabIndex == 2 ? newStockHoldings : subscriptionRecords
-            let item = items[indexPath.row]
-            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "NewStockCell")
-            cell.selectionStyle = .none
-            cell.textLabel?.text = "\(item.name)  \(item.code)"
-            cell.textLabel?.font = UIFont.boldSystemFont(ofSize: 15)
-            cell.textLabel?.textColor = Constants.Color.textPrimary
-            cell.detailTextLabel?.numberOfLines = 2
-            cell.detailTextLabel?.text = "发行价: \(item.price)  数量: \(item.quantity)\n\(item.statusText)  \(item.date)"
-            cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 12)
-            cell.detailTextLabel?.textColor = item.statusColor
+        if selectedTabIndex == 2 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "SubscriptionCell", for: indexPath) as! NewStockCell
+            cell.configure(with: subscriptionNewStocks[indexPath.row])
             return cell
         }
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "HoldingCell", for: indexPath) as! MyHoldingsHoldingCell
         cell.configure(with: holdings[indexPath.row])
+        cell.onDetail = { [weak self] in
+            guard let self = self else { return }
+            let vc = HoldingDetailViewController()
+            if indexPath.row < self.rawHoldingsData.count {
+                vc.holdingData = self.rawHoldingsData[indexPath.row]
+            }
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+        cell.onMarket = { [weak self] in
+            guard let self = self else { return }
+            let item = self.holdings[indexPath.row]
+            let vc = StockDetailViewController()
+            vc.stockCode = item.code.components(separatedBy: " ").last ?? ""
+            vc.stockName = item.name
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+        cell.onSell = { [weak self] in
+            guard let self = self else { return }
+            let item = self.holdings[indexPath.row]
+            let vc = AccountTradeViewController()
+            vc.stockCode = item.code.components(separatedBy: " ").last ?? ""
+            vc.stockName = item.name
+            vc.selectedIndex = 1 // 1 是卖出
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+        cell.onProfit = { [weak self] in
+            // 盈利
+        }
         return cell
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        // Tab 2 (申购记录) 使用卡片式 NewStockCell，不需要表头
+        if selectedTabIndex == 2 { return nil }
         if selectedTabIndex == 1 {
             if section == 0 {
                 return makeColumnHeaderView()
@@ -561,11 +588,10 @@ extension MyHoldingsViewController: UITableViewDataSource {
     }
 
     private func makeColumnHeaderView() -> UIView {
-        let pad = Constants.Spacing.lg
         let header = UIView()
         header.backgroundColor = .white
-        
         let gray = Constants.Color.textSecondary
+        
         let nameHeader = UILabel()
         nameHeader.text = "名称/代码"
         nameHeader.font = UIFont.systemFont(ofSize: 14)
@@ -574,24 +600,27 @@ extension MyHoldingsViewController: UITableViewDataSource {
         header.addSubview(nameHeader)
         nameHeader.translatesAutoresizingMaskIntoConstraints = false
         
-        let marketValueHeader = UILabel()
-        marketValueHeader.text = "市值/数量"
-        marketValueHeader.font = UIFont.systemFont(ofSize: 14)
-        marketValueHeader.textColor = gray
-        marketValueHeader.textAlignment = .center
-        header.addSubview(marketValueHeader)
-        marketValueHeader.translatesAutoresizingMaskIntoConstraints = false
+        let col2Header = UILabel()
+        // 对齐安卓：当前持仓显示"市值/数量"，历史持仓显示"买入/数量"
+        col2Header.text = selectedTabIndex == 1 ? "买入/数量" : "市值/数量"
+        col2Header.font = UIFont.systemFont(ofSize: 14)
+        col2Header.textColor = gray
+        col2Header.textAlignment = .center
+        header.addSubview(col2Header)
+        col2Header.translatesAutoresizingMaskIntoConstraints = false
         
-        let currentPriceHeader = UILabel()
-        currentPriceHeader.text = "现价/买入"
-        currentPriceHeader.font = UIFont.systemFont(ofSize: 14)
-        currentPriceHeader.textColor = gray
-        currentPriceHeader.textAlignment = .center
-        header.addSubview(currentPriceHeader)
-        currentPriceHeader.translatesAutoresizingMaskIntoConstraints = false
+        let col3Header = UILabel()
+        // 对齐安卓：当前持仓显示"现价/买入"，历史持仓显示"卖出/金额"
+        col3Header.text = selectedTabIndex == 1 ? "卖出/金额" : "现价/买入"
+        col3Header.font = UIFont.systemFont(ofSize: 14)
+        col3Header.textColor = gray
+        col3Header.textAlignment = .center
+        header.addSubview(col3Header)
+        col3Header.translatesAutoresizingMaskIntoConstraints = false
         
         let profitLossHeader = UILabel()
-        profitLossHeader.text = "盈亏/盈亏比"
+        // 对齐安卓：当前持仓显示"盈亏/盈亏比"，历史持仓只显示"盈亏"
+        profitLossHeader.text = selectedTabIndex == 1 ? "盈亏" : "盈亏/盈亏比"
         profitLossHeader.font = UIFont.systemFont(ofSize: 14)
         profitLossHeader.textColor = gray
         profitLossHeader.textAlignment = .right
@@ -599,19 +628,19 @@ extension MyHoldingsViewController: UITableViewDataSource {
         profitLossHeader.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            nameHeader.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: pad + 16),
+            nameHeader.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 48),
             nameHeader.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             nameHeader.widthAnchor.constraint(equalToConstant: 80),
             
-            marketValueHeader.centerXAnchor.constraint(equalTo: header.centerXAnchor, constant: -60),
-            marketValueHeader.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            marketValueHeader.widthAnchor.constraint(equalToConstant: 80),
+            col2Header.centerXAnchor.constraint(equalTo: header.centerXAnchor, constant: -40),
+            col2Header.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            col2Header.widthAnchor.constraint(equalToConstant: 80),
             
-            currentPriceHeader.centerXAnchor.constraint(equalTo: header.centerXAnchor, constant: 20),
-            currentPriceHeader.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            currentPriceHeader.widthAnchor.constraint(equalToConstant: 80),
+            col3Header.centerXAnchor.constraint(equalTo: header.centerXAnchor, constant: 40),
+            col3Header.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            col3Header.widthAnchor.constraint(equalToConstant: 80),
             
-            profitLossHeader.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -(pad + 16)),
+            profitLossHeader.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
             profitLossHeader.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             profitLossHeader.widthAnchor.constraint(equalToConstant: 80)
         ])
@@ -620,6 +649,7 @@ extension MyHoldingsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        if selectedTabIndex == 2 { return 0 }
         if selectedTabIndex == 1 {
             return section == 0 ? 44 : 10
         }
@@ -654,17 +684,27 @@ extension MyHoldingsViewController: UITableViewDelegate {
 // MARK: - MyHoldingsHoldingCell
 class MyHoldingsHoldingCell: UITableViewCell {
     
-    private let containerView = UIView()
+    private let typeTagView = UIView()
+    private let typeTagLabel = UILabel()
+    private let contentBlock = UIView()
     private let nameLabel = UILabel()
     private let codeLabel = UILabel()
-    private let marketValueLabel = UILabel()
-    private let marketValueDetailLabel = UILabel()
+    private let buyPriceLabel = UILabel()
+    private let quantityLabel = UILabel()
     private let currentPriceLabel = UILabel()
-    private let currentPriceDetailLabel = UILabel()
+    private let totalCostLabel = UILabel()
     private let profitLossLabel = UILabel()
     private let profitLossPercentLabel = UILabel()
-    private let separatorLine = UIView()
-    
+    private let detailButton = UIButton(type: .system)
+    private let marketButton = UIButton(type: .system)
+    private let sellButton = UIButton(type: .system)
+    private let profitButton = UIButton(type: .system)
+
+    var onDetail: (() -> Void)?
+    var onMarket: (() -> Void)?
+    var onSell: (() -> Void)?
+    var onProfit: (() -> Void)?
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -676,174 +716,8 @@ class MyHoldingsHoldingCell: UITableViewCell {
     
     private func setupUI() {
         selectionStyle = .none
-        backgroundColor = .clear
-        
-        containerView.backgroundColor = Constants.Color.backgroundWhite
-        contentView.addSubview(containerView)
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 名称列（左对齐）- 缩小字体
-        nameLabel.font = UIFont.boldSystemFont(ofSize: 15)
-        nameLabel.textColor = Constants.Color.textPrimary
-        nameLabel.textAlignment = .left
-        containerView.addSubview(nameLabel)
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        codeLabel.font = UIFont.systemFont(ofSize: 12)
-        codeLabel.textColor = Constants.Color.textSecondary
-        codeLabel.textAlignment = .left
-        containerView.addSubview(codeLabel)
-        codeLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 持仓市值列（居中）- 缩小字体
-        marketValueLabel.font = UIFont.systemFont(ofSize: 15)
-        marketValueLabel.textColor = Constants.Color.textPrimary
-        marketValueLabel.textAlignment = .center
-        containerView.addSubview(marketValueLabel)
-        marketValueLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        marketValueDetailLabel.font = UIFont.systemFont(ofSize: 12)
-        marketValueDetailLabel.textColor = Constants.Color.textSecondary
-        marketValueDetailLabel.textAlignment = .center
-        containerView.addSubview(marketValueDetailLabel)
-        marketValueDetailLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 现价成本列（居中）- 缩小字体
-        currentPriceLabel.font = UIFont.systemFont(ofSize: 15)
-        currentPriceLabel.textColor = Constants.Color.textPrimary
-        currentPriceLabel.textAlignment = .center
-        containerView.addSubview(currentPriceLabel)
-        currentPriceLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        currentPriceDetailLabel.font = UIFont.systemFont(ofSize: 12)
-        currentPriceDetailLabel.textColor = Constants.Color.textSecondary
-        currentPriceDetailLabel.textAlignment = .center
-        containerView.addSubview(currentPriceDetailLabel)
-        currentPriceDetailLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 盈亏涨幅列（右对齐）- 缩小字体
-        profitLossLabel.font = UIFont.boldSystemFont(ofSize: 15)
-        profitLossLabel.textColor = Constants.Color.stockRise // 红色
-        profitLossLabel.textAlignment = .right
-        containerView.addSubview(profitLossLabel)
-        profitLossLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        profitLossPercentLabel.font = UIFont.systemFont(ofSize: 12)
-        profitLossPercentLabel.textColor = Constants.Color.stockRise // 红色
-        profitLossPercentLabel.textAlignment = .right
-        containerView.addSubview(profitLossPercentLabel)
-        profitLossPercentLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 分隔线
-        separatorLine.backgroundColor = Constants.Color.separator
-        containerView.addSubview(separatorLine)
-        separatorLine.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            
-            // 第一行 - 缩小间距
-            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
-            nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            nameLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            marketValueLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
-            marketValueLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: -60),
-            marketValueLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            currentPriceLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
-            currentPriceLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: 20),
-            currentPriceLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            profitLossLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
-            profitLossLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            profitLossLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            // 第二行 - 缩小间距
-            codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
-            codeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            codeLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            marketValueDetailLabel.topAnchor.constraint(equalTo: marketValueLabel.bottomAnchor, constant: 4),
-            marketValueDetailLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: -60),
-            marketValueDetailLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            currentPriceDetailLabel.topAnchor.constraint(equalTo: currentPriceLabel.bottomAnchor, constant: 4),
-            currentPriceDetailLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor, constant: 20),
-            currentPriceDetailLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            profitLossPercentLabel.topAnchor.constraint(equalTo: profitLossLabel.bottomAnchor, constant: 4),
-            profitLossPercentLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            profitLossPercentLabel.widthAnchor.constraint(equalToConstant: 80),
-            
-            // 分隔线 - 缩小间距
-            separatorLine.topAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: 8),
-            separatorLine.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            separatorLine.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            separatorLine.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
-            separatorLine.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8)
-        ])
-    }
-    
-    func configure(with holding: MyHoldingsViewController.Holding) {
-        nameLabel.text = holding.name
-        codeLabel.text = holding.code
-        marketValueLabel.text = holding.marketValue
-        marketValueDetailLabel.text = holding.marketValueDetail
-        currentPriceLabel.text = holding.currentPrice
-        currentPriceDetailLabel.text = holding.currentPriceDetail
-        profitLossLabel.text = holding.profitLoss
-        profitLossPercentLabel.text = holding.profitLossPercent
-        let isRise = holding.profitLoss.hasPrefix("+") || (!holding.profitLoss.hasPrefix("-") && Double(holding.profitLoss.replacingOccurrences(of: ",", with: "")) ?? 0 >= 0)
-        let plColor = isRise ? Constants.Color.stockRise : Constants.Color.stockFall
-        profitLossLabel.textColor = plColor
-        profitLossPercentLabel.textColor = plColor
-        if holding.profitLossPercent == "0%" {
-            profitLossLabel.textColor = .gray
-            profitLossPercentLabel.textColor = .gray
-        }
-    }
-}
-
-// MARK: - 历史持仓行 Cell：左侧竖条与 cell 同高、文字从上往下；右侧三行上中下排列且整体垂直居中
-class MyHoldingsHistoryRowCell: UITableViewCell {
-
-    private let typeTagView = UIView()
-    private let typeTagLabel = UILabel()
-    private let contentBlock = UIView()
-    private let nameLabel = UILabel()
-    private let exchangeBadge = UILabel()
-    private let marketPriceLabel = UILabel()
-    private let dateLabel = UILabel()
-    private let marketValueLabel = UILabel()
-    private let quantityLabel = UILabel()
-    private let currentPriceLabel = UILabel()
-    private let buyPriceLabel = UILabel()
-    private let profitLossLabel = UILabel()
-    private let profitLossPercentLabel = UILabel()
-    private let detailButton = UIButton(type: .system)
-    private let marketButton = UIButton(type: .system)
-    private let profitButton = UIButton(type: .system)
-
-    var onDetail: (() -> Void)?
-    var onMarket: (() -> Void)?
-    var onProfit: (() -> Void)?
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    private func setupUI() {
-        selectionStyle = .none
         backgroundColor = .white
-
-        // 左侧竖条：高度与 cell 一致，文字从上往下（普→通→交→易）
+        
         typeTagView.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0)
         typeTagView.layer.cornerRadius = 2
         contentView.addSubview(typeTagView)
@@ -864,48 +738,34 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         contentBlock.addSubview(nameLabel)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        exchangeBadge.font = UIFont.systemFont(ofSize: 10)
-        exchangeBadge.textColor = .white
-        exchangeBadge.backgroundColor = Constants.Color.stockRise
-        exchangeBadge.layer.cornerRadius = 2
-        exchangeBadge.clipsToBounds = true
-        exchangeBadge.textAlignment = .center
-        contentBlock.addSubview(exchangeBadge)
-        exchangeBadge.translatesAutoresizingMaskIntoConstraints = false
+        codeLabel.font = UIFont.systemFont(ofSize: 12)
+        codeLabel.textColor = Constants.Color.textSecondary
+        contentBlock.addSubview(codeLabel)
+        codeLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        marketPriceLabel.font = UIFont.systemFont(ofSize: 12)
-        marketPriceLabel.textColor = Constants.Color.textPrimary
-        contentBlock.addSubview(marketPriceLabel)
-        marketPriceLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        dateLabel.font = UIFont.systemFont(ofSize: 12)
-        dateLabel.textColor = Constants.Color.textTertiary
-        contentBlock.addSubview(dateLabel)
-        dateLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        marketValueLabel.font = UIFont.boldSystemFont(ofSize: 14)
-        marketValueLabel.textColor = Constants.Color.textPrimary
-        marketValueLabel.textAlignment = .left
-        contentBlock.addSubview(marketValueLabel)
-        marketValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        buyPriceLabel.font = UIFont.boldSystemFont(ofSize: 14)
+        buyPriceLabel.textColor = Constants.Color.textPrimary
+        buyPriceLabel.textAlignment = .center
+        contentBlock.addSubview(buyPriceLabel)
+        buyPriceLabel.translatesAutoresizingMaskIntoConstraints = false
 
         quantityLabel.font = UIFont.systemFont(ofSize: 12)
         quantityLabel.textColor = Constants.Color.textSecondary
-        quantityLabel.textAlignment = .left
+        quantityLabel.textAlignment = .center
         contentBlock.addSubview(quantityLabel)
         quantityLabel.translatesAutoresizingMaskIntoConstraints = false
 
         currentPriceLabel.font = UIFont.boldSystemFont(ofSize: 14)
         currentPriceLabel.textColor = Constants.Color.textPrimary
-        currentPriceLabel.textAlignment = .left
+        currentPriceLabel.textAlignment = .center
         contentBlock.addSubview(currentPriceLabel)
         currentPriceLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        buyPriceLabel.font = UIFont.systemFont(ofSize: 12)
-        buyPriceLabel.textColor = Constants.Color.textSecondary
-        buyPriceLabel.textAlignment = .left
-        contentBlock.addSubview(buyPriceLabel)
-        buyPriceLabel.translatesAutoresizingMaskIntoConstraints = false
+        totalCostLabel.font = UIFont.systemFont(ofSize: 12)
+        totalCostLabel.textColor = Constants.Color.textSecondary
+        totalCostLabel.textAlignment = .center
+        contentBlock.addSubview(totalCostLabel)
+        totalCostLabel.translatesAutoresizingMaskIntoConstraints = false
 
         profitLossLabel.font = UIFont.boldSystemFont(ofSize: 14)
         profitLossLabel.textColor = Constants.Color.stockRise
@@ -913,8 +773,9 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         contentBlock.addSubview(profitLossLabel)
         profitLossLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        // 盈亏比（百分比）
         profitLossPercentLabel.font = UIFont.systemFont(ofSize: 12)
-        profitLossPercentLabel.textColor = Constants.Color.stockRise
+        profitLossPercentLabel.textColor = Constants.Color.textSecondary
         profitLossPercentLabel.textAlignment = .right
         contentBlock.addSubview(profitLossPercentLabel)
         profitLossPercentLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -922,7 +783,6 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         detailButton.setTitle("详情", for: .normal)
         detailButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
         detailButton.setTitleColor(UIColor(red: 0.2, green: 0.5, blue: 0.9, alpha: 1.0), for: .normal)
-        detailButton.backgroundColor = .white
         detailButton.layer.cornerRadius = 4
         detailButton.layer.borderWidth = 1
         detailButton.layer.borderColor = UIColor(red: 0.2, green: 0.5, blue: 0.9, alpha: 1.0).cgColor
@@ -933,7 +793,6 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         marketButton.setTitle("行情", for: .normal)
         marketButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
         marketButton.setTitleColor(UIColor(red: 0.5, green: 0.2, blue: 0.8, alpha: 1.0), for: .normal)
-        marketButton.backgroundColor = .white
         marketButton.layer.cornerRadius = 4
         marketButton.layer.borderWidth = 1
         marketButton.layer.borderColor = UIColor(red: 0.5, green: 0.2, blue: 0.8, alpha: 1.0).cgColor
@@ -941,10 +800,20 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         contentBlock.addSubview(marketButton)
         marketButton.translatesAutoresizingMaskIntoConstraints = false
 
+        sellButton.setTitle("卖出", for: .normal)
+        sellButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        // 对齐安卓：红色填充圆角按钮
+        sellButton.setTitleColor(.white, for: .normal)
+        sellButton.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0)
+        sellButton.layer.cornerRadius = 11
+        sellButton.clipsToBounds = true
+        sellButton.addTarget(self, action: #selector(sellTapped), for: .touchUpInside)
+        contentBlock.addSubview(sellButton)
+        sellButton.translatesAutoresizingMaskIntoConstraints = false
+
         profitButton.setTitle("盈利", for: .normal)
         profitButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
         profitButton.setTitleColor(UIColor(red: 0.7, green: 0.35, blue: 0.2, alpha: 1.0), for: .normal)
-        profitButton.backgroundColor = .white
         profitButton.layer.cornerRadius = 4
         profitButton.layer.borderWidth = 1
         profitButton.layer.borderColor = UIColor(red: 0.7, green: 0.35, blue: 0.2, alpha: 1.0).cgColor
@@ -952,18 +821,14 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
         contentBlock.addSubview(profitButton)
         profitButton.translatesAutoresizingMaskIntoConstraints = false
 
-        let rowGap: CGFloat = 6
-        let col1Leading: CGFloat = 0
-        let col2CenterX: CGFloat = -58
-        let col3CenterX: CGFloat = 22
-        let colWidth: CGFloat = 70
-        let vPadding: CGFloat = 4
-        let row2Height: CGFloat = 14
+        let rowGap: CGFloat = 8
+        let colWidth: CGFloat = 80
+        let vPadding: CGFloat = 12
 
         NSLayoutConstraint.activate([
             typeTagView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            typeTagView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            typeTagView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            typeTagView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            typeTagView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             typeTagView.widthAnchor.constraint(equalToConstant: 26),
 
             typeTagLabel.centerXAnchor.constraint(equalTo: typeTagView.centerXAnchor),
@@ -976,70 +841,289 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
             contentBlock.topAnchor.constraint(equalTo: contentView.topAnchor, constant: vPadding),
             contentBlock.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -vPadding),
 
-            // 第一行：名称、市值、现价、盈亏 — 顶对齐
+            // Row 1
             nameLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
-            nameLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor, constant: col1Leading),
+            nameLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor),
+            nameLabel.widthAnchor.constraint(equalToConstant: 80),
 
-            marketValueLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
-            marketValueLabel.centerXAnchor.constraint(equalTo: contentBlock.centerXAnchor, constant: col2CenterX),
-            marketValueLabel.widthAnchor.constraint(equalToConstant: colWidth),
+            buyPriceLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
+            buyPriceLabel.centerXAnchor.constraint(equalTo: contentBlock.centerXAnchor, constant: -40),
+            buyPriceLabel.widthAnchor.constraint(equalToConstant: colWidth),
 
             currentPriceLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
-            currentPriceLabel.centerXAnchor.constraint(equalTo: contentBlock.centerXAnchor, constant: col3CenterX),
+            currentPriceLabel.centerXAnchor.constraint(equalTo: contentBlock.centerXAnchor, constant: 40),
             currentPriceLabel.widthAnchor.constraint(equalToConstant: colWidth),
 
             profitLossLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
             profitLossLabel.trailingAnchor.constraint(equalTo: contentBlock.trailingAnchor),
             profitLossLabel.widthAnchor.constraint(equalToConstant: colWidth),
 
-            // 第二行：交易所+市价、数量、买入价、盈亏% — 统一顶对齐到 nameLabel.bottom + rowGap
-            exchangeBadge.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor, constant: col1Leading),
-            exchangeBadge.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: rowGap),
-            exchangeBadge.widthAnchor.constraint(equalToConstant: 16),
-            exchangeBadge.heightAnchor.constraint(equalToConstant: row2Height),
-
-            marketPriceLabel.leadingAnchor.constraint(equalTo: exchangeBadge.trailingAnchor, constant: 4),
-            marketPriceLabel.centerYAnchor.constraint(equalTo: exchangeBadge.centerYAnchor),
-
-            quantityLabel.topAnchor.constraint(equalTo: exchangeBadge.topAnchor),
-            quantityLabel.centerXAnchor.constraint(equalTo: marketValueLabel.centerXAnchor),
-            quantityLabel.widthAnchor.constraint(equalTo: marketValueLabel.widthAnchor),
-
-            buyPriceLabel.topAnchor.constraint(equalTo: exchangeBadge.topAnchor),
-            buyPriceLabel.centerXAnchor.constraint(equalTo: currentPriceLabel.centerXAnchor),
-            buyPriceLabel.widthAnchor.constraint(equalTo: currentPriceLabel.widthAnchor),
-
-            profitLossPercentLabel.topAnchor.constraint(equalTo: exchangeBadge.topAnchor),
+            // 盈亏比显示在盈亏金额下方
+            profitLossPercentLabel.topAnchor.constraint(equalTo: profitLossLabel.bottomAnchor, constant: rowGap),
             profitLossPercentLabel.trailingAnchor.constraint(equalTo: contentBlock.trailingAnchor),
-            profitLossPercentLabel.widthAnchor.constraint(equalTo: profitLossLabel.widthAnchor),
-            profitLossPercentLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: row2Height),
+            profitLossPercentLabel.widthAnchor.constraint(equalToConstant: colWidth),
 
-            // 第三行：日期 + 详情/行情/盈利 — 统一顶对齐到第二行下方 rowGap
-            detailButton.leadingAnchor.constraint(equalTo: contentBlock.trailingAnchor, constant: -(56*3 + 10*2)),
-            detailButton.topAnchor.constraint(equalTo: exchangeBadge.bottomAnchor, constant: rowGap),
-            detailButton.topAnchor.constraint(greaterThanOrEqualTo: profitLossPercentLabel.bottomAnchor, constant: rowGap),
+            // Row 2
+            codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: rowGap),
+            codeLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor),
+            codeLabel.widthAnchor.constraint(equalToConstant: 80),
+
+            quantityLabel.topAnchor.constraint(equalTo: buyPriceLabel.bottomAnchor, constant: rowGap),
+            quantityLabel.centerXAnchor.constraint(equalTo: buyPriceLabel.centerXAnchor),
+            quantityLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            totalCostLabel.topAnchor.constraint(equalTo: currentPriceLabel.bottomAnchor, constant: rowGap),
+            totalCostLabel.centerXAnchor.constraint(equalTo: currentPriceLabel.centerXAnchor),
+            totalCostLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            // Row 3 (按钮顺序对齐安卓：详情→行情→盈利→卖出)
+            detailButton.topAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: rowGap),
+            detailButton.trailingAnchor.constraint(equalTo: marketButton.leadingAnchor, constant: -8),
+            detailButton.widthAnchor.constraint(equalToConstant: 46),
+            detailButton.heightAnchor.constraint(equalToConstant: 22),
+
+            marketButton.topAnchor.constraint(equalTo: detailButton.topAnchor),
+            marketButton.trailingAnchor.constraint(equalTo: profitButton.leadingAnchor, constant: -8),
+            marketButton.widthAnchor.constraint(equalToConstant: 46),
+            marketButton.heightAnchor.constraint(equalToConstant: 22),
+
+            profitButton.topAnchor.constraint(equalTo: detailButton.topAnchor),
+            profitButton.trailingAnchor.constraint(equalTo: sellButton.leadingAnchor, constant: -8),
+            profitButton.widthAnchor.constraint(equalToConstant: 46),
+            profitButton.heightAnchor.constraint(equalToConstant: 22),
+
+            sellButton.topAnchor.constraint(equalTo: detailButton.topAnchor),
+            sellButton.trailingAnchor.constraint(equalTo: contentBlock.trailingAnchor),
+            sellButton.widthAnchor.constraint(equalToConstant: 46),
+            sellButton.heightAnchor.constraint(equalToConstant: 22),
+            sellButton.bottomAnchor.constraint(equalTo: contentBlock.bottomAnchor)
+        ])
+    }
+    
+    @objc private func detailTapped() { onDetail?() }
+    @objc private func marketTapped() { onMarket?() }
+    @objc private func sellTapped() { onSell?() }
+    @objc private func profitTapped() { onProfit?() }
+    
+    func configure(with holding: MyHoldingsViewController.Holding) {
+        nameLabel.text = holding.name
+        codeLabel.text = holding.code
+        // 对齐安卓 toCurrentRecord:
+        // col2: 市值/数量
+        buyPriceLabel.text = holding.col2Top
+        quantityLabel.text = holding.col2Bottom
+        // col3: 现价/买入
+        currentPriceLabel.text = holding.col3Top
+        totalCostLabel.text = holding.col3Bottom
+        // col4: 盈亏
+        profitLossLabel.text = holding.profitLoss
+        // 盈亏比（百分比）
+        let pct = holding.profitLossPercent
+        profitLossPercentLabel.text = pct.hasSuffix("%") ? pct : pct + "%"
+        
+        let isRise = holding.profitLoss.hasPrefix("+") || (!holding.profitLoss.hasPrefix("-") && Double(holding.profitLoss.replacingOccurrences(of: ",", with: "")) ?? 0 >= 0)
+        let plColor = isRise ? Constants.Color.stockRise : Constants.Color.stockFall
+        profitLossLabel.textColor = plColor
+        profitLossPercentLabel.textColor = plColor
+        if holding.profitLoss == "0" || holding.profitLoss == "0.00" {
+            profitLossLabel.textColor = .gray
+            profitLossPercentLabel.textColor = .gray
+        }
+    }
+}
+
+// MARK: - 历史持仓行 Cell：左侧竖条与 cell 同高、文字从上往下；右侧三行上中下排列且整体垂直居中
+class MyHoldingsHistoryRowCell: UITableViewCell {
+
+    private let typeTagView = UIView()
+    private let typeTagLabel = UILabel()
+    private let contentBlock = UIView()
+    private let nameLabel = UILabel()
+    private let codeLabel = UILabel()
+    private let dateLabel = UILabel()
+    private let buyPriceLabel = UILabel()
+    private let quantityLabel = UILabel()
+    private let currentPriceLabel = UILabel()
+    private let totalCostLabel = UILabel()
+    private let profitLossLabel = UILabel()
+    private let detailButton = UIButton(type: .system)
+    private let marketButton = UIButton(type: .system)
+    private let profitButton = UIButton(type: .system)
+
+    var onDetail: (() -> Void)?
+    var onMarket: (() -> Void)?
+    var onProfit: (() -> Void)?
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    private func setupUI() {
+        selectionStyle = .none
+        backgroundColor = .white
+
+        typeTagView.backgroundColor = UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0)
+        typeTagView.layer.cornerRadius = 2
+        contentView.addSubview(typeTagView)
+        typeTagView.translatesAutoresizingMaskIntoConstraints = false
+
+        typeTagLabel.text = "普通交易"
+        typeTagLabel.font = UIFont.systemFont(ofSize: 12)
+        typeTagLabel.textColor = .white
+        typeTagLabel.transform = CGAffineTransform(rotationAngle: -CGFloat.pi / 2)
+        typeTagView.addSubview(typeTagLabel)
+        typeTagLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        contentView.addSubview(contentBlock)
+        contentBlock.translatesAutoresizingMaskIntoConstraints = false
+
+        nameLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        nameLabel.textColor = Constants.Color.textPrimary
+        contentBlock.addSubview(nameLabel)
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        codeLabel.font = UIFont.systemFont(ofSize: 12)
+        codeLabel.textColor = Constants.Color.textSecondary
+        contentBlock.addSubview(codeLabel)
+        codeLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        dateLabel.font = UIFont.systemFont(ofSize: 12)
+        dateLabel.textColor = Constants.Color.textTertiary
+        contentBlock.addSubview(dateLabel)
+        dateLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        buyPriceLabel.font = UIFont.boldSystemFont(ofSize: 14)
+        buyPriceLabel.textColor = Constants.Color.textPrimary
+        buyPriceLabel.textAlignment = .center
+        contentBlock.addSubview(buyPriceLabel)
+        buyPriceLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        quantityLabel.font = UIFont.systemFont(ofSize: 12)
+        quantityLabel.textColor = Constants.Color.textSecondary
+        quantityLabel.textAlignment = .center
+        contentBlock.addSubview(quantityLabel)
+        quantityLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        currentPriceLabel.font = UIFont.boldSystemFont(ofSize: 14)
+        currentPriceLabel.textColor = Constants.Color.textPrimary
+        currentPriceLabel.textAlignment = .center
+        contentBlock.addSubview(currentPriceLabel)
+        currentPriceLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        totalCostLabel.font = UIFont.systemFont(ofSize: 12)
+        totalCostLabel.textColor = Constants.Color.textSecondary
+        totalCostLabel.textAlignment = .center
+        contentBlock.addSubview(totalCostLabel)
+        totalCostLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        profitLossLabel.font = UIFont.boldSystemFont(ofSize: 14)
+        profitLossLabel.textColor = Constants.Color.stockRise
+        profitLossLabel.textAlignment = .right
+        contentBlock.addSubview(profitLossLabel)
+        profitLossLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        detailButton.setTitle("详情", for: .normal)
+        detailButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        detailButton.setTitleColor(UIColor(red: 0.2, green: 0.5, blue: 0.9, alpha: 1.0), for: .normal)
+        detailButton.layer.cornerRadius = 4
+        detailButton.layer.borderWidth = 1
+        detailButton.layer.borderColor = UIColor(red: 0.2, green: 0.5, blue: 0.9, alpha: 1.0).cgColor
+        detailButton.addTarget(self, action: #selector(detailTapped), for: .touchUpInside)
+        contentBlock.addSubview(detailButton)
+        detailButton.translatesAutoresizingMaskIntoConstraints = false
+
+        marketButton.setTitle("行情", for: .normal)
+        marketButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        marketButton.setTitleColor(UIColor(red: 0.5, green: 0.2, blue: 0.8, alpha: 1.0), for: .normal)
+        marketButton.layer.cornerRadius = 4
+        marketButton.layer.borderWidth = 1
+        marketButton.layer.borderColor = UIColor(red: 0.5, green: 0.2, blue: 0.8, alpha: 1.0).cgColor
+        marketButton.addTarget(self, action: #selector(marketTapped), for: .touchUpInside)
+        contentBlock.addSubview(marketButton)
+        marketButton.translatesAutoresizingMaskIntoConstraints = false
+
+        profitButton.setTitle("盈利", for: .normal)
+        profitButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        profitButton.setTitleColor(UIColor(red: 0.7, green: 0.35, blue: 0.2, alpha: 1.0), for: .normal)
+        profitButton.layer.cornerRadius = 4
+        profitButton.layer.borderWidth = 1
+        profitButton.layer.borderColor = UIColor(red: 0.7, green: 0.35, blue: 0.2, alpha: 1.0).cgColor
+        profitButton.addTarget(self, action: #selector(profitTapped), for: .touchUpInside)
+        contentBlock.addSubview(profitButton)
+        profitButton.translatesAutoresizingMaskIntoConstraints = false
+
+        let rowGap: CGFloat = 8
+        let colWidth: CGFloat = 80
+        let vPadding: CGFloat = 12
+
+        NSLayoutConstraint.activate([
+            typeTagView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            typeTagView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            typeTagView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
+            typeTagView.widthAnchor.constraint(equalToConstant: 26),
+
+            typeTagLabel.centerXAnchor.constraint(equalTo: typeTagView.centerXAnchor),
+            typeTagLabel.centerYAnchor.constraint(equalTo: typeTagView.centerYAnchor),
+            typeTagLabel.widthAnchor.constraint(equalToConstant: 52),
+            typeTagLabel.heightAnchor.constraint(equalToConstant: 20),
+
+            contentBlock.leadingAnchor.constraint(equalTo: typeTagView.trailingAnchor, constant: 10),
+            contentBlock.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            contentBlock.topAnchor.constraint(equalTo: contentView.topAnchor, constant: vPadding),
+            contentBlock.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -vPadding),
+
+            // Row 1
+            nameLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
+            nameLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor),
+            nameLabel.widthAnchor.constraint(equalToConstant: 80),
+
+            buyPriceLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
+            buyPriceLabel.centerXAnchor.constraint(equalTo: contentBlock.centerXAnchor, constant: -40),
+            buyPriceLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            currentPriceLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
+            currentPriceLabel.centerXAnchor.constraint(equalTo: contentBlock.centerXAnchor, constant: 40),
+            currentPriceLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            profitLossLabel.topAnchor.constraint(equalTo: contentBlock.topAnchor),
+            profitLossLabel.trailingAnchor.constraint(equalTo: contentBlock.trailingAnchor),
+            profitLossLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            // Row 2
+            codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: rowGap),
+            codeLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor),
+            codeLabel.widthAnchor.constraint(equalToConstant: 80),
+
+            quantityLabel.topAnchor.constraint(equalTo: buyPriceLabel.bottomAnchor, constant: rowGap),
+            quantityLabel.centerXAnchor.constraint(equalTo: buyPriceLabel.centerXAnchor),
+            quantityLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            totalCostLabel.topAnchor.constraint(equalTo: currentPriceLabel.bottomAnchor, constant: rowGap),
+            totalCostLabel.centerXAnchor.constraint(equalTo: currentPriceLabel.centerXAnchor),
+            totalCostLabel.widthAnchor.constraint(equalToConstant: colWidth),
+
+            // Row 3 (Date + Buttons)
+            dateLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor),
+            dateLabel.centerYAnchor.constraint(equalTo: detailButton.centerYAnchor),
+
+            detailButton.topAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: rowGap),
+            detailButton.trailingAnchor.constraint(equalTo: marketButton.leadingAnchor, constant: -10),
             detailButton.widthAnchor.constraint(equalToConstant: 52),
             detailButton.heightAnchor.constraint(equalToConstant: 22),
 
-            dateLabel.leadingAnchor.constraint(equalTo: contentBlock.leadingAnchor, constant: col1Leading),
-            dateLabel.centerYAnchor.constraint(equalTo: detailButton.centerYAnchor),
-            dateLabel.topAnchor.constraint(greaterThanOrEqualTo: exchangeBadge.bottomAnchor, constant: rowGap),
-
-            marketButton.leadingAnchor.constraint(equalTo: detailButton.trailingAnchor, constant: 10),
-            marketButton.centerYAnchor.constraint(equalTo: detailButton.centerYAnchor),
+            marketButton.topAnchor.constraint(equalTo: detailButton.topAnchor),
+            marketButton.trailingAnchor.constraint(equalTo: profitButton.leadingAnchor, constant: -10),
             marketButton.widthAnchor.constraint(equalToConstant: 52),
             marketButton.heightAnchor.constraint(equalToConstant: 22),
 
-            profitButton.leadingAnchor.constraint(equalTo: marketButton.trailingAnchor, constant: 10),
+            profitButton.topAnchor.constraint(equalTo: detailButton.topAnchor),
             profitButton.trailingAnchor.constraint(equalTo: contentBlock.trailingAnchor),
-            profitButton.centerYAnchor.constraint(equalTo: detailButton.centerYAnchor),
             profitButton.widthAnchor.constraint(equalToConstant: 52),
             profitButton.heightAnchor.constraint(equalToConstant: 22),
-
-            contentBlock.bottomAnchor.constraint(equalTo: detailButton.bottomAnchor),
-
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: marketValueLabel.leadingAnchor, constant: -8),
-            marketPriceLabel.trailingAnchor.constraint(lessThanOrEqualTo: quantityLabel.leadingAnchor, constant: -8)
+            profitButton.bottomAnchor.constraint(equalTo: contentBlock.bottomAnchor)
         ])
     }
 
@@ -1050,28 +1134,20 @@ class MyHoldingsHistoryRowCell: UITableViewCell {
     func configure(with item: MyHoldingsViewController.HistoricalHolding) {
         typeTagLabel.text = item.typeLabel
         nameLabel.text = item.name
-        let parts = item.marketLine.split(separator: " ", maxSplits: 1)
-        if parts.count >= 2 {
-            exchangeBadge.text = String(parts[0])
-            marketPriceLabel.text = String(parts[1])
-        } else {
-            exchangeBadge.text = ""
-            marketPriceLabel.text = item.marketLine
-        }
+        // 对齐安卓：codeLabel 显示交易所+代码，如 "沪 920166"
+        codeLabel.text = item.marketLine
         dateLabel.text = item.date
-        marketValueLabel.text = item.marketValue
+        buyPriceLabel.text = item.buyPrice
         quantityLabel.text = item.quantity
         currentPriceLabel.text = item.currentPrice
-        buyPriceLabel.text = item.buyPrice ?? ""
+        totalCostLabel.text = item.totalCost
         profitLossLabel.text = item.profitLoss
-        profitLossPercentLabel.text = item.profitLossPercent
+        
         let isRise = item.profitLoss.hasPrefix("+") || (!item.profitLoss.hasPrefix("-") && Double(item.profitLoss.replacingOccurrences(of: ",", with: "")) ?? 0 >= 0)
         let plColor = isRise ? Constants.Color.stockRise : Constants.Color.stockFall
         profitLossLabel.textColor = plColor
-        profitLossPercentLabel.textColor = plColor
-        if item.profitLossPercent == "0.00%" {
+        if item.profitLoss == "0" || item.profitLoss == "0.00" {
             profitLossLabel.textColor = .gray
-            profitLossPercentLabel.textColor = .gray
         }
     }
 }

@@ -21,10 +21,12 @@ class AllotmentRecordsViewController: ZQViewController {
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let tabContainer = UIView()
     private var tabButtons: [UIButton] = []
-    private let indicatorView = UIView()
     private var selectedTabIndex: Int = 1 // 默认选中"中签"
     private var stocks: [NewStock] = []
-    private var indicatorCenterXConstraint: NSLayoutConstraint!
+    private let emptyLabel = UILabel()
+    
+    private let themeRed = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
+    private let grayColor = Constants.Color.textSecondary
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,10 +37,14 @@ class AllotmentRecordsViewController: ZQViewController {
     
     private func setupNavigationBar() {
         gk_navTitle = "配售记录"
-        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
-        gk_navTitleColor = .white
-        gk_statusBarStyle = .lightContent
+        gk_navBackgroundColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
+        gk_statusBarStyle = .default
+        gk_backStyle = .black
     }
+    
+    private let indicatorView = UIView()
+    private var indicatorLeadingConstraint: NSLayoutConstraint?
     
     private func setupUI() {
         view.backgroundColor = Constants.Color.backgroundMain
@@ -52,12 +58,11 @@ class AllotmentRecordsViewController: ZQViewController {
         let tabStackView = UIStackView()
         tabStackView.axis = .horizontal
         tabStackView.distribution = .fillEqually
-        tabStackView.spacing = 0
         tabContainer.addSubview(tabStackView)
         tabStackView.translatesAutoresizingMaskIntoConstraints = false
         
         for (index, tabTitle) in tabs.enumerated() {
-            let button = UIButton(type: .system)
+            let button = UIButton(type: .custom)
             button.setTitle(tabTitle, for: .normal)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 15)
             button.tag = index
@@ -66,8 +71,8 @@ class AllotmentRecordsViewController: ZQViewController {
             tabButtons.append(button)
         }
         
-        // 指示器
-        indicatorView.backgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // 蓝色
+        // 下划线指示器
+        indicatorView.backgroundColor = themeRed
         tabContainer.addSubview(indicatorView)
         indicatorView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -80,6 +85,17 @@ class AllotmentRecordsViewController: ZQViewController {
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
+        // 空状态
+        emptyLabel.text = "暂无数据"
+        emptyLabel.textColor = Constants.Color.textSecondary
+        emptyLabel.font = UIFont.systemFont(ofSize: 14)
+        emptyLabel.textAlignment = .center
+        emptyLabel.isHidden = true
+        view.addSubview(emptyLabel)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        indicatorLeadingConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
+        
         NSLayoutConstraint.activate([
             tabContainer.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
             tabContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -89,24 +105,21 @@ class AllotmentRecordsViewController: ZQViewController {
             tabStackView.topAnchor.constraint(equalTo: tabContainer.topAnchor),
             tabStackView.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
             tabStackView.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
-            tabStackView.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
+            tabStackView.bottomAnchor.constraint(equalTo: indicatorView.topAnchor),
             
             indicatorView.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
             indicatorView.heightAnchor.constraint(equalToConstant: 2),
-            indicatorView.widthAnchor.constraint(equalToConstant: 20),
+            indicatorView.widthAnchor.constraint(equalToConstant: 24),
+            indicatorLeadingConstraint!,
             
             tableView.topAnchor.constraint(equalTo: tabContainer.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-        
-        // 设置指示器初始位置（确保tabButtons已经填充）
-        guard !tabButtons.isEmpty && selectedTabIndex < tabButtons.count else {
-            return
-        }
-        indicatorCenterXConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
-        indicatorCenterXConstraint.isActive = true
         
         updateTabSelection()
     }
@@ -132,17 +145,13 @@ class AllotmentRecordsViewController: ZQViewController {
                 guard let dict = res.decrypted,
                       let data = dict["data"] as? [String: Any],
                       let list = data["dxlog_list"] as? [[String: Any]] else {
-                    if let dict = res.decrypted {
-                        print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
-                    }
                     DispatchQueue.main.async {
                         self.stocks = []
                         self.tableView.reloadData()
+                        self.emptyLabel.isHidden = false
                     }
                     return
                 }
-                
-                print("==== 我的新股接口响应数据 ====\n\(dict)\n====================")
                 
                 var newStocks: [NewStock] = []
                 for item in list {
@@ -151,12 +160,33 @@ class AllotmentRecordsViewController: ZQViewController {
                     let code = item["code"] as? String ?? ""
                     let statusStr = "\(item["status"] ?? "")"
                     let statusText = item["status_txt"] as? String ?? ""
-                    let issuePrice = "\(item["sg_fx_price"] ?? "0")"
-                    let quantity = "\(item["zq_num"] ?? "0")"
-                    let lots = "\(item["zq_nums"] ?? "0")"
-                    var listingTime = item["sg_ss_date"] as? String ?? "未公布"
-                    if listingTime.isEmpty { listingTime = "未公布" }
-                    let zqMoney = "\(item["zq_money"] ?? "0")"
+                    
+                    // 对齐新模型字段类型
+                    let issuePrice: Double
+                    if let d = item["sg_fx_price"] as? Double { issuePrice = d }
+                    else if let n = item["sg_fx_price"] as? NSNumber { issuePrice = n.doubleValue }
+                    else if let s = item["sg_fx_price"] as? String, let d = Double(s) { issuePrice = d }
+                    else { issuePrice = 0.0 }
+                    
+                    let zqNum = item["zq_num"] as? Int ?? (Int("\(item["zq_num"] ?? "0")") ?? 0)
+                    let zqNums = item["zq_nums"] as? Int ?? (Int("\(item["zq_nums"] ?? "0")") ?? 0)
+                    
+                    let sgSsDate = item["sg_ss_date"] as? String ?? ""
+                    let sgSsTag = item["sg_ss_tag"] as? Int ?? (Int("\(item["sg_ss_tag"] ?? "0")") ?? 0)
+                    let listingDate = (sgSsTag == 1 && !sgSsDate.isEmpty && sgSsDate != "0000-00-00") ? sgSsDate : "未公布"
+                    
+                    let zqMoney: Double
+                    if let d = item["zq_money"] as? Double { zqMoney = d }
+                    else if let n = item["zq_money"] as? NSNumber { zqMoney = n.doubleValue }
+                    else if let s = item["zq_money"] as? String, let d = Double(s) { zqMoney = d }
+                    else { zqMoney = 0.0 }
+                    
+                    let syRenjiao: Double
+                    if let d = item["sy_renjiao"] as? Double { syRenjiao = d }
+                    else if let n = item["sy_renjiao"] as? NSNumber { syRenjiao = n.doubleValue }
+                    else if let s = item["sy_renjiao"] as? String, let d = Double(s) { syRenjiao = d }
+                    else { syRenjiao = 0.0 }
+                    
                     let dateStr = item["createtime_txt"] as? String ?? ""
                     
                     let model = NewStock(
@@ -166,10 +196,12 @@ class AllotmentRecordsViewController: ZQViewController {
                         status: NewStockStatus(rawValue: statusStr) ?? .successful,
                         statusText: statusText,
                         issuePrice: issuePrice,
-                        quantity: quantity,
-                        lots: lots,
-                        listingTime: listingTime,
+                        quantity: zqNum,
+                        lots: zqNums,
+                        listingDate: listingDate,
+                        hasListingDate: sgSsTag == 1,
                         paidAmount: zqMoney,
+                        remainRenjiao: syRenjiao,
                         date: dateStr
                     )
                     newStocks.append(model)
@@ -178,6 +210,7 @@ class AllotmentRecordsViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.stocks = newStocks
                     self.tableView.reloadData()
+                    self.emptyLabel.isHidden = !newStocks.isEmpty
                 }
                 
             case .failure(let err):
@@ -193,38 +226,31 @@ class AllotmentRecordsViewController: ZQViewController {
         guard newIndex != selectedTabIndex else { return }
         
         selectedTabIndex = newIndex
-        updateTabSelection()
         
-        // 重新调用接口拉取数据
+        // 动画移动指示器
+        indicatorLeadingConstraint?.isActive = false
+        indicatorLeadingConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
+        indicatorLeadingConstraint?.isActive = true
+        
+        UIView.animate(withDuration: 0.2) {
+            self.tabContainer.layoutIfNeeded()
+        }
+        
+        updateTabSelection()
         loadData()
     }
     
     private func updateTabSelection() {
-        // 安全检查
-        guard !tabButtons.isEmpty && selectedTabIndex < tabButtons.count else {
-            return
-        }
-        
         for (index, button) in tabButtons.enumerated() {
             if index == selectedTabIndex {
-                button.setTitleColor(UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0), for: .normal)
-                // 去掉边框
-                button.layer.borderWidth = 0
+                button.setTitleColor(themeRed, for: .normal)
+                button.layer.borderColor = UIColor.clear.cgColor
+                button.backgroundColor = .clear
             } else {
-                button.setTitleColor(Constants.Color.textSecondary, for: .normal)
-                button.layer.borderWidth = 0
+                button.setTitleColor(grayColor, for: .normal)
+                button.layer.borderColor = UIColor.clear.cgColor
+                button.backgroundColor = .clear
             }
-        }
-        
-        // 更新指示器位置
-        if indicatorCenterXConstraint != nil {
-            indicatorCenterXConstraint.isActive = false
-        }
-        indicatorCenterXConstraint = indicatorView.centerXAnchor.constraint(equalTo: tabButtons[selectedTabIndex].centerXAnchor)
-        indicatorCenterXConstraint.isActive = true
-        
-        UIView.animate(withDuration: 0.2) {
-            self.view.layoutIfNeeded()
         }
     }
 }

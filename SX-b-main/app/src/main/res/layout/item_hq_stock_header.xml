@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/hq_card_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="10dp">
+
+    <!-- 固定左侧：名称 -->
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:text="@string/hq_col_name"
+        android:textColor="@color/hq_text_gray"
+        android:textSize="13sp" />
+
+    <!-- 可滑动区域：表头列 -->
+    <HorizontalScrollView
+        android:id="@+id/hsv_header"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_price"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_change"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_change_pct"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_volume"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_turnover"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_prev_close"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/hq_col_open"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:paddingEnd="16dp"
+                android:text="@string/hq_col_high"
+                android:textColor="@color/hq_text_gray"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+</LinearLayout>

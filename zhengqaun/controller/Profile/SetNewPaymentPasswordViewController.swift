@@ -33,12 +33,13 @@ class SetNewPaymentPasswordViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = UIColor(red: 0.1, green: 0.47, blue: 0.82, alpha: 1.0)
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "请输入新支付密码"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
+        gk_backStyle = .black
     }
     
     private func setupUI() {
@@ -59,7 +60,7 @@ class SetNewPaymentPasswordViewController: ZQViewController {
         instructionLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            instructionLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight + 200),
+            instructionLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight + 60),
             instructionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             instructionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])

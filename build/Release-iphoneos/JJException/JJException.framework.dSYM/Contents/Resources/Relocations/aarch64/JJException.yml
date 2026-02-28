@@ -1,0 +1,304 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/wayne/Desktop/shanxizhengquan/build/Release-iphoneos/JJException/JJException.framework/JJException'
+relocations:
+  - { offset: 0xF0659, size: 0x8, addend: 0x0, symName: _JJExceptionVersionString, symObjAddr: 0x10, symBinAddr: 0xFFC0, symSize: 0x0 }
+  - { offset: 0xF068E, size: 0x8, addend: 0x0, symName: _JJExceptionVersionNumber, symObjAddr: 0x40, symBinAddr: 0xFFF0, symSize: 0x0 }
+  - { offset: 0xF06CB, size: 0x8, addend: 0x0, symName: '+[JJException isGuardException]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x54 }
+  - { offset: 0xF072E, size: 0x8, addend: 0x0, symName: '+[JJException isGuardException]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x54 }
+  - { offset: 0xF0761, size: 0x8, addend: 0x0, symName: '+[JJException exceptionWhenTerminate]', symObjAddr: 0x54, symBinAddr: 0x4054, symSize: 0x54 }
+  - { offset: 0xF0794, size: 0x8, addend: 0x0, symName: '+[JJException setExceptionWhenTerminate:]', symObjAddr: 0xA8, symBinAddr: 0x40A8, symSize: 0x50 }
+  - { offset: 0xF07D3, size: 0x8, addend: 0x0, symName: '+[JJException startGuardException]', symObjAddr: 0xF8, symBinAddr: 0x40F8, symSize: 0x4C }
+  - { offset: 0xF0802, size: 0x8, addend: 0x0, symName: '+[JJException stopGuardException]', symObjAddr: 0x144, symBinAddr: 0x4144, symSize: 0x4C }
+  - { offset: 0xF0831, size: 0x8, addend: 0x0, symName: '+[JJException configExceptionCategory:]', symObjAddr: 0x190, symBinAddr: 0x4190, symSize: 0x50 }
+  - { offset: 0xF0870, size: 0x8, addend: 0x0, symName: '+[JJException registerExceptionHandle:]', symObjAddr: 0x1E0, symBinAddr: 0x41E0, symSize: 0x64 }
+  - { offset: 0xF0939, size: 0x8, addend: 0x0, symName: __Z20handleCrashExceptionP8NSString, symObjAddr: 0x0, symBinAddr: 0x4244, symSize: 0x68 }
+  - { offset: 0xF0947, size: 0x8, addend: 0x0, symName: '+[JJExceptionProxy shareExceptionProxy]', symObjAddr: 0x304, symBinAddr: 0x4548, symSize: 0x84 }
+  - { offset: 0xF0971, size: 0x8, addend: 0x0, symName: _shareExceptionProxy.onceToken, symObjAddr: 0x63E0, symBinAddr: 0x24000, symSize: 0x0 }
+  - { offset: 0xF0987, size: 0x8, addend: 0x0, symName: _shareExceptionProxy.exceptionProxy, symObjAddr: 0x63E8, symBinAddr: 0x24008, symSize: 0x0 }
+  - { offset: 0xF0B2C, size: 0x8, addend: 0x0, symName: __Z20handleCrashExceptionP8NSString, symObjAddr: 0x0, symBinAddr: 0x4244, symSize: 0x68 }
+  - { offset: 0xF0B57, size: 0x8, addend: 0x0, symName: __Z20handleCrashExceptionP8NSStringP12NSDictionary, symObjAddr: 0x68, symBinAddr: 0x42AC, symSize: 0x88 }
+  - { offset: 0xF0B92, size: 0x8, addend: 0x0, symName: __Z20handleCrashException24JJExceptionGuardCategoryP8NSStringP12NSDictionary, symObjAddr: 0xF0, symBinAddr: 0x4334, symSize: 0x90 }
+  - { offset: 0xF0BDD, size: 0x8, addend: 0x0, symName: __Z20handleCrashException24JJExceptionGuardCategoryP8NSString, symObjAddr: 0x180, symBinAddr: 0x43C4, symSize: 0x78 }
+  - { offset: 0xF0C18, size: 0x8, addend: 0x0, symName: _get_load_address, symObjAddr: 0x1F8, symBinAddr: 0x443C, symSize: 0x80 }
+  - { offset: 0xF0CDA, size: 0x8, addend: 0x0, symName: _get_slide_address, symObjAddr: 0x278, symBinAddr: 0x44BC, symSize: 0x8C }
+  - { offset: 0xF0DCD, size: 0x8, addend: 0x0, symName: '___39+[JJExceptionProxy shareExceptionProxy]_block_invoke', symObjAddr: 0x388, symBinAddr: 0x45CC, symSize: 0x38 }
+  - { offset: 0xF0E0C, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy init]', symObjAddr: 0x3C0, symBinAddr: 0x4604, symSize: 0xD0 }
+  - { offset: 0xF0E7F, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy handleCrashException:exceptionCategory:extraInfo:]', symObjAddr: 0x490, symBinAddr: 0x46D4, symSize: 0x1F0 }
+  - { offset: 0xF0F4E, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy handleCrashException:extraInfo:]', symObjAddr: 0x680, symBinAddr: 0x48C4, symSize: 0x1C }
+  - { offset: 0xF0F9D, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy setIsProtectException:]', symObjAddr: 0x69C, symBinAddr: 0x48E0, symSize: 0x238 }
+  - { offset: 0xF102C, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy setExceptionGuardCategory:]', symObjAddr: 0x8D4, symBinAddr: 0x4B18, symSize: 0x34 }
+  - { offset: 0xF106B, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy delegate]', symObjAddr: 0x908, symBinAddr: 0x4B4C, symSize: 0x18 }
+  - { offset: 0xF10A2, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy setDelegate:]', symObjAddr: 0x920, symBinAddr: 0x4B64, symSize: 0xC }
+  - { offset: 0xF10E3, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy isProtectException]', symObjAddr: 0x92C, symBinAddr: 0x4B70, symSize: 0x8 }
+  - { offset: 0xF111A, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy exceptionWhenTerminate]', symObjAddr: 0x934, symBinAddr: 0x4B78, symSize: 0x8 }
+  - { offset: 0xF1151, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy setExceptionWhenTerminate:]', symObjAddr: 0x93C, symBinAddr: 0x4B80, symSize: 0x8 }
+  - { offset: 0xF118C, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy exceptionGuardCategory]', symObjAddr: 0x944, symBinAddr: 0x4B88, symSize: 0x8 }
+  - { offset: 0xF11C3, size: 0x8, addend: 0x0, symName: '-[JJExceptionProxy .cxx_destruct]', symObjAddr: 0x94C, symBinAddr: 0x4B90, symSize: 0x50 }
+  - { offset: 0xF1301, size: 0x8, addend: 0x0, symName: '+[NSArray(ArrayHook) jj_swizzleNSArray]', symObjAddr: 0x0, symBinAddr: 0x4BE0, symSize: 0x238 }
+  - { offset: 0xF135D, size: 0x8, addend: 0x0, symName: '+[NSArray(ArrayHook) jj_swizzleNSArray]', symObjAddr: 0x0, symBinAddr: 0x4BE0, symSize: 0x238 }
+  - { offset: 0xF1769, size: 0x8, addend: 0x0, symName: '+[NSArray(ArrayHook) hookArrayWithObject:]', symObjAddr: 0x238, symBinAddr: 0x4E18, symSize: 0x4C }
+  - { offset: 0xF17E7, size: 0x8, addend: 0x0, symName: '-[NSArray(ArrayHook) hookObjectAtIndex:]', symObjAddr: 0x284, symBinAddr: 0x4E64, symSize: 0xAC }
+  - { offset: 0xF1843, size: 0x8, addend: 0x0, symName: '-[NSArray(ArrayHook) hookObjectAtIndexedSubscript:]', symObjAddr: 0x330, symBinAddr: 0x4F10, symSize: 0xAC }
+  - { offset: 0xF189F, size: 0x8, addend: 0x0, symName: '-[NSArray(ArrayHook) hookSubarrayWithRange:]', symObjAddr: 0x3DC, symBinAddr: 0x4FBC, symSize: 0xE4 }
+  - { offset: 0xF18FB, size: 0x8, addend: 0x0, symName: '+[NSArray(ArrayHook) hookArrayWithObjects:count:]', symObjAddr: 0x4C0, symBinAddr: 0x50A0, symSize: 0x148 }
+  - { offset: 0xF1A54, size: 0x8, addend: 0x0, symName: '+[NSAttributedString(AttributedStringHook) jj_swizzleNSAttributedString]', symObjAddr: 0x0, symBinAddr: 0x51E8, symSize: 0xB8 }
+  - { offset: 0xF1AE3, size: 0x8, addend: 0x0, symName: '+[NSAttributedString(AttributedStringHook) jj_swizzleNSAttributedString]', symObjAddr: 0x0, symBinAddr: 0x51E8, symSize: 0xB8 }
+  - { offset: 0xF1C15, size: 0x8, addend: 0x0, symName: '-[NSAttributedString(AttributedStringHook) hookInitWithString:]', symObjAddr: 0xB8, symBinAddr: 0x52A0, symSize: 0x58 }
+  - { offset: 0xF1C9A, size: 0x8, addend: 0x0, symName: '-[NSAttributedString(AttributedStringHook) hookAttribute:atIndex:effectiveRange:]', symObjAddr: 0x110, symBinAddr: 0x52F8, symSize: 0xE0 }
+  - { offset: 0xF1D1F, size: 0x8, addend: 0x0, symName: '-[NSAttributedString(AttributedStringHook) hookAttributedSubstringFromRange:]', symObjAddr: 0x1F0, symBinAddr: 0x53D8, symSize: 0xE0 }
+  - { offset: 0xF1DB3, size: 0x8, addend: 0x0, symName: '-[NSAttributedString(AttributedStringHook) hookEnumerateAttribute:inRange:options:usingBlock:]', symObjAddr: 0x2D0, symBinAddr: 0x54B8, symSize: 0x120 }
+  - { offset: 0xF1E61, size: 0x8, addend: 0x0, symName: '-[NSAttributedString(AttributedStringHook) hookEnumerateAttributesInRange:options:usingBlock:]', symObjAddr: 0x3F0, symBinAddr: 0x55D8, symSize: 0x154 }
+  - { offset: 0xF2033, size: 0x8, addend: 0x0, symName: '+[NSDictionary(DictionaryHook) jj_swizzleNSDictionary]', symObjAddr: 0x0, symBinAddr: 0x572C, symSize: 0x58 }
+  - { offset: 0xF208F, size: 0x8, addend: 0x0, symName: '+[NSDictionary(DictionaryHook) jj_swizzleNSDictionary]', symObjAddr: 0x0, symBinAddr: 0x572C, symSize: 0x58 }
+  - { offset: 0xF20BE, size: 0x8, addend: 0x0, symName: '+[NSDictionary(DictionaryHook) hookDictionaryWithObject:forKey:]', symObjAddr: 0x58, symBinAddr: 0x5784, symSize: 0x8C }
+  - { offset: 0xF2151, size: 0x8, addend: 0x0, symName: '+[NSDictionary(DictionaryHook) hookDictionaryWithObjects:forKeys:count:]', symObjAddr: 0xE4, symBinAddr: 0x5810, symSize: 0x1A4 }
+  - { offset: 0xF22F6, size: 0x8, addend: 0x0, symName: '+[NSMutableArray(MutableArrayHook) jj_swizzleNSMutableArray]', symObjAddr: 0x0, symBinAddr: 0x59B4, symSize: 0x220 }
+  - { offset: 0xF2352, size: 0x8, addend: 0x0, symName: '+[NSMutableArray(MutableArrayHook) jj_swizzleNSMutableArray]', symObjAddr: 0x0, symBinAddr: 0x59B4, symSize: 0x220 }
+  - { offset: 0xF26BD, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookAddObject:]', symObjAddr: 0x220, symBinAddr: 0x5BD4, symSize: 0x38 }
+  - { offset: 0xF2735, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookObjectAtIndex:]', symObjAddr: 0x258, symBinAddr: 0x5C0C, symSize: 0xAC }
+  - { offset: 0xF2791, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookObjectAtIndexedSubscript:]', symObjAddr: 0x304, symBinAddr: 0x5CB8, symSize: 0xAC }
+  - { offset: 0xF27ED, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookInsertObject:atIndex:]', symObjAddr: 0x3B0, symBinAddr: 0x5D64, symSize: 0xD8 }
+  - { offset: 0xF2855, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookRemoveObjectAtIndex:]', symObjAddr: 0x488, symBinAddr: 0x5E3C, symSize: 0xA4 }
+  - { offset: 0xF28AD, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookReplaceObjectAtIndex:withObject:]', symObjAddr: 0x52C, symBinAddr: 0x5EE0, symSize: 0xD4 }
+  - { offset: 0xF2915, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookSetObject:atIndexedSubscript:]', symObjAddr: 0x600, symBinAddr: 0x5FB4, symSize: 0xD4 }
+  - { offset: 0xF297D, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookRemoveObjectsInRange:]', symObjAddr: 0x6D4, symBinAddr: 0x6088, symSize: 0xA4 }
+  - { offset: 0xF29D5, size: 0x8, addend: 0x0, symName: '-[NSMutableArray(MutableArrayHook) hookSubarrayWithRange:]', symObjAddr: 0x778, symBinAddr: 0x612C, symSize: 0xE4 }
+  - { offset: 0xF2A9D, size: 0x8, addend: 0x0, symName: '+[NSMutableAttributedString(MutableAttributedStringHook) jj_swizzleNSMutableAttributedString]', symObjAddr: 0x0, symBinAddr: 0x6210, symSize: 0x118 }
+  - { offset: 0xF2AF9, size: 0x8, addend: 0x0, symName: '+[NSMutableAttributedString(MutableAttributedStringHook) jj_swizzleNSMutableAttributedString]', symObjAddr: 0x0, symBinAddr: 0x6210, symSize: 0x118 }
+  - { offset: 0xF2C83, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookInitWithString:]', symObjAddr: 0x118, symBinAddr: 0x6328, symSize: 0x58 }
+  - { offset: 0xF2D08, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookInitWithString:attributes:]', symObjAddr: 0x170, symBinAddr: 0x6380, symSize: 0x90 }
+  - { offset: 0xF2D7D, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookAddAttribute:value:range:]', symObjAddr: 0x200, symBinAddr: 0x6410, symSize: 0x154 }
+  - { offset: 0xF2E44, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookAddAttributes:range:]', symObjAddr: 0x354, symBinAddr: 0x6564, symSize: 0x134 }
+  - { offset: 0xF2EE9, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookSetAttributes:range:]', symObjAddr: 0x488, symBinAddr: 0x6698, symSize: 0x10C }
+  - { offset: 0xF2F77, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookRemoveAttribute:range:]', symObjAddr: 0x594, symBinAddr: 0x67A4, symSize: 0x134 }
+  - { offset: 0xF301C, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookDeleteCharactersInRange:]', symObjAddr: 0x6C8, symBinAddr: 0x68D8, symSize: 0xDC }
+  - { offset: 0xF309A, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookReplaceCharactersInRange:withString:]', symObjAddr: 0x7A4, symBinAddr: 0x69B4, symSize: 0x11C }
+  - { offset: 0xF313F, size: 0x8, addend: 0x0, symName: '-[NSMutableAttributedString(MutableAttributedStringHook) hookReplaceCharactersInRange:withAttributedString:]', symObjAddr: 0x8C0, symBinAddr: 0x6AD0, symSize: 0x11C }
+  - { offset: 0xF3240, size: 0x8, addend: 0x0, symName: '+[NSMutableDictionary(MutableDictionaryHook) jj_swizzleNSMutableDictionary]', symObjAddr: 0x0, symBinAddr: 0x6BEC, symSize: 0x80 }
+  - { offset: 0xF329C, size: 0x8, addend: 0x0, symName: '+[NSMutableDictionary(MutableDictionaryHook) jj_swizzleNSMutableDictionary]', symObjAddr: 0x0, symBinAddr: 0x6BEC, symSize: 0x80 }
+  - { offset: 0xF338D, size: 0x8, addend: 0x0, symName: '-[NSMutableDictionary(MutableDictionaryHook) hookSetObject:forKey:]', symObjAddr: 0x80, symBinAddr: 0x6C6C, symSize: 0xA4 }
+  - { offset: 0xF3421, size: 0x8, addend: 0x0, symName: '-[NSMutableDictionary(MutableDictionaryHook) hookRemoveObjectForKey:]', symObjAddr: 0x124, symBinAddr: 0x6D10, symSize: 0x44 }
+  - { offset: 0xF3479, size: 0x8, addend: 0x0, symName: '-[NSMutableDictionary(MutableDictionaryHook) hookSetObject:forKeyedSubscript:]', symObjAddr: 0x168, symBinAddr: 0x6D54, symSize: 0x80 }
+  - { offset: 0xF3541, size: 0x8, addend: 0x0, symName: '+[NSMutableSet(MutableSetHook) jj_swizzleNSMutableSet]', symObjAddr: 0x0, symBinAddr: 0x6DD4, symSize: 0x70 }
+  - { offset: 0xF359D, size: 0x8, addend: 0x0, symName: '+[NSMutableSet(MutableSetHook) jj_swizzleNSMutableSet]', symObjAddr: 0x0, symBinAddr: 0x6DD4, symSize: 0x70 }
+  - { offset: 0xF368D, size: 0x8, addend: 0x0, symName: '-[NSMutableSet(MutableSetHook) hookAddObject:]', symObjAddr: 0x70, symBinAddr: 0x6E44, symSize: 0x38 }
+  - { offset: 0xF370A, size: 0x8, addend: 0x0, symName: '-[NSMutableSet(MutableSetHook) hookRemoveObject:]', symObjAddr: 0xA8, symBinAddr: 0x6E7C, symSize: 0x38 }
+  - { offset: 0xF37B2, size: 0x8, addend: 0x0, symName: '+[NSMutableString(MutableStringHook) jj_swizzleNSMutableString]', symObjAddr: 0x0, symBinAddr: 0x6EB4, symSize: 0xD4 }
+  - { offset: 0xF380E, size: 0x8, addend: 0x0, symName: '+[NSMutableString(MutableStringHook) jj_swizzleNSMutableString]', symObjAddr: 0x0, symBinAddr: 0x6EB4, symSize: 0xD4 }
+  - { offset: 0xF396B, size: 0x8, addend: 0x0, symName: '-[NSMutableString(MutableStringHook) hookAppendString:]', symObjAddr: 0xD4, symBinAddr: 0x6F88, symSize: 0x80 }
+  - { offset: 0xF39EE, size: 0x8, addend: 0x0, symName: '-[NSMutableString(MutableStringHook) hookInsertString:atIndex:]', symObjAddr: 0x154, symBinAddr: 0x7008, symSize: 0xE4 }
+  - { offset: 0xF3A5F, size: 0x8, addend: 0x0, symName: '-[NSMutableString(MutableStringHook) hookDeleteCharactersInRange:]', symObjAddr: 0x238, symBinAddr: 0x70EC, symSize: 0xDC }
+  - { offset: 0xF3AEF, size: 0x8, addend: 0x0, symName: '-[NSMutableString(MutableStringHook) hookSubstringFromIndex:]', symObjAddr: 0x314, symBinAddr: 0x71C8, symSize: 0xA8 }
+  - { offset: 0xF3B54, size: 0x8, addend: 0x0, symName: '-[NSMutableString(MutableStringHook) hookSubstringToIndex:]', symObjAddr: 0x3BC, symBinAddr: 0x7270, symSize: 0xAC }
+  - { offset: 0xF3BB9, size: 0x8, addend: 0x0, symName: '-[NSMutableString(MutableStringHook) hookSubstringWithRange:]', symObjAddr: 0x468, symBinAddr: 0x731C, symSize: 0xE0 }
+  - { offset: 0xF3C8D, size: 0x8, addend: 0x0, symName: '+[NSNotificationCenter(ClearNotification) jj_swizzleNSNotificationCenter]', symObjAddr: 0x0, symBinAddr: 0x73FC, symSize: 0x24 }
+  - { offset: 0xF3D02, size: 0x8, addend: 0x0, symName: '+[NSNotificationCenter(ClearNotification) jj_swizzleNSNotificationCenter]', symObjAddr: 0x0, symBinAddr: 0x73FC, symSize: 0x24 }
+  - { offset: 0xF3D33, size: 0x8, addend: 0x0, symName: '___73+[NSNotificationCenter(ClearNotification) jj_swizzleNSNotificationCenter]_block_invoke', symObjAddr: 0x24, symBinAddr: 0x7420, symSize: 0x90 }
+  - { offset: 0xF3D6E, size: 0x8, addend: 0x0, symName: '___73+[NSNotificationCenter(ClearNotification) jj_swizzleNSNotificationCenter]_block_invoke_2', symObjAddr: 0xB4, symBinAddr: 0x74B0, symSize: 0x1C }
+  - { offset: 0xF3DF1, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0xD0, symBinAddr: 0x74CC, symSize: 0x8 }
+  - { offset: 0xF3E18, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0xD8, symBinAddr: 0x74D4, symSize: 0x8 }
+  - { offset: 0xF3E37, size: 0x8, addend: 0x0, symName: '-[NSNotificationCenter(ClearNotification) processAddObserver:selector:name:object:swizzleInfo:]', symObjAddr: 0xE0, symBinAddr: 0x74DC, symSize: 0x170 }
+  - { offset: 0xF3F0D, size: 0x8, addend: 0x0, symName: '___95-[NSNotificationCenter(ClearNotification) processAddObserver:selector:name:object:swizzleInfo:]_block_invoke', symObjAddr: 0x250, symBinAddr: 0x764C, symSize: 0x50 }
+  - { offset: 0xF4194, size: 0x8, addend: 0x0, symName: '-[DeallocStub dealloc]', symObjAddr: 0x0, symBinAddr: 0x769C, symSize: 0xA8 }
+  - { offset: 0xF41AE, size: 0x8, addend: 0x0, symName: _DeallocNSObjectKey, symObjAddr: 0x4B4, symBinAddr: 0x10008, symSize: 0x0 }
+  - { offset: 0xF425F, size: 0x8, addend: 0x0, symName: '-[DeallocStub dealloc]', symObjAddr: 0x0, symBinAddr: 0x769C, symSize: 0xA8 }
+  - { offset: 0xF429E, size: 0x8, addend: 0x0, symName: '-[DeallocStub deallocBlock]', symObjAddr: 0xA8, symBinAddr: 0x7744, symSize: 0x8 }
+  - { offset: 0xF42D5, size: 0x8, addend: 0x0, symName: '-[DeallocStub setDeallocBlock:]', symObjAddr: 0xB0, symBinAddr: 0x774C, symSize: 0x8 }
+  - { offset: 0xF4314, size: 0x8, addend: 0x0, symName: '-[DeallocStub .cxx_destruct]', symObjAddr: 0xB8, symBinAddr: 0x7754, symSize: 0xC }
+  - { offset: 0xF4347, size: 0x8, addend: 0x0, symName: '-[NSObject(DeallocBlock) jj_deallocBlock:]', symObjAddr: 0xC4, symBinAddr: 0x7760, symSize: 0x110 }
+  - { offset: 0xF44B7, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem init]', symObjAddr: 0x0, symBinAddr: 0x7870, symSize: 0x58 }
+  - { offset: 0xF44DF, size: 0x8, addend: 0x0, symName: _DeallocKVOKey, symObjAddr: 0x1CD0, symBinAddr: 0x10009, symSize: 0x0 }
+  - { offset: 0xF4662, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem init]', symObjAddr: 0x0, symBinAddr: 0x7870, symSize: 0x58 }
+  - { offset: 0xF4699, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem isEqual:]', symObjAddr: 0x58, symBinAddr: 0x78C8, symSize: 0x1C4 }
+  - { offset: 0xF46E0, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem hash]', symObjAddr: 0x21C, symBinAddr: 0x7A8C, symSize: 0x58 }
+  - { offset: 0xF4717, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem dealloc]', symObjAddr: 0x274, symBinAddr: 0x7AE4, symSize: 0x98 }
+  - { offset: 0xF474A, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem observer]', symObjAddr: 0x30C, symBinAddr: 0x7B7C, symSize: 0x8 }
+  - { offset: 0xF4781, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem setObserver:]', symObjAddr: 0x314, symBinAddr: 0x7B84, symSize: 0x8 }
+  - { offset: 0xF47BE, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem whichObject]', symObjAddr: 0x31C, symBinAddr: 0x7B8C, symSize: 0x8 }
+  - { offset: 0xF47F5, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem setWhichObject:]', symObjAddr: 0x324, symBinAddr: 0x7B94, symSize: 0x8 }
+  - { offset: 0xF4832, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem keyPath]', symObjAddr: 0x32C, symBinAddr: 0x7B9C, symSize: 0x8 }
+  - { offset: 0xF4869, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem setKeyPath:]', symObjAddr: 0x334, symBinAddr: 0x7BA4, symSize: 0x8 }
+  - { offset: 0xF48A8, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem options]', symObjAddr: 0x33C, symBinAddr: 0x7BAC, symSize: 0x8 }
+  - { offset: 0xF48DF, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem setOptions:]', symObjAddr: 0x344, symBinAddr: 0x7BB4, symSize: 0x8 }
+  - { offset: 0xF491C, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem context]', symObjAddr: 0x34C, symBinAddr: 0x7BBC, symSize: 0x8 }
+  - { offset: 0xF4953, size: 0x8, addend: 0x0, symName: '-[KVOObjectItem setContext:]', symObjAddr: 0x354, symBinAddr: 0x7BC4, symSize: 0x8 }
+  - { offset: 0xF4990, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer checkAddKVOItemExist:existResult:]', symObjAddr: 0x35C, symBinAddr: 0x7BCC, symSize: 0xBC }
+  - { offset: 0xF4A53, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer lockObjectSet:]', symObjAddr: 0x418, symBinAddr: 0x7C88, symSize: 0x74 }
+  - { offset: 0xF4AC6, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer kvoLock]', symObjAddr: 0x48C, symBinAddr: 0x7CFC, symSize: 0x50 }
+  - { offset: 0xF4B24, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer dealloc]', symObjAddr: 0x4DC, symBinAddr: 0x7D4C, symSize: 0x64 }
+  - { offset: 0xF4B74, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer cleanKVOData]', symObjAddr: 0x540, symBinAddr: 0x7DB0, symSize: 0x1D4 }
+  - { offset: 0xF4BF5, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer kvoObjectSet]', symObjAddr: 0x714, symBinAddr: 0x7F84, symSize: 0x5C }
+  - { offset: 0xF4C2C, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer setKvoObjectSet:]', symObjAddr: 0x770, symBinAddr: 0x7FE0, symSize: 0x8 }
+  - { offset: 0xF4C6B, size: 0x8, addend: 0x0, symName: '-[KVOObjectContainer setKvoLock:]', symObjAddr: 0x778, symBinAddr: 0x7FE8, symSize: 0x8 }
+  - { offset: 0xF4CAA, size: 0x8, addend: 0x0, symName: '+[NSObject(KVOCrash) jj_swizzleKVOCrash]', symObjAddr: 0x780, symBinAddr: 0x7FF0, symSize: 0x94 }
+  - { offset: 0xF4D36, size: 0x8, addend: 0x0, symName: '-[NSObject(KVOCrash) hookAddObserver:forKeyPath:options:context:]', symObjAddr: 0x814, symBinAddr: 0x8084, symSize: 0x258 }
+  - { offset: 0xF4EB5, size: 0x8, addend: 0x0, symName: '___65-[NSObject(KVOCrash) hookAddObserver:forKeyPath:options:context:]_block_invoke', symObjAddr: 0xA6C, symBinAddr: 0x82DC, symSize: 0x24 }
+  - { offset: 0xF4F34, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32o40o48o, symObjAddr: 0xA90, symBinAddr: 0x8300, symSize: 0x4C }
+  - { offset: 0xF4F5D, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32o40o48o, symObjAddr: 0xADC, symBinAddr: 0x834C, symSize: 0x3C }
+  - { offset: 0xF4F7C, size: 0x8, addend: 0x0, symName: '-[NSObject(KVOCrash) hookRemoveObserver:forKeyPath:context:]', symObjAddr: 0xB18, symBinAddr: 0x8388, symSize: 0x84 }
+  - { offset: 0xF4FDF, size: 0x8, addend: 0x0, symName: '-[NSObject(KVOCrash) hookRemoveObserver:forKeyPath:]', symObjAddr: 0xB9C, symBinAddr: 0x840C, symSize: 0xF8 }
+  - { offset: 0xF5058, size: 0x8, addend: 0x0, symName: '___52-[NSObject(KVOCrash) hookRemoveObserver:forKeyPath:]_block_invoke', symObjAddr: 0xC94, symBinAddr: 0x8504, symSize: 0x1E4 }
+  - { offset: 0xF5138, size: 0x8, addend: 0x0, symName: '-[NSObject(KVOCrash) hookObserveValueForKeyPath:ofObject:change:context:]', symObjAddr: 0xE78, symBinAddr: 0x86E8, symSize: 0xF0 }
+  - { offset: 0xF5207, size: 0x8, addend: 0x0, symName: '-[NSObject(KVOCrash) ignoreKVOInstanceClass:]', symObjAddr: 0xF68, symBinAddr: 0x87D8, symSize: 0xAC }
+  - { offset: 0xF52DA, size: 0x8, addend: 0x0, symName: '-[NSObject(KVOCrash) jj_cleanKVO]', symObjAddr: 0x1014, symBinAddr: 0x8884, symSize: 0x48 }
+  - { offset: 0xF55C2, size: 0x8, addend: 0x0, symName: _jj_swizzleDeallocIfNeeded, symObjAddr: 0x344, symBinAddr: 0x8C10, symSize: 0x268 }
+  - { offset: 0xF55E4, size: 0x8, addend: 0x0, symName: _jj_swizzleDeallocIfNeeded.deallocSEL, symObjAddr: 0x6968, symBinAddr: 0x24010, symSize: 0x0 }
+  - { offset: 0xF55FA, size: 0x8, addend: 0x0, symName: _jj_swizzleDeallocIfNeeded.cleanupSEL, symObjAddr: 0x6970, symBinAddr: 0x24018, symSize: 0x0 }
+  - { offset: 0xF5610, size: 0x8, addend: 0x0, symName: _jj_swizzleDeallocIfNeeded.onceToken, symObjAddr: 0x6978, symBinAddr: 0x24020, symSize: 0x0 }
+  - { offset: 0xF57E1, size: 0x8, addend: 0x0, symName: _jjSwizzledDeallocKey, symObjAddr: 0xE64, symBinAddr: 0x10018, symSize: 0x0 }
+  - { offset: 0xF58EE, size: 0x8, addend: 0x0, symName: '-[JJSwizzleObject getOriginalImplementation]', symObjAddr: 0x0, symBinAddr: 0x88CC, symSize: 0x1C }
+  - { offset: 0xF5931, size: 0x8, addend: 0x0, symName: '-[JJSwizzleObject selector]', symObjAddr: 0x1C, symBinAddr: 0x88E8, symSize: 0x8 }
+  - { offset: 0xF5968, size: 0x8, addend: 0x0, symName: '-[JJSwizzleObject setSelector:]', symObjAddr: 0x24, symBinAddr: 0x88F0, symSize: 0x8 }
+  - { offset: 0xF59A5, size: 0x8, addend: 0x0, symName: '-[JJSwizzleObject impProviderBlock]', symObjAddr: 0x2C, symBinAddr: 0x88F8, symSize: 0x8 }
+  - { offset: 0xF59DC, size: 0x8, addend: 0x0, symName: '-[JJSwizzleObject setImpProviderBlock:]', symObjAddr: 0x34, symBinAddr: 0x8900, symSize: 0x8 }
+  - { offset: 0xF5A1B, size: 0x8, addend: 0x0, symName: '-[JJSwizzleObject .cxx_destruct]', symObjAddr: 0x3C, symBinAddr: 0x8908, symSize: 0xC }
+  - { offset: 0xF5A4E, size: 0x8, addend: 0x0, symName: _swizzleClassMethod, symObjAddr: 0x48, symBinAddr: 0x8914, symSize: 0x13C }
+  - { offset: 0xF5CB0, size: 0x8, addend: 0x0, symName: _swizzleInstanceMethod, symObjAddr: 0x184, symBinAddr: 0x8A50, symSize: 0x10C }
+  - { offset: 0xF5E2C, size: 0x8, addend: 0x0, symName: _jj_requiresDeallocSwizzle, symObjAddr: 0x290, symBinAddr: 0x8B5C, symSize: 0xB4 }
+  - { offset: 0xF5F92, size: 0x8, addend: 0x0, symName: _jj_swizzleDeallocIfNeeded.cold.1, symObjAddr: 0x998, symBinAddr: 0xE2D8, symSize: 0x14 }
+  - { offset: 0xF5FAE, size: 0x8, addend: 0x0, symName: _jj_swizzleDeallocIfNeeded.cold.1, symObjAddr: 0x998, symBinAddr: 0xE2D8, symSize: 0x14 }
+  - { offset: 0xF5FC0, size: 0x8, addend: 0x0, symName: ___jj_swizzleDeallocIfNeeded_block_invoke, symObjAddr: 0x5AC, symBinAddr: 0x8E78, symSize: 0x48 }
+  - { offset: 0xF6015, size: 0x8, addend: 0x0, symName: ___jj_swizzleDeallocIfNeeded_block_invoke_2, symObjAddr: 0x5F4, symBinAddr: 0x8EC0, symSize: 0x60 }
+  - { offset: 0xF607E, size: 0x8, addend: 0x0, symName: ___jj_swizzleDeallocIfNeeded_block_invoke_3, symObjAddr: 0x654, symBinAddr: 0x8F20, symSize: 0x58 }
+  - { offset: 0xF60D5, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32r, symObjAddr: 0x6AC, symBinAddr: 0x8F78, symSize: 0x10 }
+  - { offset: 0xF60FE, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32r, symObjAddr: 0x6BC, symBinAddr: 0x8F88, symSize: 0xC }
+  - { offset: 0xF611D, size: 0x8, addend: 0x0, symName: ___JJ_SWIZZLE_BLOCK, symObjAddr: 0x6C8, symBinAddr: 0x8F94, symSize: 0x184 }
+  - { offset: 0xF6261, size: 0x8, addend: 0x0, symName: _____JJ_SWIZZLE_BLOCK_block_invoke, symObjAddr: 0x84C, symBinAddr: 0x9118, symSize: 0x68 }
+  - { offset: 0xF6328, size: 0x8, addend: 0x0, symName: '+[NSObject(SwizzleHook) jj_swizzleClassMethod:withSwizzleMethod:]', symObjAddr: 0x8B4, symBinAddr: 0x9180, symSize: 0x3C }
+  - { offset: 0xF6389, size: 0x8, addend: 0x0, symName: '-[NSObject(SwizzleHook) jj_swizzleInstanceMethod:withSwizzleMethod:]', symObjAddr: 0x8F0, symBinAddr: 0x91BC, symSize: 0x3C }
+  - { offset: 0xF63EA, size: 0x8, addend: 0x0, symName: '-[NSObject(SwizzleHook) jj_swizzleInstanceMethod:withSwizzledBlock:]', symObjAddr: 0x92C, symBinAddr: 0x91F8, symSize: 0x5C }
+  - { offset: 0xF6779, size: 0x8, addend: 0x0, symName: '+[NSObject(UnrecognizedSelectorHook) jj_swizzleUnrecognizedSelector]', symObjAddr: 0x0, symBinAddr: 0x9254, symSize: 0x9C }
+  - { offset: 0xF67E3, size: 0x8, addend: 0x0, symName: '+[NSObject(UnrecognizedSelectorHook) jj_swizzleUnrecognizedSelector]', symObjAddr: 0x0, symBinAddr: 0x9254, symSize: 0x9C }
+  - { offset: 0xF68BC, size: 0x8, addend: 0x0, symName: '+[NSObject(UnrecognizedSelectorHook) classMethodSignatureForSelectorSwizzled:]', symObjAddr: 0x9C, symBinAddr: 0x92F0, symSize: 0x6C }
+  - { offset: 0xF6913, size: 0x8, addend: 0x0, symName: '-[NSObject(UnrecognizedSelectorHook) methodSignatureForSelectorSwizzled:]', symObjAddr: 0x108, symBinAddr: 0x935C, symSize: 0x6C }
+  - { offset: 0xF696A, size: 0x8, addend: 0x0, symName: '+[NSObject(UnrecognizedSelectorHook) checkObjectSignatureAndCurrentClass:]', symObjAddr: 0x174, symBinAddr: 0x93C8, symSize: 0x9C }
+  - { offset: 0xF6A18, size: 0x8, addend: 0x0, symName: '-[NSObject(UnrecognizedSelectorHook) forwardInvocationSwizzled:]', symObjAddr: 0x210, symBinAddr: 0x9464, symSize: 0x78 }
+  - { offset: 0xF6AE9, size: 0x8, addend: 0x0, symName: '+[NSObject(UnrecognizedSelectorHook) forwardClassInvocationSwizzled:]', symObjAddr: 0x288, symBinAddr: 0x94DC, symSize: 0x78 }
+  - { offset: 0xF6BBF, size: 0x8, addend: 0x0, symName: '+[NSSet(SetHook) jj_swizzleNSSet]', symObjAddr: 0x0, symBinAddr: 0x9554, symSize: 0x2C }
+  - { offset: 0xF6C1B, size: 0x8, addend: 0x0, symName: '+[NSSet(SetHook) jj_swizzleNSSet]', symObjAddr: 0x0, symBinAddr: 0x9554, symSize: 0x2C }
+  - { offset: 0xF6C4A, size: 0x8, addend: 0x0, symName: '+[NSSet(SetHook) hookSetWithObject:]', symObjAddr: 0x2C, symBinAddr: 0x9580, symSize: 0x58 }
+  - { offset: 0xF6D58, size: 0x8, addend: 0x0, symName: '+[NSString(StringHook) jj_swizzleNSString]', symObjAddr: 0x0, symBinAddr: 0x95D8, symSize: 0x1A8 }
+  - { offset: 0xF6DE7, size: 0x8, addend: 0x0, symName: '+[NSString(StringHook) jj_swizzleNSString]', symObjAddr: 0x0, symBinAddr: 0x95D8, symSize: 0x1A8 }
+  - { offset: 0xF703D, size: 0x8, addend: 0x0, symName: '+[NSString(StringHook) hookStringWithUTF8String:]', symObjAddr: 0x1A8, symBinAddr: 0x9780, symSize: 0x58 }
+  - { offset: 0xF70BD, size: 0x8, addend: 0x0, symName: '+[NSString(StringHook) hookStringWithCString:encoding:]', symObjAddr: 0x200, symBinAddr: 0x97D8, symSize: 0x58 }
+  - { offset: 0xF712B, size: 0x8, addend: 0x0, symName: '-[NSString(StringHook) hookInitWithString:]', symObjAddr: 0x258, symBinAddr: 0x9830, symSize: 0x58 }
+  - { offset: 0xF7189, size: 0x8, addend: 0x0, symName: '-[NSString(StringHook) hookInitWithCString:encoding:]', symObjAddr: 0x2B0, symBinAddr: 0x9888, symSize: 0x58 }
+  - { offset: 0xF71F7, size: 0x8, addend: 0x0, symName: '-[NSString(StringHook) hookSubstringFromIndex:]', symObjAddr: 0x308, symBinAddr: 0x98E0, symSize: 0xA8 }
+  - { offset: 0xF725C, size: 0x8, addend: 0x0, symName: '-[NSString(StringHook) hookSubstringToIndex:]', symObjAddr: 0x3B0, symBinAddr: 0x9988, symSize: 0xAC }
+  - { offset: 0xF72C1, size: 0x8, addend: 0x0, symName: '-[NSString(StringHook) hookSubstringWithRange:]', symObjAddr: 0x45C, symBinAddr: 0x9A34, symSize: 0xE0 }
+  - { offset: 0xF7355, size: 0x8, addend: 0x0, symName: '-[NSString(StringHook) hookRangeOfString:options:range:locale:]', symObjAddr: 0x53C, symBinAddr: 0x9B14, symSize: 0x180 }
+  - { offset: 0xF74AF, size: 0x8, addend: 0x0, symName: '-[TimerObject fireTimer]', symObjAddr: 0x0, symBinAddr: 0x9C94, symSize: 0x19C }
+  - { offset: 0xF7620, size: 0x8, addend: 0x0, symName: '-[TimerObject fireTimer]', symObjAddr: 0x0, symBinAddr: 0x9C94, symSize: 0x19C }
+  - { offset: 0xF7692, size: 0x8, addend: 0x0, symName: '-[TimerObject ti]', symObjAddr: 0x19C, symBinAddr: 0x9E30, symSize: 0x8 }
+  - { offset: 0xF76C7, size: 0x8, addend: 0x0, symName: '-[TimerObject setTi:]', symObjAddr: 0x1A4, symBinAddr: 0x9E38, symSize: 0x8 }
+  - { offset: 0xF7705, size: 0x8, addend: 0x0, symName: '-[TimerObject target]', symObjAddr: 0x1AC, symBinAddr: 0x9E40, symSize: 0x18 }
+  - { offset: 0xF773C, size: 0x8, addend: 0x0, symName: '-[TimerObject setTarget:]', symObjAddr: 0x1C4, symBinAddr: 0x9E58, symSize: 0xC }
+  - { offset: 0xF777D, size: 0x8, addend: 0x0, symName: '-[TimerObject selector]', symObjAddr: 0x1D0, symBinAddr: 0x9E64, symSize: 0x8 }
+  - { offset: 0xF77B4, size: 0x8, addend: 0x0, symName: '-[TimerObject setSelector:]', symObjAddr: 0x1D8, symBinAddr: 0x9E6C, symSize: 0x8 }
+  - { offset: 0xF77F1, size: 0x8, addend: 0x0, symName: '-[TimerObject userInfo]', symObjAddr: 0x1E0, symBinAddr: 0x9E74, symSize: 0x8 }
+  - { offset: 0xF7828, size: 0x8, addend: 0x0, symName: '-[TimerObject setUserInfo:]', symObjAddr: 0x1E8, symBinAddr: 0x9E7C, symSize: 0x8 }
+  - { offset: 0xF7865, size: 0x8, addend: 0x0, symName: '-[TimerObject timer]', symObjAddr: 0x1F0, symBinAddr: 0x9E84, symSize: 0x18 }
+  - { offset: 0xF789C, size: 0x8, addend: 0x0, symName: '-[TimerObject setTimer:]', symObjAddr: 0x208, symBinAddr: 0x9E9C, symSize: 0xC }
+  - { offset: 0xF78DD, size: 0x8, addend: 0x0, symName: '-[TimerObject targetClassName]', symObjAddr: 0x214, symBinAddr: 0x9EA8, symSize: 0x8 }
+  - { offset: 0xF7914, size: 0x8, addend: 0x0, symName: '-[TimerObject setTargetClassName:]', symObjAddr: 0x21C, symBinAddr: 0x9EB0, symSize: 0x8 }
+  - { offset: 0xF7953, size: 0x8, addend: 0x0, symName: '-[TimerObject targetMethodName]', symObjAddr: 0x224, symBinAddr: 0x9EB8, symSize: 0x8 }
+  - { offset: 0xF798A, size: 0x8, addend: 0x0, symName: '-[TimerObject setTargetMethodName:]', symObjAddr: 0x22C, symBinAddr: 0x9EC0, symSize: 0x8 }
+  - { offset: 0xF79C9, size: 0x8, addend: 0x0, symName: '-[TimerObject .cxx_destruct]', symObjAddr: 0x234, symBinAddr: 0x9EC8, symSize: 0x40 }
+  - { offset: 0xF79FC, size: 0x8, addend: 0x0, symName: '+[NSTimer(CleanTimer) jj_swizzleNSTimer]', symObjAddr: 0x274, symBinAddr: 0x9F08, symSize: 0x3C }
+  - { offset: 0xF7A5A, size: 0x8, addend: 0x0, symName: '+[NSTimer(CleanTimer) hookScheduledTimerWithTimeInterval:target:selector:userInfo:repeats:]', symObjAddr: 0x2B0, symBinAddr: 0x9F44, symSize: 0x1BC }
+  - { offset: 0xF7BD4, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_magic, symObjAddr: 0x28, symBinAddr: 0xA100, symSize: 0x14 }
+  - { offset: 0xF7BE6, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_padding_bytes, symObjAddr: 0x44, symBinAddr: 0xA114, symSize: 0xC }
+  - { offset: 0xF7BF8, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_version, symObjAddr: 0x50, symBinAddr: 0xA120, symSize: 0xC }
+  - { offset: 0xF7C3B, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0xA12C, symSize: 0xC }
+  - { offset: 0xF7C49, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0xA12C, symSize: 0xC }
+  - { offset: 0xF7C85, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0xA138, symSize: 0xC }
+  - { offset: 0xF7C93, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0xA138, symSize: 0xC }
+  - { offset: 0xF7CAC, size: 0x8, addend: 0x0, symName: _getValueProfRecordValueData, symObjAddr: 0x1C, symBinAddr: 0xA144, symSize: 0x14 }
+  - { offset: 0xF7CE3, size: 0x8, addend: 0x0, symName: _getValueProfRecordNext, symObjAddr: 0x170, symBinAddr: 0xA158, symSize: 0x15C }
+  - { offset: 0xF7D21, size: 0x8, addend: 0x0, symName: _getFirstValueProfRecord, symObjAddr: 0x2CC, symBinAddr: 0xA2B4, symSize: 0x8 }
+  - { offset: 0xF7D4F, size: 0x8, addend: 0x0, symName: _lprofSetupValueProfiler, symObjAddr: 0xA10, symBinAddr: 0xA2BC, symSize: 0x68 }
+  - { offset: 0xF7DBB, size: 0x8, addend: 0x0, symName: ___llvm_profile_instrument_target_value, symObjAddr: 0xD50, symBinAddr: 0xA324, symSize: 0x2CC }
+  - { offset: 0xF7E2F, size: 0x8, addend: 0x0, symName: _lprofGetVPDataReader, symObjAddr: 0x1054, symBinAddr: 0xA5F0, symSize: 0xC }
+  - { offset: 0xF7E41, size: 0x8, addend: 0x0, symName: _initializeValueProfRuntimeRecord, symObjAddr: 0x1060, symBinAddr: 0xA5FC, symSize: 0x210 }
+  - { offset: 0xF7E5A, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0xA80C, symSize: 0x14 }
+  - { offset: 0xF7E70, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0xA80C, symSize: 0x14 }
+  - { offset: 0xF7E83, size: 0x8, addend: 0x0, symName: _getValueProfDataSizeWrapper, symObjAddr: 0x1284, symBinAddr: 0xA820, symSize: 0xE0 }
+  - { offset: 0xF7F24, size: 0x8, addend: 0x0, symName: _getNumValueSitesRT, symObjAddr: 0x13A0, symBinAddr: 0xA93C, symSize: 0x10 }
+  - { offset: 0xF7F36, size: 0x8, addend: 0x0, symName: _getNumValueDataRT, symObjAddr: 0x13B0, symBinAddr: 0xA94C, symSize: 0x148 }
+  - { offset: 0xF7F48, size: 0x8, addend: 0x0, symName: _getNextNValueData, symObjAddr: 0x1364, symBinAddr: 0xA900, symSize: 0x3C }
+  - { offset: 0xF7F84, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0xAA94, symSize: 0x1C }
+  - { offset: 0xF7F92, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0xAA94, symSize: 0x1C }
+  - { offset: 0xF7FA4, size: 0x8, addend: 0x0, symName: ___llvm_profile_enable_continuous_mode, symObjAddr: 0x1C, symBinAddr: 0xAAB0, symSize: 0x10 }
+  - { offset: 0xF7FB6, size: 0x8, addend: 0x0, symName: ___llvm_profile_disable_continuous_mode, symObjAddr: 0x2C, symBinAddr: 0xAAC0, symSize: 0xC }
+  - { offset: 0xF7FC8, size: 0x8, addend: 0x0, symName: ___llvm_profile_set_page_size, symObjAddr: 0x38, symBinAddr: 0xAACC, symSize: 0xC }
+  - { offset: 0xF7FDA, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer, symObjAddr: 0x44, symBinAddr: 0xAAD8, symSize: 0xC8 }
+  - { offset: 0xF80D7, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer_internal, symObjAddr: 0x10C, symBinAddr: 0xABA0, symSize: 0x1C8 }
+  - { offset: 0xF833E, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_data, symObjAddr: 0x2D4, symBinAddr: 0xAD68, symSize: 0x10 }
+  - { offset: 0xF8350, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0xAD78, symSize: 0x10 }
+  - { offset: 0xF8366, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0xAD78, symSize: 0x10 }
+  - { offset: 0xF8378, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_vtable, symObjAddr: 0x2F4, symBinAddr: 0xAD88, symSize: 0x18 }
+  - { offset: 0xF838A, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_vtable_section_size, symObjAddr: 0x30C, symBinAddr: 0xADA0, symSize: 0x8 }
+  - { offset: 0xF839C, size: 0x8, addend: 0x0, symName: ___llvm_profile_counter_entry_size, symObjAddr: 0x314, symBinAddr: 0xADA8, symSize: 0x20 }
+  - { offset: 0xF83BD, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_counters, symObjAddr: 0x334, symBinAddr: 0xADC8, symSize: 0x4C }
+  - { offset: 0xF8416, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_counters_size, symObjAddr: 0x380, symBinAddr: 0xAE14, symSize: 0x5C }
+  - { offset: 0xF84A8, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_padding_sizes_for_counters, symObjAddr: 0x3EC, symBinAddr: 0xAE70, symSize: 0x160 }
+  - { offset: 0xF8580, size: 0x8, addend: 0x0, symName: _initBufferWriter, symObjAddr: 0x54C, symBinAddr: 0xAFD0, symSize: 0x10 }
+  - { offset: 0xF85E0, size: 0x8, addend: 0x0, symName: _getCurFilenameLength, symObjAddr: 0x1C0, symBinAddr: 0xAFE0, symSize: 0x318 }
+  - { offset: 0xF862B, size: 0x8, addend: 0x0, symName: _getCurFilename, symObjAddr: 0x4D8, symBinAddr: 0xB2F8, symSize: 0x338 }
+  - { offset: 0xF872F, size: 0x8, addend: 0x0, symName: _parseAndSetFilename, symObjAddr: 0x918, symBinAddr: 0xB630, symSize: 0x580 }
+  - { offset: 0xF899F, size: 0x8, addend: 0x0, symName: _truncateCurrentFile, symObjAddr: 0x1E2C, symBinAddr: 0xC62C, symSize: 0xCC }
+  - { offset: 0xF8A14, size: 0x8, addend: 0x0, symName: _initializeProfileForContinuousMode, symObjAddr: 0x1EF8, symBinAddr: 0xC6F8, symSize: 0x250 }
+  - { offset: 0xF8C2D, size: 0x8, addend: 0x0, symName: ___llvm_profile_initialize, symObjAddr: 0xE98, symBinAddr: 0xBBB0, symSize: 0xBC }
+  - { offset: 0xF8CEB, size: 0x8, addend: 0x0, symName: ___llvm_profile_write_file, symObjAddr: 0xFD8, symBinAddr: 0xBC6C, symSize: 0x1B0 }
+  - { offset: 0xF8DC4, size: 0x8, addend: 0x0, symName: _writeFile, symObjAddr: 0x1188, symBinAddr: 0xBE1C, symSize: 0x29C }
+  - { offset: 0xF9076, size: 0x8, addend: 0x0, symName: _createProfileDir, symObjAddr: 0x2148, symBinAddr: 0xC948, symSize: 0x88 }
+  - { offset: 0xF90BB, size: 0x8, addend: 0x0, symName: _getProfileFileSizeForMerging, symObjAddr: 0x18BC, symBinAddr: 0xC0BC, symSize: 0x114 }
+  - { offset: 0xF914C, size: 0x8, addend: 0x0, symName: _mmapProfileForMerging, symObjAddr: 0x19D0, symBinAddr: 0xC1D0, symSize: 0xC0 }
+  - { offset: 0xF920C, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0xC0B8, symSize: 0x4 }
+  - { offset: 0xF9222, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0xC0B8, symSize: 0x4 }
+  - { offset: 0xF9234, size: 0x8, addend: 0x0, symName: _mmapForContinuousMode, symObjAddr: 0x1A90, symBinAddr: 0xC290, symSize: 0x260 }
+  - { offset: 0xF93E9, size: 0x8, addend: 0x0, symName: _fileWriter, symObjAddr: 0x1CF0, symBinAddr: 0xC4F0, symSize: 0x13C }
+  - { offset: 0xF9446, size: 0x8, addend: 0x0, symName: _exitSignalHandler, symObjAddr: 0x21D0, symBinAddr: 0xC9D0, symSize: 0x10 }
+  - { offset: 0xF9499, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0xC9E0, symSize: 0xD4 }
+  - { offset: 0xF94A7, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0xC9E0, symSize: 0xD4 }
+  - { offset: 0xF95A6, size: 0x8, addend: 0x0, symName: ___llvm_profile_check_compatibility, symObjAddr: 0xD4, symBinAddr: 0xCAB4, symSize: 0x1D8 }
+  - { offset: 0xF96CB, size: 0x8, addend: 0x0, symName: ___llvm_profile_merge_from_buffer, symObjAddr: 0x2AC, symBinAddr: 0xCC8C, symSize: 0x4A4 }
+  - { offset: 0xF980B, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0xD130, symSize: 0xF4 }
+  - { offset: 0xF9819, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0xD130, symSize: 0xF4 }
+  - { offset: 0xF98B1, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0xD224, symSize: 0x70 }
+  - { offset: 0xF98BF, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0xD224, symSize: 0x70 }
+  - { offset: 0xF98E6, size: 0x8, addend: 0x0, symName: _lprofBufferIOWrite, symObjAddr: 0x108, symBinAddr: 0xD294, symSize: 0x13C }
+  - { offset: 0xF9951, size: 0x8, addend: 0x0, symName: _lprofWriteData, symObjAddr: 0x308, symBinAddr: 0xD3D0, symSize: 0xD8 }
+  - { offset: 0xF9A4E, size: 0x8, addend: 0x0, symName: _lprofWriteDataImpl, symObjAddr: 0x3E0, symBinAddr: 0xD4A8, symSize: 0x320 }
+  - { offset: 0xF9B57, size: 0x8, addend: 0x0, symName: _createHeader, symObjAddr: 0x700, symBinAddr: 0xD7C8, symSize: 0x1A4 }
+  - { offset: 0xF9C39, size: 0x8, addend: 0x0, symName: _writeValueProfData, symObjAddr: 0x8A4, symBinAddr: 0xD96C, symSize: 0x15C }
+  - { offset: 0xF9CF3, size: 0x8, addend: 0x0, symName: _writeOneValueProfData, symObjAddr: 0x105C, symBinAddr: 0xDAC8, symSize: 0x408 }
+  - { offset: 0xF9E97, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0xDED0, symSize: 0xC }
+  - { offset: 0xF9EA5, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0xDED0, symSize: 0xC }
+  - { offset: 0xF9EB7, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_data, symObjAddr: 0xC, symBinAddr: 0xDEDC, symSize: 0xC }
+  - { offset: 0xF9EC9, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_names, symObjAddr: 0x18, symBinAddr: 0xDEE8, symSize: 0xC }
+  - { offset: 0xF9EDB, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_names, symObjAddr: 0x24, symBinAddr: 0xDEF4, symSize: 0xC }
+  - { offset: 0xF9EED, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_counters, symObjAddr: 0x30, symBinAddr: 0xDF00, symSize: 0xC }
+  - { offset: 0xF9EFF, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_counters, symObjAddr: 0x3C, symBinAddr: 0xDF0C, symSize: 0xC }
+  - { offset: 0xF9F11, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_bitmap, symObjAddr: 0x48, symBinAddr: 0xDF18, symSize: 0xC }
+  - { offset: 0xF9F23, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_bitmap, symObjAddr: 0x54, symBinAddr: 0xDF24, symSize: 0xC }
+  - { offset: 0xF9F35, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtables, symObjAddr: 0x60, symBinAddr: 0xDF30, symSize: 0xC }
+  - { offset: 0xF9F47, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtables, symObjAddr: 0x6C, symBinAddr: 0xDF3C, symSize: 0xC }
+  - { offset: 0xF9F59, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtabnames, symObjAddr: 0x78, symBinAddr: 0xDF48, symSize: 0xC }
+  - { offset: 0xF9F6B, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtabnames, symObjAddr: 0x84, symBinAddr: 0xDF54, symSize: 0xC }
+  - { offset: 0xF9F7D, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vnodes, symObjAddr: 0x9C, symBinAddr: 0xDF60, symSize: 0xC }
+  - { offset: 0xF9F8F, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vnodes, symObjAddr: 0xA8, symBinAddr: 0xDF6C, symSize: 0xC }
+  - { offset: 0xF9FA1, size: 0x8, addend: 0x0, symName: ___llvm_write_binary_ids, symObjAddr: 0xB4, symBinAddr: 0xDF78, symSize: 0x8 }
+  - { offset: 0xF9FDD, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0xDF80, symSize: 0x1C }
+  - { offset: 0xF9FF9, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0xDF80, symSize: 0x1C }
+  - { offset: 0xFA072, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0xDF9C, symSize: 0x5C }
+  - { offset: 0xFA087, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0xDF9C, symSize: 0x5C }
+  - { offset: 0xFA0C6, size: 0x8, addend: 0x0, symName: _lprofGetHostName, symObjAddr: 0x74, symBinAddr: 0xDFF8, symSize: 0x80 }
+  - { offset: 0xFA110, size: 0x8, addend: 0x0, symName: _lprofLockFileHandle, symObjAddr: 0x214, symBinAddr: 0xE078, symSize: 0x94 }
+  - { offset: 0xFA18E, size: 0x8, addend: 0x0, symName: _lprofUnlockFileHandle, symObjAddr: 0x2A8, symBinAddr: 0xE10C, symSize: 0x94 }
+  - { offset: 0xFA1FC, size: 0x8, addend: 0x0, symName: _lprofOpenFileEx, symObjAddr: 0x33C, symBinAddr: 0xE1A0, symSize: 0xD4 }
+  - { offset: 0xFA2A1, size: 0x8, addend: 0x0, symName: _lprofFindFirstDirSeparator, symObjAddr: 0x554, symBinAddr: 0xE274, symSize: 0x8 }
+  - { offset: 0xFA2CA, size: 0x8, addend: 0x0, symName: _lprofInstallSignalHandler, symObjAddr: 0x564, symBinAddr: 0xE27C, symSize: 0x58 }
+  - { offset: 0xFA301, size: 0x8, addend: 0x0, symName: _lprofRestoreSigKill, symObjAddr: 0x5C4, symBinAddr: 0xE2D4, symSize: 0x4 }
+...

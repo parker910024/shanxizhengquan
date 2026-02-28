@@ -121,7 +121,8 @@ class ZixuanViewController: ZQViewController {
                 }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    UIApplication.shared.open(url)
+                    let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }
@@ -384,12 +385,14 @@ class ZixuanViewController: ZQViewController {
                 guard let dict = res.decrypted,
                       let data = dict["data"] as? [String: Any],
                       let list = data["list"] as? [[String: Any]] else {
-                    self.listData = []
-                    self.updateListVisibility()
+                    DispatchQueue.main.async {
+                        self.listData = []
+                        self.updateListVisibility()
+                    }
                     return
                 }
                 
-                self.listData = list.compactMap { item in
+                let parsed = list.compactMap { item -> ZixuanStockItem? in
                     let name = item["name"] as? String ?? "--"
                     let code = item["code"] as? String ?? ""
                     let symbol = item["symbol"] as? String ?? ""
@@ -412,7 +415,10 @@ class ZixuanViewController: ZQViewController {
                     )
                 }
                 
-                self.updateListVisibility()
+                DispatchQueue.main.async {
+                    self.listData = parsed
+                    self.updateListVisibility()
+                }
                 
             case .failure(_): break
             }
@@ -443,6 +449,7 @@ extension ZixuanViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let row = listData[indexPath.row]
+        // 跳转到 IndexDetailViewController（个股详情页）
         let vc = IndexDetailViewController()
         vc.indexName = row.name
         vc.indexCode = row.code

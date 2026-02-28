@@ -22,14 +22,15 @@ class MyWatchlistViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = Constants.Color.themeBlue
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "我的自选"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
         gk_navItemLeftSpace = 15
         gk_navItemRightSpace = 15
+        gk_backStyle = .black
     }
     
     private func setupTableView() {

@@ -2,27 +2,18 @@
 //  SecuritiesTransferRecordViewController.swift
 //  zhengqaun
 //
-//  资金记录：三 Tab（资金明细/转入记录/转出记录），列表展示变动资金与详情
+//  资金记录：三 Tab（资金明细/转入记录/转出记录），统一 Cell 布局对齐安卓
 //
 
 import UIKit
+import SafariServices
 
-/// 资金明细单条数据
-struct FundDetailRecord {
-    let type: String           // 如 "平仓收益"、"普通下单"
-    let capitalChange: String  // 变动资金，如 "9,039,600.00"
-    let dateTime: String       // 如 "2026-01-07 20:37:37"
-    let detailText: String     // 多行详情描述
-}
-
-/// 银证转账记录数据模型
-struct TransferRecord {
-    let typeName: String
-    let statusText: String
-    let amount: String
-    let timestamp: String
-    let isFailed: Bool
-    let isSuccess: Bool
+/// 统一资金记录数据模型（对齐安卓 FundRecord）
+struct FundRecord {
+    let type: String       // 类型名称，如"平仓收益"、"银证转入"
+    let amount: Double     // 变动资金
+    let dateTime: String   // 时间
+    let detail: String     // 详情描述
 }
 
 enum FundRecordTab: Int {
@@ -44,10 +35,11 @@ class SecuritiesTransferRecordViewController: ZQViewController {
     private var selectedTab: FundRecordTab = .detail
     private var indicatorCenterXConstraint: NSLayoutConstraint!
 
-    // 数据
-    private var fundDetails: [FundDetailRecord] = []
-    private var transferInRecords: [TransferRecord] = []
-    private var transferOutRecords: [TransferRecord] = []
+    // 统一数据源（对齐安卓：三个 Tab 复用同一模型）
+    private var records: [FundRecord] = []
+    
+    // 空状态标签（对齐安卓）
+    private let emptyLabel = UILabel()
 
     private let tabOrange = UIColor(red: 1.0, green: 0.55, blue: 0.2, alpha: 1.0)
 
@@ -90,7 +82,8 @@ class SecuritiesTransferRecordViewController: ZQViewController {
                 if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    UIApplication.shared.open(url)
+                    let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }
@@ -102,9 +95,10 @@ class SecuritiesTransferRecordViewController: ZQViewController {
         view.backgroundColor = .white
         setupTabs()
         setupTableView()
+        setupEmptyLabel()
     }
 
-    // MARK: - 三 Tab：资金明细 | 转入记录 | 转出记录（背景透明，选中不改背景）
+    // MARK: - 三 Tab：资金明细 | 转入记录 | 转出记录
     private func setupTabs() {
         tabContainer.backgroundColor = .clear
         view.addSubview(tabContainer)
@@ -161,7 +155,7 @@ class SecuritiesTransferRecordViewController: ZQViewController {
 
             tabIndicator.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
             tabIndicator.heightAnchor.constraint(equalToConstant: 2),
-            tabIndicator.widthAnchor.constraint(equalToConstant: 24),
+            tabIndicator.widthAnchor.constraint(equalToConstant: 40),
 
             sep.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
             sep.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
@@ -204,8 +198,7 @@ class SecuritiesTransferRecordViewController: ZQViewController {
         tableView.dataSource = self
         tableView.separatorStyle = .none
         tableView.backgroundColor = .white
-        tableView.register(FundDetailCell.self, forCellReuseIdentifier: "FundDetailCell")
-        tableView.register(TransferRecordCell.self, forCellReuseIdentifier: "TransferCell")
+        tableView.register(UnifiedFundRecordCell.self, forCellReuseIdentifier: "UnifiedFundRecordCell")
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -215,9 +208,25 @@ class SecuritiesTransferRecordViewController: ZQViewController {
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
+    
+    // MARK: - 空状态（对齐安卓）
+    private func setupEmptyLabel() {
+        emptyLabel.text = "暂无数据"
+        emptyLabel.font = UIFont.systemFont(ofSize: 14)
+        emptyLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        emptyLabel.textAlignment = .center
+        emptyLabel.isHidden = true
+        view.addSubview(emptyLabel)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
 
-    // MARK: - Data
+    // MARK: - 数据加载（对齐安卓）
     private func loadData() {
+        // 对齐安卓：资金明细不传 type，转入 type=0，转出 type=1
         var params: [String: Any] = [:]
         switch selectedTab {
         case .detail:
@@ -227,6 +236,13 @@ class SecuritiesTransferRecordViewController: ZQViewController {
         case .transferOut:
             params = ["type": "1"]
         }
+        
+        // 对齐安卓：加载时显示"加载中..."
+        records = []
+        tableView.reloadData()
+        tableView.isHidden = true
+        emptyLabel.text = "加载中..."
+        emptyLabel.isHidden = false
         
         SecureNetworkManager.shared.request(
             api: "/api/user/capitalLog",
@@ -240,88 +256,91 @@ class SecuritiesTransferRecordViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let list = data["list"] as? [[String: Any]] else {
                     DispatchQueue.main.async {
-                        self.clearData()
+                        self.records = []
                         self.tableView.reloadData()
+                        self.showEmptyState()
                     }
                     return
                 }
-                
-                print("==== 资金流水/明细接口 ====\n\(dict)\n===================")
                 
                 DispatchQueue.main.async {
                     self.parseAndReload(list: list)
                 }
             case .failure(let err):
                 DispatchQueue.main.async {
+                    self.records = []
+                    self.tableView.reloadData()
+                    self.emptyLabel.text = "获取记录失败"
+                    self.emptyLabel.isHidden = false
+                    self.tableView.isHidden = true
                     Toast.show("获取记录失败: \(err.localizedDescription)")
                 }
             }
         }
     }
     
-    private func clearData() {
-        switch selectedTab {
-        case .detail: fundDetails = []
-        case .transferIn: transferInRecords = []
-        case .transferOut: transferOutRecords = []
-        }
-    }
-    
+    /// 对齐安卓 toFundRecord() 转换逻辑
     private func parseAndReload(list: [[String: Any]]) {
-        var parsedFunds: [FundDetailRecord] = []
-        var parsedTransfers: [TransferRecord] = []
-        
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
+        var parsed: [FundRecord] = []
+        
         for item in list {
-            let typeName = item["pay_type_name"] as? String ?? ""
-            let moneyStr = "\(item["money"] ?? "0")"
+            let payTypeName = item["pay_type_name"] as? String ?? ""
+            // 兼容多种 JSON 类型：Double、Int、String
+            let moneyVal: Double
+            if let d = item["money"] as? Double {
+                moneyVal = d
+            } else if let n = item["money"] as? NSNumber {
+                moneyVal = n.doubleValue
+            } else if let s = item["money"] as? String, let d = Double(s) {
+                moneyVal = d
+            } else {
+                moneyVal = 0.0
+            }
             
             let timeVal = item["createtime"] as? TimeInterval ?? 0
-            let date = Date(timeIntervalSince1970: timeVal)
-            let dateStr = formatter.string(from: date)
-            
-            if selectedTab == .detail {
-                // 可能是明细，找一个长描述字段（如 memo, remark, content 等，如果没有就打平或者取空）
-                let detailInfo = item["remark"] as? String ?? (item["content"] as? String ?? "")
-                
-                parsedFunds.append(FundDetailRecord(
-                    type: typeName,
-                    capitalChange: moneyStr,
-                    dateTime: dateStr,
-                    detailText: detailInfo
-                ))
+            let dateStr: String
+            if timeVal > 0 {
+                let date = Date(timeIntervalSince1970: timeVal)
+                dateStr = formatter.string(from: date)
             } else {
-                // 银证记录
-                let statusText = item["is_pay_name"] as? String ?? ""
-                let isPay = "\(item["is_pay"] ?? "")"
-                // 0失败 1成功(或需结合具体文本判断，这里只示意)
-                let isFailed = (isPay == "0" && statusText.contains("失败")) || statusText.contains("失败")
-                // 若状态明确有成功可做判断，如果无，则默认灰色等
-                let isSuccess = (isPay == "1") || statusText.contains("成功")
-                
-                parsedTransfers.append(TransferRecord(
-                    typeName: typeName,
-                    statusText: statusText,
-                    amount: moneyStr,
-                    timestamp: dateStr,
-                    isFailed: isFailed,
-                    isSuccess: isSuccess
-                ))
+                dateStr = ""
             }
+            
+            // 对齐安卓：detail = pay_type_name + is_pay_name + reject
+            let isPayName = item["is_pay_name"] as? String ?? ""
+            let reject = item["reject"] as? String ?? ""
+            var detailParts: [String] = []
+            if !payTypeName.isEmpty { detailParts.append(payTypeName) }
+            if !isPayName.isEmpty { detailParts.append(isPayName) }
+            if !reject.isEmpty { detailParts.append(reject) }
+            let detail = detailParts.isEmpty ? "—" : detailParts.joined(separator: "，")
+            
+            parsed.append(FundRecord(
+                type: payTypeName.isEmpty ? "资金变动" : payTypeName,
+                amount: moneyVal,
+                dateTime: dateStr,
+                detail: detail
+            ))
         }
         
-        switch selectedTab {
-        case .detail:
-            fundDetails = parsedFunds
-        case .transferIn:
-            transferInRecords = parsedTransfers
-        case .transferOut:
-            transferOutRecords = parsedTransfers
-        }
-        
+        records = parsed
         tableView.reloadData()
+        
+        if records.isEmpty {
+            showEmptyState()
+        } else {
+            tableView.isHidden = false
+            emptyLabel.isHidden = true
+        }
+    }
+    
+    private func showEmptyState() {
+        emptyLabel.text = "暂无数据"
+        emptyLabel.isHidden = false
+        tableView.isHidden = true
     }
 }
 
@@ -329,45 +348,33 @@ class SecuritiesTransferRecordViewController: ZQViewController {
 extension SecuritiesTransferRecordViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch selectedTab {
-        case .detail: return fundDetails.count
-        case .transferIn: return transferInRecords.count
-        case .transferOut: return transferOutRecords.count
-        }
+        return records.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        switch selectedTab {
-        case .detail:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "FundDetailCell", for: indexPath) as! FundDetailCell
-            cell.configure(with: fundDetails[indexPath.row])
-            return cell
-        case .transferIn:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "TransferCell", for: indexPath) as! TransferRecordCell
-            cell.configure(with: transferInRecords[indexPath.row])
-            return cell
-        case .transferOut:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "TransferCell", for: indexPath) as! TransferRecordCell
-            cell.configure(with: transferOutRecords[indexPath.row])
-            return cell
-        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "UnifiedFundRecordCell", for: indexPath) as! UnifiedFundRecordCell
+        cell.configure(with: records[indexPath.row])
+        return cell
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if selectedTab == .detail {
-            let record = fundDetails[indexPath.row]
-            let h = FundDetailCell.heightFor(record)
-            return h
-        }
-        return 70
+        return UITableView.automaticDimension
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
     }
 }
 
-// MARK: - 资金明细 Cell：类型(粗体) | 变动资金:(粗体) 金额；日期(灰)；多行详情(灰)
-class FundDetailCell: UITableViewCell {
+// MARK: - 统一资金记录 Cell（对齐安卓 item_fund_record.xml）
+// 第1行：类型(左) + "变动资金：" + 金额(右，粗体)
+// 第2行：日期时间（灰色）
+// 第3行：详情（灰色，多行）
+// 底部分割线
+class UnifiedFundRecordCell: UITableViewCell {
 
     private let typeLabel = UILabel()
-    private let changeLabel = UILabel()
+    private let changePrefixLabel = UILabel()
     private let amountLabel = UILabel()
     private let dateLabel = UILabel()
     private let detailLabel = UILabel()
@@ -384,158 +391,87 @@ class FundDetailCell: UITableViewCell {
         selectionStyle = .none
         backgroundColor = .white
 
-        typeLabel.font = UIFont.boldSystemFont(ofSize: 15)
-        typeLabel.textColor = Constants.Color.textPrimary
+        // 类型标签（左侧）
+        typeLabel.font = UIFont.systemFont(ofSize: 15)
+        typeLabel.textColor = UIColor(red: 0x30/255, green: 0x30/255, blue: 0x30/255, alpha: 1.0)
         contentView.addSubview(typeLabel)
         typeLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        changeLabel.text = "变动资金:"
-        changeLabel.font = UIFont.systemFont(ofSize: 14)
-        changeLabel.textColor = Constants.Color.textPrimary
-        contentView.addSubview(changeLabel)
-        changeLabel.translatesAutoresizingMaskIntoConstraints = false
+        // "变动资金："前缀标签
+        changePrefixLabel.text = "变动资金："
+        changePrefixLabel.font = UIFont.systemFont(ofSize: 15)
+        changePrefixLabel.textColor = UIColor(red: 0x30/255, green: 0x30/255, blue: 0x30/255, alpha: 1.0)
+        changePrefixLabel.setContentHuggingPriority(.required, for: .horizontal)
+        changePrefixLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        contentView.addSubview(changePrefixLabel)
+        changePrefixLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        amountLabel.font = UIFont.boldSystemFont(ofSize: 15)
-        amountLabel.textColor = Constants.Color.textPrimary
+        // 金额标签（粗体，18sp）
+        amountLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        amountLabel.textColor = UIColor(red: 0x30/255, green: 0x30/255, blue: 0x30/255, alpha: 1.0)
         amountLabel.textAlignment = .right
+        amountLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         contentView.addSubview(amountLabel)
         amountLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        dateLabel.font = UIFont.systemFont(ofSize: 12)
-        dateLabel.textColor = Constants.Color.textTertiary
+        // 日期标签（灰色 13sp）
+        dateLabel.font = UIFont.systemFont(ofSize: 13)
+        dateLabel.textColor = UIColor(red: 0x60/255, green: 0x60/255, blue: 0x60/255, alpha: 1.0)
         contentView.addSubview(dateLabel)
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        detailLabel.font = UIFont.systemFont(ofSize: 12)
-        detailLabel.textColor = Constants.Color.textTertiary
+        // 详情标签（灰色 13sp，多行）
+        detailLabel.font = UIFont.systemFont(ofSize: 13)
+        detailLabel.textColor = UIColor(red: 0x60/255, green: 0x60/255, blue: 0x60/255, alpha: 1.0)
         detailLabel.numberOfLines = 0
         contentView.addSubview(detailLabel)
         detailLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        separator.backgroundColor = Constants.Color.separator
+        // 分割线
+        separator.backgroundColor = UIColor(red: 0xF0/255, green: 0xF0/255, blue: 0xF0/255, alpha: 1.0)
         contentView.addSubview(separator)
         separator.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
+            // 第1行：类型(左) + 变动资金：金额(右)
             typeLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
             typeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
 
-            changeLabel.centerYAnchor.constraint(equalTo: typeLabel.centerYAnchor),
-            changeLabel.trailingAnchor.constraint(equalTo: amountLabel.leadingAnchor, constant: -4),
             amountLabel.centerYAnchor.constraint(equalTo: typeLabel.centerYAnchor),
             amountLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            amountLabel.leadingAnchor.constraint(greaterThanOrEqualTo: changeLabel.leadingAnchor),
 
-            dateLabel.topAnchor.constraint(equalTo: typeLabel.bottomAnchor, constant: 8),
+            changePrefixLabel.centerYAnchor.constraint(equalTo: typeLabel.centerYAnchor),
+            changePrefixLabel.trailingAnchor.constraint(equalTo: amountLabel.leadingAnchor, constant: -2),
+            changePrefixLabel.leadingAnchor.constraint(greaterThanOrEqualTo: typeLabel.trailingAnchor, constant: 8),
+
+            // 第2行：日期
+            dateLabel.topAnchor.constraint(equalTo: typeLabel.bottomAnchor, constant: 10),
             dateLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            dateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
 
-            detailLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 8),
+            // 第3行：详情
+            detailLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 10),
             detailLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             detailLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            detailLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
 
+            // 分割线
+            separator.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 16),
             separator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            separator.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale)
+            separator.heightAnchor.constraint(equalToConstant: 1),
+            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
 
-    func configure(with record: FundDetailRecord) {
+    func configure(with record: FundRecord) {
         typeLabel.text = record.type
-        amountLabel.text = record.capitalChange
+        // 对齐安卓：使用 NumberFormatter 格式化金额（带逗号分隔）
+        let nf = NumberFormatter()
+        nf.numberStyle = .decimal
+        nf.minimumFractionDigits = 2
+        nf.maximumFractionDigits = 2
+        amountLabel.text = nf.string(from: NSNumber(value: record.amount)) ?? String(format: "%.2f", record.amount)
         dateLabel.text = record.dateTime
-        detailLabel.text = record.detailText
-    }
-
-    static func heightFor(_ record: FundDetailRecord) -> CGFloat {
-        let font = UIFont.systemFont(ofSize: 12)
-        let width = UIScreen.main.bounds.width - 32
-        let rect = (record.detailText as NSString).boundingRect(with: CGSize(width: width, height: .greatestFiniteMagnitude), options: .usesLineFragmentOrigin, attributes: [.font: font], context: nil)
-        let detailH = ceil(rect.height)
-        return 16 + 20 + 8 + 18 + 8 + detailH + 16
-    }
-}
-
-// MARK: - 转入/转出记录 Cell（保留原样式）
-class TransferRecordCell: UITableViewCell {
-
-    private let typeLabel = UILabel()
-    private let statusLabel = UILabel()
-    private let amountLabel = UILabel()
-    private let timeLabel = UILabel()
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    private func setupUI() {
-        selectionStyle = .none
-        backgroundColor = .white
-        typeLabel.font = UIFont.systemFont(ofSize: 15)
-        typeLabel.textColor = Constants.Color.textPrimary
-        contentView.addSubview(typeLabel)
-        typeLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.font = UIFont.systemFont(ofSize: 13)
-        statusLabel.textColor = Constants.Color.stockRise
-        contentView.addSubview(statusLabel)
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        amountLabel.font = UIFont.systemFont(ofSize: 15, weight: .medium)
-        amountLabel.textAlignment = .right
-        contentView.addSubview(amountLabel)
-        amountLabel.translatesAutoresizingMaskIntoConstraints = false
-        timeLabel.font = UIFont.systemFont(ofSize: 12)
-        timeLabel.textColor = Constants.Color.textTertiary
-        timeLabel.textAlignment = .right
-        contentView.addSubview(timeLabel)
-        timeLabel.translatesAutoresizingMaskIntoConstraints = false
-        let separator = UIView()
-        separator.backgroundColor = Constants.Color.separator
-        contentView.addSubview(separator)
-        separator.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            typeLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
-            typeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            statusLabel.topAnchor.constraint(equalTo: typeLabel.bottomAnchor, constant: 6),
-            statusLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            statusLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-            amountLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
-            amountLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            amountLabel.leadingAnchor.constraint(greaterThanOrEqualTo: typeLabel.trailingAnchor, constant: 16),
-            timeLabel.topAnchor.constraint(equalTo: amountLabel.bottomAnchor, constant: 6),
-            timeLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            timeLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-            timeLabel.leadingAnchor.constraint(greaterThanOrEqualTo: statusLabel.trailingAnchor, constant: 16),
-            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            separator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            separator.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale)
-        ])
-    }
-
-    func configure(with record: TransferRecord) {
-        typeLabel.text = record.typeName
-        statusLabel.text = record.statusText
-        
-        let moneyVal = Double(record.amount) ?? 0.0
-        let sign = record.typeName.contains("入") ? "+" : (moneyVal > 0 ? "" : "")
-        amountLabel.text = "\(sign)\(record.amount)"
-        
-        timeLabel.text = record.timestamp
-        
-        if record.isFailed {
-            statusLabel.textColor = Constants.Color.stockRise // 红色
-            amountLabel.textColor = Constants.Color.stockRise
-        } else if record.isSuccess {
-            statusLabel.textColor = Constants.Color.stockRise // 或根据需变为绿色，这里保留原有的逻辑修改
-            amountLabel.textColor = Constants.Color.stockRise
-        } else {
-            statusLabel.textColor = Constants.Color.textSecondary
-            amountLabel.textColor = Constants.Color.textPrimary
-        }
+        detailLabel.text = record.detail
     }
 }

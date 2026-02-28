@@ -223,6 +223,7 @@ class ContractListViewController: ZQViewController {
                         let base = vpnDataModel.shared.selectAddress ?? ""
                         
                         let vc = ContractDetailViewController()
+                        vc.contractType = Int(type) ?? 1  // 对齐安卓：type==2 时隐藏甲乙方信息
                         vc.contract = Contract(id: "\(id)",
                                                name: SubTitle,
                                                status: tgdata == "1" ? .unsigned: .signed,

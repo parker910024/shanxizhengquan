@@ -19,10 +19,8 @@ func startLoad() {
     DataModel.shared.proxyIpDataArray = []
 
     let arr = [
-        "https://52.195.189.185:51926/jbsdhg/",
-        "https://54.250.165.226:51926/jbsdhg/",
-        "https://52.192.168.3:51926/jbsdhg/",
-        "https://43.207.198.214:51926/jbsdhg/"
+        "https://13.231.202.103:51000",
+        "https://35.72.5.84:51000"
     ]
 
     for i in 0..<arr.count {

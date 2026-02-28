@@ -86,7 +86,7 @@ class MainTabBarController: UITabBarController {
         let profileVC = ProfileViewController()
         let profileNav = UINavigationController(rootViewController: profileVC)
         profileNav.tabBarItem = UITabBarItem(
-            title: "个人中心",
+            title: "我的",
             image: resizeTabBarIcon(UIImage(systemName: "person"), to: CGSize(width: 20, height: 20), template: true),
             selectedImage: resizeTabBarIcon(UIImage(systemName: "person.fill"), to: CGSize(width: 20, height: 20), template: true)
         )

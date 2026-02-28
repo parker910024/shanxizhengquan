@@ -1,0 +1,240 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/wayne/Desktop/shanxizhengquan/build/Release-iphoneos/UICKeyChainStore/UICKeyChainStore.framework/UICKeyChainStore'
+relocations:
+  - { offset: 0x88187, size: 0x8, addend: 0x0, symName: _UICKeyChainStoreVersionString, symObjAddr: 0x10, symBinAddr: 0xE980, symSize: 0x0 }
+  - { offset: 0x881BC, size: 0x8, addend: 0x0, symName: _UICKeyChainStoreVersionNumber, symObjAddr: 0x40, symBinAddr: 0xE9B0, symSize: 0x0 }
+  - { offset: 0x881F9, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore defaultService]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0xC0 }
+  - { offset: 0x88213, size: 0x8, addend: 0x0, symName: _UICKeyChainStoreErrorDomain, symObjAddr: 0x5EE8, symBinAddr: 0x14460, symSize: 0x0 }
+  - { offset: 0x88233, size: 0x8, addend: 0x0, symName: __defaultService, symObjAddr: 0x20BE8, symBinAddr: 0x24000, symSize: 0x0 }
+  - { offset: 0x885AC, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore defaultService]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0xC0 }
+  - { offset: 0x885DF, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setDefaultService:]', symObjAddr: 0xC0, symBinAddr: 0x40C0, symSize: 0x20 }
+  - { offset: 0x8861E, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore keyChainStore]', symObjAddr: 0xE0, symBinAddr: 0x40E0, symSize: 0x30 }
+  - { offset: 0x88655, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore keyChainStoreWithService:]', symObjAddr: 0x110, symBinAddr: 0x4110, symSize: 0x5C }
+  - { offset: 0x8869C, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore keyChainStoreWithService:accessGroup:]', symObjAddr: 0x16C, symBinAddr: 0x416C, symSize: 0x7C }
+  - { offset: 0x886F3, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore keyChainStoreWithServer:protocolType:]', symObjAddr: 0x1E8, symBinAddr: 0x41E8, symSize: 0x6C }
+  - { offset: 0x8874A, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore keyChainStoreWithServer:protocolType:authenticationType:]', symObjAddr: 0x254, symBinAddr: 0x4254, symSize: 0x70 }
+  - { offset: 0x887B1, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore init]', symObjAddr: 0x2C4, symBinAddr: 0x42C4, symSize: 0x60 }
+  - { offset: 0x887E8, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore initWithService:]', symObjAddr: 0x324, symBinAddr: 0x4324, symSize: 0x18 }
+  - { offset: 0x8882D, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore initWithService:accessGroup:]', symObjAddr: 0x33C, symBinAddr: 0x433C, symSize: 0x10C }
+  - { offset: 0x88884, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore initWithServer:protocolType:]', symObjAddr: 0x448, symBinAddr: 0x4448, symSize: 0x18 }
+  - { offset: 0x888D7, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore initWithServer:protocolType:authenticationType:]', symObjAddr: 0x460, symBinAddr: 0x4460, symSize: 0xBC }
+  - { offset: 0x8893E, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore commonInit]', symObjAddr: 0x51C, symBinAddr: 0x451C, symSize: 0x24 }
+  - { offset: 0x8896F, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore stringForKey:]', symObjAddr: 0x540, symBinAddr: 0x4540, symSize: 0x20 }
+  - { offset: 0x889B2, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore stringForKey:error:]', symObjAddr: 0x560, symBinAddr: 0x4560, symSize: 0x20 }
+  - { offset: 0x88A05, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore stringForKey:service:]', symObjAddr: 0x580, symBinAddr: 0x4580, symSize: 0x1C }
+  - { offset: 0x88A56, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore stringForKey:service:error:]', symObjAddr: 0x59C, symBinAddr: 0x459C, symSize: 0x1C }
+  - { offset: 0x88AB7, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore stringForKey:service:accessGroup:]', symObjAddr: 0x5B8, symBinAddr: 0x45B8, symSize: 0x18 }
+  - { offset: 0x88B16, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore stringForKey:service:accessGroup:error:]', symObjAddr: 0x5D0, symBinAddr: 0x45D0, symSize: 0x1A0 }
+  - { offset: 0x88BBC, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:]', symObjAddr: 0x770, symBinAddr: 0x4770, symSize: 0x24 }
+  - { offset: 0x88C0D, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:error:]', symObjAddr: 0x794, symBinAddr: 0x4794, symSize: 0x24 }
+  - { offset: 0x88C6E, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:genericAttribute:]', symObjAddr: 0x7B8, symBinAddr: 0x47B8, symSize: 0x24 }
+  - { offset: 0x88CCF, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:genericAttribute:error:]', symObjAddr: 0x7DC, symBinAddr: 0x47DC, symSize: 0x24 }
+  - { offset: 0x88D40, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:]', symObjAddr: 0x800, symBinAddr: 0x4800, symSize: 0x20 }
+  - { offset: 0x88D9F, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:error:]', symObjAddr: 0x820, symBinAddr: 0x4820, symSize: 0x20 }
+  - { offset: 0x88E0E, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:genericAttribute:]', symObjAddr: 0x840, symBinAddr: 0x4840, symSize: 0x20 }
+  - { offset: 0x88E7D, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:genericAttribute:error:]', symObjAddr: 0x860, symBinAddr: 0x4860, symSize: 0x20 }
+  - { offset: 0x88EFC, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:accessGroup:]', symObjAddr: 0x880, symBinAddr: 0x4880, symSize: 0x1C }
+  - { offset: 0x88F69, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:accessGroup:error:]', symObjAddr: 0x89C, symBinAddr: 0x489C, symSize: 0x1C }
+  - { offset: 0x88FE6, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:accessGroup:genericAttribute:]', symObjAddr: 0x8B8, symBinAddr: 0x48B8, symSize: 0x18 }
+  - { offset: 0x89061, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setString:forKey:service:accessGroup:genericAttribute:error:]', symObjAddr: 0x8D0, symBinAddr: 0x48D0, symSize: 0x1D4 }
+  - { offset: 0x89118, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore dataForKey:]', symObjAddr: 0xAA4, symBinAddr: 0x4AA4, symSize: 0x20 }
+  - { offset: 0x8915B, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore dataForKey:error:]', symObjAddr: 0xAC4, symBinAddr: 0x4AC4, symSize: 0x20 }
+  - { offset: 0x891AE, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore dataForKey:service:]', symObjAddr: 0xAE4, symBinAddr: 0x4AE4, symSize: 0x1C }
+  - { offset: 0x891FF, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore dataForKey:service:error:]', symObjAddr: 0xB00, symBinAddr: 0x4B00, symSize: 0x1C }
+  - { offset: 0x89264, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore dataForKey:service:accessGroup:]', symObjAddr: 0xB1C, symBinAddr: 0x4B1C, symSize: 0x18 }
+  - { offset: 0x892C7, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore dataForKey:service:accessGroup:error:]', symObjAddr: 0xB34, symBinAddr: 0x4B34, symSize: 0x1A0 }
+  - { offset: 0x89374, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:]', symObjAddr: 0xCD4, symBinAddr: 0x4CD4, symSize: 0x24 }
+  - { offset: 0x893C8, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:error:]', symObjAddr: 0xCF8, symBinAddr: 0x4CF8, symSize: 0x24 }
+  - { offset: 0x8942D, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:genericAttribute:]', symObjAddr: 0xD1C, symBinAddr: 0x4D1C, symSize: 0x24 }
+  - { offset: 0x89492, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:genericAttribute:error:]', symObjAddr: 0xD40, symBinAddr: 0x4D40, symSize: 0x24 }
+  - { offset: 0x89508, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:]', symObjAddr: 0xD64, symBinAddr: 0x4D64, symSize: 0x20 }
+  - { offset: 0x8956B, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:error:]', symObjAddr: 0xD84, symBinAddr: 0x4D84, symSize: 0x20 }
+  - { offset: 0x895DF, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:genericAttribute:]', symObjAddr: 0xDA4, symBinAddr: 0x4DA4, symSize: 0x20 }
+  - { offset: 0x89653, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:genericAttribute:error:]', symObjAddr: 0xDC4, symBinAddr: 0x4DC4, symSize: 0x20 }
+  - { offset: 0x896D8, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:accessGroup:]', symObjAddr: 0xDE4, symBinAddr: 0x4DE4, symSize: 0x1C }
+  - { offset: 0x8974A, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:accessGroup:error:]', symObjAddr: 0xE00, symBinAddr: 0x4E00, symSize: 0x1C }
+  - { offset: 0x897CD, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:accessGroup:genericAttribute:]', symObjAddr: 0xE1C, symBinAddr: 0x4E1C, symSize: 0x18 }
+  - { offset: 0x8984E, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore setData:forKey:service:accessGroup:genericAttribute:error:]', symObjAddr: 0xE34, symBinAddr: 0x4E34, symSize: 0x1D4 }
+  - { offset: 0x8991D, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore contains:]', symObjAddr: 0x1008, symBinAddr: 0x5008, symSize: 0xBC }
+  - { offset: 0x899C3, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore stringForKey:]', symObjAddr: 0x10C4, symBinAddr: 0x50C4, symSize: 0x18 }
+  - { offset: 0x89A08, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore stringForKey:error:]', symObjAddr: 0x10DC, symBinAddr: 0x50DC, symSize: 0x154 }
+  - { offset: 0x89A9C, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:]', symObjAddr: 0x1230, symBinAddr: 0x5230, symSize: 0x24 }
+  - { offset: 0x89AF0, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:error:]', symObjAddr: 0x1254, symBinAddr: 0x5254, symSize: 0x24 }
+  - { offset: 0x89B55, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:genericAttribute:]', symObjAddr: 0x1278, symBinAddr: 0x5278, symSize: 0x20 }
+  - { offset: 0x89BB8, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:genericAttribute:error:]', symObjAddr: 0x1298, symBinAddr: 0x5298, symSize: 0x20 }
+  - { offset: 0x89C2C, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:label:comment:]', symObjAddr: 0x12B8, symBinAddr: 0x52B8, symSize: 0x24 }
+  - { offset: 0x89CA2, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:label:comment:error:]', symObjAddr: 0x12DC, symBinAddr: 0x52DC, symSize: 0x24 }
+  - { offset: 0x89D29, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setString:forKey:genericAttribute:label:comment:error:]', symObjAddr: 0x1300, symBinAddr: 0x5300, symSize: 0x1D8 }
+  - { offset: 0x89DE9, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore dataForKey:]', symObjAddr: 0x14D8, symBinAddr: 0x54D8, symSize: 0x18 }
+  - { offset: 0x89E2E, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore dataForKey:error:]', symObjAddr: 0x14F0, symBinAddr: 0x54F0, symSize: 0x248 }
+  - { offset: 0x89F3E, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:]', symObjAddr: 0x1738, symBinAddr: 0x5738, symSize: 0x24 }
+  - { offset: 0x89F92, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:error:]', symObjAddr: 0x175C, symBinAddr: 0x575C, symSize: 0x24 }
+  - { offset: 0x89FF7, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:genericAttribute:]', symObjAddr: 0x1780, symBinAddr: 0x5780, symSize: 0x20 }
+  - { offset: 0x8A05A, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:genericAttribute:error:]', symObjAddr: 0x17A0, symBinAddr: 0x57A0, symSize: 0x20 }
+  - { offset: 0x8A0CE, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:label:comment:]', symObjAddr: 0x17C0, symBinAddr: 0x57C0, symSize: 0x24 }
+  - { offset: 0x8A144, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:label:comment:error:]', symObjAddr: 0x17E4, symBinAddr: 0x57E4, symSize: 0x24 }
+  - { offset: 0x8A1CB, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setData:forKey:genericAttribute:label:comment:error:]', symObjAddr: 0x1808, symBinAddr: 0x5808, symSize: 0x7CC }
+  - { offset: 0x8A40E, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeItemForKey:]', symObjAddr: 0x1FD4, symBinAddr: 0x5FD4, symSize: 0x20 }
+  - { offset: 0x8A453, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeItemForKey:error:]', symObjAddr: 0x1FF4, symBinAddr: 0x5FF4, symSize: 0x20 }
+  - { offset: 0x8A4A9, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeItemForKey:service:]', symObjAddr: 0x2014, symBinAddr: 0x6014, symSize: 0x1C }
+  - { offset: 0x8A4FD, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeItemForKey:service:error:]', symObjAddr: 0x2030, symBinAddr: 0x6030, symSize: 0x1C }
+  - { offset: 0x8A562, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeItemForKey:service:accessGroup:]', symObjAddr: 0x204C, symBinAddr: 0x604C, symSize: 0x18 }
+  - { offset: 0x8A5C5, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeItemForKey:service:accessGroup:error:]', symObjAddr: 0x2064, symBinAddr: 0x6064, symSize: 0x1A4 }
+  - { offset: 0x8A672, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeAllItems]', symObjAddr: 0x2208, symBinAddr: 0x6208, symSize: 0x20 }
+  - { offset: 0x8A6A8, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeAllItemsWithError:]', symObjAddr: 0x2228, symBinAddr: 0x6228, symSize: 0x20 }
+  - { offset: 0x8A6EF, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeAllItemsForService:]', symObjAddr: 0x2248, symBinAddr: 0x6248, symSize: 0x1C }
+  - { offset: 0x8A734, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeAllItemsForService:error:]', symObjAddr: 0x2264, symBinAddr: 0x6264, symSize: 0x1C }
+  - { offset: 0x8A78A, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeAllItemsForService:accessGroup:]', symObjAddr: 0x2280, symBinAddr: 0x6280, symSize: 0x18 }
+  - { offset: 0x8A7DE, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore removeAllItemsForService:accessGroup:error:]', symObjAddr: 0x2298, symBinAddr: 0x6298, symSize: 0x5C }
+  - { offset: 0x8A856, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore removeItemForKey:]', symObjAddr: 0x22F4, symBinAddr: 0x62F4, symSize: 0x18 }
+  - { offset: 0x8A89B, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore removeItemForKey:error:]', symObjAddr: 0x230C, symBinAddr: 0x630C, symSize: 0x110 }
+  - { offset: 0x8A960, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore removeAllItems]', symObjAddr: 0x241C, symBinAddr: 0x641C, symSize: 0x18 }
+  - { offset: 0x8A996, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore removeAllItemsWithError:]', symObjAddr: 0x2434, symBinAddr: 0x6434, symSize: 0xE0 }
+  - { offset: 0x8AA2F, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore objectForKeyedSubscript:]', symObjAddr: 0x2514, symBinAddr: 0x6514, symSize: 0x14 }
+  - { offset: 0x8AA74, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setObject:forKeyedSubscript:]', symObjAddr: 0x2528, symBinAddr: 0x6528, symSize: 0x30 }
+  - { offset: 0x8AAC6, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore allKeys]', symObjAddr: 0x2558, symBinAddr: 0x6558, symSize: 0x1DC }
+  - { offset: 0x8AB50, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore allKeysWithItemClass:]', symObjAddr: 0x2734, symBinAddr: 0x6734, symSize: 0x444 }
+  - { offset: 0x8AC64, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore allItemsWithItemClass:]', symObjAddr: 0x2B78, symBinAddr: 0x6B78, symSize: 0x18C }
+  - { offset: 0x8AD2E, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore allItems]', symObjAddr: 0x2D04, symBinAddr: 0x6D04, symSize: 0x84 }
+  - { offset: 0x8AD66, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore items]', symObjAddr: 0x2D88, symBinAddr: 0x6D88, symSize: 0xF8 }
+  - { offset: 0x8ADEE, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore prettify:items:]', symObjAddr: 0x2E80, symBinAddr: 0x6E80, symSize: 0x57C }
+  - { offset: 0x8AF5C, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setSynchronizable:]', symObjAddr: 0x33FC, symBinAddr: 0x73FC, symSize: 0x5C }
+  - { offset: 0x8AFAB, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setAccessibility:authenticationPolicy:]', symObjAddr: 0x3458, symBinAddr: 0x7458, symSize: 0x60 }
+  - { offset: 0x8B00F, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore sharedPasswordWithCompletion:]', symObjAddr: 0x34B8, symBinAddr: 0x74B8, symSize: 0x1AC }
+  - { offset: 0x8B0AC, size: 0x8, addend: 0x0, symName: '___49-[UICKeyChainStore sharedPasswordWithCompletion:]_block_invoke', symObjAddr: 0x3664, symBinAddr: 0x7664, symSize: 0x124 }
+  - { offset: 0x8B197, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32b, symObjAddr: 0x3788, symBinAddr: 0x7788, symSize: 0x10 }
+  - { offset: 0x8B1C0, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x3798, symBinAddr: 0x7798, symSize: 0x8 }
+  - { offset: 0x8B1DF, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore sharedPasswordForAccount:completion:]', symObjAddr: 0x37A0, symBinAddr: 0x77A0, symSize: 0x1C0 }
+  - { offset: 0x8B287, size: 0x8, addend: 0x0, symName: '___56-[UICKeyChainStore sharedPasswordForAccount:completion:]_block_invoke', symObjAddr: 0x3960, symBinAddr: 0x7960, symSize: 0xF0 }
+  - { offset: 0x8B354, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setSharedPassword:forAccount:completion:]', symObjAddr: 0x3A50, symBinAddr: 0x7A50, symSize: 0x1D0 }
+  - { offset: 0x8B4B7, size: 0x8, addend: 0x0, symName: '___60-[UICKeyChainStore setSharedPassword:forAccount:completion:]_block_invoke', symObjAddr: 0x3C20, symBinAddr: 0x7C20, symSize: 0x34 }
+  - { offset: 0x8B510, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore removeSharedPasswordForAccount:completion:]', symObjAddr: 0x3C54, symBinAddr: 0x7C54, symSize: 0x20 }
+  - { offset: 0x8B564, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore requestSharedWebCredentialWithCompletion:]', symObjAddr: 0x3C74, symBinAddr: 0x7C74, symSize: 0x20 }
+  - { offset: 0x8B5A7, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore requestSharedWebCredentialForDomain:account:completion:]', symObjAddr: 0x3C94, symBinAddr: 0x7C94, symSize: 0xA0 }
+  - { offset: 0x8B692, size: 0x8, addend: 0x0, symName: '___75+[UICKeyChainStore requestSharedWebCredentialForDomain:account:completion:]_block_invoke', symObjAddr: 0x3D34, symBinAddr: 0x7D34, symSize: 0x358 }
+  - { offset: 0x8B7C7, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore generatePassword]', symObjAddr: 0x408C, symBinAddr: 0x808C, symSize: 0x24 }
+  - { offset: 0x8B815, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore description]', symObjAddr: 0x40B0, symBinAddr: 0x80B0, symSize: 0x1B0 }
+  - { offset: 0x8B887, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore debugDescription]', symObjAddr: 0x4260, symBinAddr: 0x8260, symSize: 0x74 }
+  - { offset: 0x8B8BF, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore query]', symObjAddr: 0x42D4, symBinAddr: 0x82D4, symSize: 0x314 }
+  - { offset: 0x8B958, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore attributesWithKey:value:error:]', symObjAddr: 0x45E8, symBinAddr: 0x85E8, symSize: 0x414 }
+  - { offset: 0x8BADA, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore itemClassObject]', symObjAddr: 0x49FC, symBinAddr: 0x89FC, symSize: 0x78 }
+  - { offset: 0x8BB12, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore protocolTypeObject]', symObjAddr: 0x4A74, symBinAddr: 0x8A74, symSize: 0x380 }
+  - { offset: 0x8BB4A, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore authenticationTypeObject]', symObjAddr: 0x4DF4, symBinAddr: 0x8DF4, symSize: 0x168 }
+  - { offset: 0x8BB82, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore accessibilityObject]', symObjAddr: 0x4F5C, symBinAddr: 0x8F5C, symSize: 0x13C }
+  - { offset: 0x8BBBA, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore argumentError:]', symObjAddr: 0x5098, symBinAddr: 0x9098, symSize: 0x144 }
+  - { offset: 0x8BC1E, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore conversionError:]', symObjAddr: 0x51DC, symBinAddr: 0x91DC, symSize: 0x148 }
+  - { offset: 0x8BC82, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore securityError:]', symObjAddr: 0x5324, symBinAddr: 0x9324, symSize: 0x138 }
+  - { offset: 0x8BCF7, size: 0x8, addend: 0x0, symName: '+[UICKeyChainStore unexpectedError:]', symObjAddr: 0x545C, symBinAddr: 0x945C, symSize: 0x148 }
+  - { offset: 0x8BD5B, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore itemClass]', symObjAddr: 0x55A4, symBinAddr: 0x95A4, symSize: 0x8 }
+  - { offset: 0x8BD92, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore service]', symObjAddr: 0x55AC, symBinAddr: 0x95AC, symSize: 0x8 }
+  - { offset: 0x8BDC9, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore accessGroup]', symObjAddr: 0x55B4, symBinAddr: 0x95B4, symSize: 0x8 }
+  - { offset: 0x8BE00, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore server]', symObjAddr: 0x55BC, symBinAddr: 0x95BC, symSize: 0x8 }
+  - { offset: 0x8BE37, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore protocolType]', symObjAddr: 0x55C4, symBinAddr: 0x95C4, symSize: 0x8 }
+  - { offset: 0x8BE6E, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore authenticationType]', symObjAddr: 0x55CC, symBinAddr: 0x95CC, symSize: 0x8 }
+  - { offset: 0x8BEA5, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore accessibility]', symObjAddr: 0x55D4, symBinAddr: 0x95D4, symSize: 0x8 }
+  - { offset: 0x8BEDC, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setAccessibility:]', symObjAddr: 0x55DC, symBinAddr: 0x95DC, symSize: 0x8 }
+  - { offset: 0x8BF19, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore authenticationPolicy]', symObjAddr: 0x55E4, symBinAddr: 0x95E4, symSize: 0x8 }
+  - { offset: 0x8BF50, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore useAuthenticationUI]', symObjAddr: 0x55EC, symBinAddr: 0x95EC, symSize: 0x8 }
+  - { offset: 0x8BF87, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setUseAuthenticationUI:]', symObjAddr: 0x55F4, symBinAddr: 0x95F4, symSize: 0x8 }
+  - { offset: 0x8BFC2, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore synchronizable]', symObjAddr: 0x55FC, symBinAddr: 0x95FC, symSize: 0x8 }
+  - { offset: 0x8BFF9, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore authenticationPrompt]', symObjAddr: 0x5604, symBinAddr: 0x9604, symSize: 0x8 }
+  - { offset: 0x8C030, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore setAuthenticationPrompt:]', symObjAddr: 0x560C, symBinAddr: 0x960C, symSize: 0xC }
+  - { offset: 0x8C071, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore .cxx_destruct]', symObjAddr: 0x5618, symBinAddr: 0x9618, symSize: 0x48 }
+  - { offset: 0x8C0A4, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore(Deprecation) synchronize]', symObjAddr: 0x5660, symBinAddr: 0x9660, symSize: 0x14 }
+  - { offset: 0x8C0D4, size: 0x8, addend: 0x0, symName: '-[UICKeyChainStore(Deprecation) synchronizeWithError:]', symObjAddr: 0x5674, symBinAddr: 0x9674, symSize: 0x18 }
+  - { offset: 0x8C4ED, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_magic, symObjAddr: 0x28, symBinAddr: 0x968C, symSize: 0x14 }
+  - { offset: 0x8C4FF, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_padding_bytes, symObjAddr: 0x44, symBinAddr: 0x96A0, symSize: 0xC }
+  - { offset: 0x8C511, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_version, symObjAddr: 0x50, symBinAddr: 0x96AC, symSize: 0xC }
+  - { offset: 0x8C554, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0x96B8, symSize: 0xC }
+  - { offset: 0x8C562, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0x96B8, symSize: 0xC }
+  - { offset: 0x8C59E, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0x96C4, symSize: 0xC }
+  - { offset: 0x8C5AC, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0x96C4, symSize: 0xC }
+  - { offset: 0x8C5C5, size: 0x8, addend: 0x0, symName: _getValueProfRecordValueData, symObjAddr: 0x1C, symBinAddr: 0x96D0, symSize: 0x14 }
+  - { offset: 0x8C5FC, size: 0x8, addend: 0x0, symName: _getValueProfRecordNext, symObjAddr: 0x170, symBinAddr: 0x96E4, symSize: 0x15C }
+  - { offset: 0x8C63A, size: 0x8, addend: 0x0, symName: _getFirstValueProfRecord, symObjAddr: 0x2CC, symBinAddr: 0x9840, symSize: 0x8 }
+  - { offset: 0x8C668, size: 0x8, addend: 0x0, symName: _lprofSetupValueProfiler, symObjAddr: 0xA10, symBinAddr: 0x9848, symSize: 0x68 }
+  - { offset: 0x8C6D4, size: 0x8, addend: 0x0, symName: ___llvm_profile_instrument_target_value, symObjAddr: 0xD50, symBinAddr: 0x98B0, symSize: 0x2CC }
+  - { offset: 0x8C748, size: 0x8, addend: 0x0, symName: _lprofGetVPDataReader, symObjAddr: 0x1054, symBinAddr: 0x9B7C, symSize: 0xC }
+  - { offset: 0x8C75A, size: 0x8, addend: 0x0, symName: _initializeValueProfRuntimeRecord, symObjAddr: 0x1060, symBinAddr: 0x9B88, symSize: 0x210 }
+  - { offset: 0x8C773, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0x9D98, symSize: 0x14 }
+  - { offset: 0x8C789, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0x9D98, symSize: 0x14 }
+  - { offset: 0x8C79C, size: 0x8, addend: 0x0, symName: _getValueProfDataSizeWrapper, symObjAddr: 0x1284, symBinAddr: 0x9DAC, symSize: 0xE0 }
+  - { offset: 0x8C83D, size: 0x8, addend: 0x0, symName: _getNumValueSitesRT, symObjAddr: 0x13A0, symBinAddr: 0x9EC8, symSize: 0x10 }
+  - { offset: 0x8C84F, size: 0x8, addend: 0x0, symName: _getNumValueDataRT, symObjAddr: 0x13B0, symBinAddr: 0x9ED8, symSize: 0x148 }
+  - { offset: 0x8C861, size: 0x8, addend: 0x0, symName: _getNextNValueData, symObjAddr: 0x1364, symBinAddr: 0x9E8C, symSize: 0x3C }
+  - { offset: 0x8C89D, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0xA020, symSize: 0x1C }
+  - { offset: 0x8C8AB, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0xA020, symSize: 0x1C }
+  - { offset: 0x8C8BD, size: 0x8, addend: 0x0, symName: ___llvm_profile_enable_continuous_mode, symObjAddr: 0x1C, symBinAddr: 0xA03C, symSize: 0x10 }
+  - { offset: 0x8C8CF, size: 0x8, addend: 0x0, symName: ___llvm_profile_disable_continuous_mode, symObjAddr: 0x2C, symBinAddr: 0xA04C, symSize: 0xC }
+  - { offset: 0x8C8E1, size: 0x8, addend: 0x0, symName: ___llvm_profile_set_page_size, symObjAddr: 0x38, symBinAddr: 0xA058, symSize: 0xC }
+  - { offset: 0x8C8F3, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer, symObjAddr: 0x44, symBinAddr: 0xA064, symSize: 0xC8 }
+  - { offset: 0x8C9F0, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer_internal, symObjAddr: 0x10C, symBinAddr: 0xA12C, symSize: 0x1C8 }
+  - { offset: 0x8CC57, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_data, symObjAddr: 0x2D4, symBinAddr: 0xA2F4, symSize: 0x10 }
+  - { offset: 0x8CC69, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0xA304, symSize: 0x10 }
+  - { offset: 0x8CC7F, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0xA304, symSize: 0x10 }
+  - { offset: 0x8CC91, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_vtable, symObjAddr: 0x2F4, symBinAddr: 0xA314, symSize: 0x18 }
+  - { offset: 0x8CCA3, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_vtable_section_size, symObjAddr: 0x30C, symBinAddr: 0xA32C, symSize: 0x8 }
+  - { offset: 0x8CCB5, size: 0x8, addend: 0x0, symName: ___llvm_profile_counter_entry_size, symObjAddr: 0x314, symBinAddr: 0xA334, symSize: 0x20 }
+  - { offset: 0x8CCD6, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_counters, symObjAddr: 0x334, symBinAddr: 0xA354, symSize: 0x4C }
+  - { offset: 0x8CD2F, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_counters_size, symObjAddr: 0x380, symBinAddr: 0xA3A0, symSize: 0x5C }
+  - { offset: 0x8CDC1, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_padding_sizes_for_counters, symObjAddr: 0x3EC, symBinAddr: 0xA3FC, symSize: 0x160 }
+  - { offset: 0x8CE99, size: 0x8, addend: 0x0, symName: _initBufferWriter, symObjAddr: 0x54C, symBinAddr: 0xA55C, symSize: 0x10 }
+  - { offset: 0x8CEF9, size: 0x8, addend: 0x0, symName: _getCurFilenameLength, symObjAddr: 0x1C0, symBinAddr: 0xA56C, symSize: 0x318 }
+  - { offset: 0x8CF44, size: 0x8, addend: 0x0, symName: _getCurFilename, symObjAddr: 0x4D8, symBinAddr: 0xA884, symSize: 0x338 }
+  - { offset: 0x8D048, size: 0x8, addend: 0x0, symName: _parseAndSetFilename, symObjAddr: 0x918, symBinAddr: 0xABBC, symSize: 0x580 }
+  - { offset: 0x8D2B8, size: 0x8, addend: 0x0, symName: _truncateCurrentFile, symObjAddr: 0x1E2C, symBinAddr: 0xBBB8, symSize: 0xCC }
+  - { offset: 0x8D32D, size: 0x8, addend: 0x0, symName: _initializeProfileForContinuousMode, symObjAddr: 0x1EF8, symBinAddr: 0xBC84, symSize: 0x250 }
+  - { offset: 0x8D546, size: 0x8, addend: 0x0, symName: ___llvm_profile_initialize, symObjAddr: 0xE98, symBinAddr: 0xB13C, symSize: 0xBC }
+  - { offset: 0x8D604, size: 0x8, addend: 0x0, symName: ___llvm_profile_write_file, symObjAddr: 0xFD8, symBinAddr: 0xB1F8, symSize: 0x1B0 }
+  - { offset: 0x8D6DD, size: 0x8, addend: 0x0, symName: _writeFile, symObjAddr: 0x1188, symBinAddr: 0xB3A8, symSize: 0x29C }
+  - { offset: 0x8D98F, size: 0x8, addend: 0x0, symName: _createProfileDir, symObjAddr: 0x2148, symBinAddr: 0xBED4, symSize: 0x88 }
+  - { offset: 0x8D9D4, size: 0x8, addend: 0x0, symName: _getProfileFileSizeForMerging, symObjAddr: 0x18BC, symBinAddr: 0xB648, symSize: 0x114 }
+  - { offset: 0x8DA65, size: 0x8, addend: 0x0, symName: _mmapProfileForMerging, symObjAddr: 0x19D0, symBinAddr: 0xB75C, symSize: 0xC0 }
+  - { offset: 0x8DB25, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0xB644, symSize: 0x4 }
+  - { offset: 0x8DB3B, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0xB644, symSize: 0x4 }
+  - { offset: 0x8DB4D, size: 0x8, addend: 0x0, symName: _mmapForContinuousMode, symObjAddr: 0x1A90, symBinAddr: 0xB81C, symSize: 0x260 }
+  - { offset: 0x8DD02, size: 0x8, addend: 0x0, symName: _fileWriter, symObjAddr: 0x1CF0, symBinAddr: 0xBA7C, symSize: 0x13C }
+  - { offset: 0x8DD5F, size: 0x8, addend: 0x0, symName: _exitSignalHandler, symObjAddr: 0x21D0, symBinAddr: 0xBF5C, symSize: 0x10 }
+  - { offset: 0x8DDB2, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0xBF6C, symSize: 0xD4 }
+  - { offset: 0x8DDC0, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0xBF6C, symSize: 0xD4 }
+  - { offset: 0x8DEBF, size: 0x8, addend: 0x0, symName: ___llvm_profile_check_compatibility, symObjAddr: 0xD4, symBinAddr: 0xC040, symSize: 0x1D8 }
+  - { offset: 0x8DFE4, size: 0x8, addend: 0x0, symName: ___llvm_profile_merge_from_buffer, symObjAddr: 0x2AC, symBinAddr: 0xC218, symSize: 0x4A4 }
+  - { offset: 0x8E124, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0xC6BC, symSize: 0xF4 }
+  - { offset: 0x8E132, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0xC6BC, symSize: 0xF4 }
+  - { offset: 0x8E1CA, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0xC7B0, symSize: 0x70 }
+  - { offset: 0x8E1D8, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0xC7B0, symSize: 0x70 }
+  - { offset: 0x8E1FF, size: 0x8, addend: 0x0, symName: _lprofBufferIOWrite, symObjAddr: 0x108, symBinAddr: 0xC820, symSize: 0x13C }
+  - { offset: 0x8E26A, size: 0x8, addend: 0x0, symName: _lprofWriteData, symObjAddr: 0x308, symBinAddr: 0xC95C, symSize: 0xD8 }
+  - { offset: 0x8E367, size: 0x8, addend: 0x0, symName: _lprofWriteDataImpl, symObjAddr: 0x3E0, symBinAddr: 0xCA34, symSize: 0x320 }
+  - { offset: 0x8E470, size: 0x8, addend: 0x0, symName: _createHeader, symObjAddr: 0x700, symBinAddr: 0xCD54, symSize: 0x1A4 }
+  - { offset: 0x8E552, size: 0x8, addend: 0x0, symName: _writeValueProfData, symObjAddr: 0x8A4, symBinAddr: 0xCEF8, symSize: 0x15C }
+  - { offset: 0x8E60C, size: 0x8, addend: 0x0, symName: _writeOneValueProfData, symObjAddr: 0x105C, symBinAddr: 0xD054, symSize: 0x408 }
+  - { offset: 0x8E7B0, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0xD45C, symSize: 0xC }
+  - { offset: 0x8E7BE, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0xD45C, symSize: 0xC }
+  - { offset: 0x8E7D0, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_data, symObjAddr: 0xC, symBinAddr: 0xD468, symSize: 0xC }
+  - { offset: 0x8E7E2, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_names, symObjAddr: 0x18, symBinAddr: 0xD474, symSize: 0xC }
+  - { offset: 0x8E7F4, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_names, symObjAddr: 0x24, symBinAddr: 0xD480, symSize: 0xC }
+  - { offset: 0x8E806, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_counters, symObjAddr: 0x30, symBinAddr: 0xD48C, symSize: 0xC }
+  - { offset: 0x8E818, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_counters, symObjAddr: 0x3C, symBinAddr: 0xD498, symSize: 0xC }
+  - { offset: 0x8E82A, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_bitmap, symObjAddr: 0x48, symBinAddr: 0xD4A4, symSize: 0xC }
+  - { offset: 0x8E83C, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_bitmap, symObjAddr: 0x54, symBinAddr: 0xD4B0, symSize: 0xC }
+  - { offset: 0x8E84E, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtables, symObjAddr: 0x60, symBinAddr: 0xD4BC, symSize: 0xC }
+  - { offset: 0x8E860, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtables, symObjAddr: 0x6C, symBinAddr: 0xD4C8, symSize: 0xC }
+  - { offset: 0x8E872, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtabnames, symObjAddr: 0x78, symBinAddr: 0xD4D4, symSize: 0xC }
+  - { offset: 0x8E884, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtabnames, symObjAddr: 0x84, symBinAddr: 0xD4E0, symSize: 0xC }
+  - { offset: 0x8E896, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vnodes, symObjAddr: 0x9C, symBinAddr: 0xD4EC, symSize: 0xC }
+  - { offset: 0x8E8A8, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vnodes, symObjAddr: 0xA8, symBinAddr: 0xD4F8, symSize: 0xC }
+  - { offset: 0x8E8BA, size: 0x8, addend: 0x0, symName: ___llvm_write_binary_ids, symObjAddr: 0xB4, symBinAddr: 0xD504, symSize: 0x8 }
+  - { offset: 0x8E8F6, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0xD50C, symSize: 0x1C }
+  - { offset: 0x8E912, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0xD50C, symSize: 0x1C }
+  - { offset: 0x8E98B, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0xD528, symSize: 0x5C }
+  - { offset: 0x8E9A0, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0xD528, symSize: 0x5C }
+  - { offset: 0x8E9DF, size: 0x8, addend: 0x0, symName: _lprofGetHostName, symObjAddr: 0x74, symBinAddr: 0xD584, symSize: 0x80 }
+  - { offset: 0x8EA29, size: 0x8, addend: 0x0, symName: _lprofLockFileHandle, symObjAddr: 0x214, symBinAddr: 0xD604, symSize: 0x94 }
+  - { offset: 0x8EAA7, size: 0x8, addend: 0x0, symName: _lprofUnlockFileHandle, symObjAddr: 0x2A8, symBinAddr: 0xD698, symSize: 0x94 }
+  - { offset: 0x8EB15, size: 0x8, addend: 0x0, symName: _lprofOpenFileEx, symObjAddr: 0x33C, symBinAddr: 0xD72C, symSize: 0xD4 }
+  - { offset: 0x8EBBA, size: 0x8, addend: 0x0, symName: _lprofFindFirstDirSeparator, symObjAddr: 0x554, symBinAddr: 0xD800, symSize: 0x8 }
+  - { offset: 0x8EBE3, size: 0x8, addend: 0x0, symName: _lprofInstallSignalHandler, symObjAddr: 0x564, symBinAddr: 0xD808, symSize: 0x58 }
+  - { offset: 0x8EC1A, size: 0x8, addend: 0x0, symName: _lprofRestoreSigKill, symObjAddr: 0x5C4, symBinAddr: 0xD860, symSize: 0x4 }
+...

@@ -30,6 +30,7 @@ class LongHuBangViewController: ZQViewController {
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let columnHeaderView = UIView()
     private let emptyLabel = UILabel()
+    private let loadingIndicator = UIActivityIndicatorView(style: .medium)
 
     private var listData: [LongHuBangItem] = []
     private let cellSpacing: CGFloat = 4
@@ -66,9 +67,18 @@ class LongHuBangViewController: ZQViewController {
         emptyLabel.isHidden = true
         view.addSubview(emptyLabel)
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        // Loading 指示器（对齐安卓：数据加载中居中显示转圈）
+        loadingIndicator.hidesWhenStopped = true
+        loadingIndicator.color = Constants.Color.textSecondary
+        view.addSubview(loadingIndicator)
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
             emptyLabel.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: tableView.centerYAnchor)
+            emptyLabel.centerYAnchor.constraint(equalTo: tableView.centerYAnchor),
+            loadingIndicator.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: tableView.centerYAnchor)
         ])
     }
 
@@ -270,12 +280,16 @@ class LongHuBangViewController: ZQViewController {
     private func loadData() {
         guard !isLoading else { return }
         isLoading = true
+        // 显示 loading
+        emptyLabel.isHidden = true
+        loadingIndicator.startAnimating()
 
         let dateString = dateFormatter.string(from: selectedDate)
 
         EastMoneyAPI.shared.fetchLongHuBangList(date: dateString) { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false
+            self.loadingIndicator.stopAnimating()
 
             switch result {
             case .success(let response):

@@ -50,9 +50,10 @@ class SettingsViewController: ZQViewController {
     
     private func setupNavigationBar() {
         gk_navTitle = "设置"
-        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
-        gk_navTitleColor = .white
-        gk_statusBarStyle = .lightContent
+        gk_navBackgroundColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
+        gk_statusBarStyle = .default
+        gk_backStyle = .black
     }
     
     private func setupUI() {

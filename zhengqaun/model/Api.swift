@@ -26,6 +26,7 @@ class Api: NSObject {
     
     //修改支付密码
     static let editPass_api = "/api/user/editPass"
+    static let editPass1_api = "/api/user/editPass1"  // 修改登录密码
     
     //本地上传
     static let upload_api = "/api/upload/file"

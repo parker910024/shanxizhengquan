@@ -1,0 +1,498 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/wayne/Desktop/shanxizhengquan/build/Release-iphoneos/IQKeyboardManager/IQKeyboardManager.framework/IQKeyboardManager'
+relocations:
+  - { offset: 0x6EA98, size: 0x8, addend: 0x0, symName: _IQKeyboardManagerVersionString, symObjAddr: 0x10, symBinAddr: 0x20E60, symSize: 0x0 }
+  - { offset: 0x6EACD, size: 0x8, addend: 0x0, symName: _IQKeyboardManagerVersionNumber, symObjAddr: 0x40, symBinAddr: 0x20E90, symSize: 0x0 }
+  - { offset: 0x6EB0A, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem initialize]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x1D8 }
+  - { offset: 0x6EB6A, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem initialize]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x1D8 }
+  - { offset: 0x6EBE3, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem init]', symObjAddr: 0x1D8, symBinAddr: 0x41D8, symSize: 0x70 }
+  - { offset: 0x6EC1A, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem initWithCoder:]', symObjAddr: 0x248, symBinAddr: 0x4248, symSize: 0x70 }
+  - { offset: 0x6EC61, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem setTintColor:]', symObjAddr: 0x2B8, symBinAddr: 0x42B8, symSize: 0x10C }
+  - { offset: 0x6ECB4, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem initWithBarButtonSystemItem:target:action:]', symObjAddr: 0x3C4, symBinAddr: 0x43C4, symSize: 0x68 }
+  - { offset: 0x6ED1B, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem setTarget:action:]', symObjAddr: 0x42C, symBinAddr: 0x442C, symSize: 0xFC }
+  - { offset: 0x6ED7E, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem dealloc]', symObjAddr: 0x528, symBinAddr: 0x4528, symSize: 0x64 }
+  - { offset: 0x6EDB1, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem isSystemItem]', symObjAddr: 0x58C, symBinAddr: 0x458C, symSize: 0x10 }
+  - { offset: 0x6EDE8, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem invocation]', symObjAddr: 0x59C, symBinAddr: 0x459C, symSize: 0x10 }
+  - { offset: 0x6EE1F, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem setInvocation:]', symObjAddr: 0x5AC, symBinAddr: 0x45AC, symSize: 0x14 }
+  - { offset: 0x6EE60, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItem .cxx_destruct]', symObjAddr: 0x5C0, symBinAddr: 0x45C0, symSize: 0x14 }
+  - { offset: 0x6EF2E, size: 0x8, addend: 0x0, symName: '+[IQKeyboardManager load]', symObjAddr: 0x0, symBinAddr: 0x45D4, symSize: 0x24 }
+  - { offset: 0x6EF48, size: 0x8, addend: 0x0, symName: _kIQDoneButtonToolbarTag, symObjAddr: 0x9628, symBinAddr: 0x20EA8, symSize: 0x0 }
+  - { offset: 0x6EF6A, size: 0x8, addend: 0x0, symName: _kIQPreviousNextButtonToolbarTag, symObjAddr: 0x9630, symBinAddr: 0x20EB0, symSize: 0x0 }
+  - { offset: 0x6EF74, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager init]', symObjAddr: 0x24, symBinAddr: 0x45F8, symSize: 0xE4 }
+  - { offset: 0x6EF9E, size: 0x8, addend: 0x0, symName: _init.onceToken, symObjAddr: 0x31920, symBinAddr: 0x40000, symSize: 0x0 }
+  - { offset: 0x6F006, size: 0x8, addend: 0x0, symName: '+[IQKeyboardManager sharedManager]', symObjAddr: 0x570, symBinAddr: 0x4B44, symSize: 0x84 }
+  - { offset: 0x6F032, size: 0x8, addend: 0x0, symName: _sharedManager.kbManager, symObjAddr: 0x31928, symBinAddr: 0x40008, symSize: 0x0 }
+  - { offset: 0x6F049, size: 0x8, addend: 0x0, symName: _sharedManager.onceToken, symObjAddr: 0x31930, symBinAddr: 0x40010, symSize: 0x0 }
+  - { offset: 0x6F7DE, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager keyWindow]', symObjAddr: 0x16C0, symBinAddr: 0x5C94, symSize: 0x370 }
+  - { offset: 0x6F80A, size: 0x8, addend: 0x0, symName: _keyWindow.cachedKeyWindow, symObjAddr: 0x31938, symBinAddr: 0x40018, symSize: 0x0 }
+  - { offset: 0x6F8CC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager showLog:indentation:]', symObjAddr: 0x8E14, symBinAddr: 0xD3E8, symSize: 0x158 }
+  - { offset: 0x6F8F4, size: 0x8, addend: 0x0, symName: '_showLog:indentation:.indentation', symObjAddr: 0x31940, symBinAddr: 0x40020, symSize: 0x0 }
+  - { offset: 0x6F9D5, size: 0x8, addend: 0x0, symName: '+[IQKeyboardManager load]', symObjAddr: 0x0, symBinAddr: 0x45D4, symSize: 0x24 }
+  - { offset: 0x6FA46, size: 0x8, addend: 0x0, symName: '___25-[IQKeyboardManager init]_block_invoke', symObjAddr: 0x108, symBinAddr: 0x46DC, symSize: 0x3F4 }
+  - { offset: 0x6FAC1, size: 0x8, addend: 0x0, symName: '___25-[IQKeyboardManager init]_block_invoke_2', symObjAddr: 0x4FC, symBinAddr: 0x4AD0, symSize: 0x60 }
+  - { offset: 0x6FB07, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32w, symObjAddr: 0x55C, symBinAddr: 0x4B30, symSize: 0xC }
+  - { offset: 0x6FB30, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32w, symObjAddr: 0x568, symBinAddr: 0x4B3C, symSize: 0x8 }
+  - { offset: 0x6FB4F, size: 0x8, addend: 0x0, symName: '___34+[IQKeyboardManager sharedManager]_block_invoke', symObjAddr: 0x5F4, symBinAddr: 0x4BC8, symSize: 0x38 }
+  - { offset: 0x6FB91, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager dealloc]', symObjAddr: 0x62C, symBinAddr: 0x4C00, symSize: 0x80 }
+  - { offset: 0x6FBC5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setEnable:]', symObjAddr: 0x6AC, symBinAddr: 0x4C80, symSize: 0x190 }
+  - { offset: 0x6FC06, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager privateIsEnabled]', symObjAddr: 0x83C, symBinAddr: 0x4E10, symSize: 0x418 }
+  - { offset: 0x6FD31, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setKeyboardDistanceFromTextField:]', symObjAddr: 0xC54, symBinAddr: 0x5228, symSize: 0x88 }
+  - { offset: 0x6FDA3, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setShouldResignOnTouchOutside:]', symObjAddr: 0xCDC, symBinAddr: 0x52B0, symSize: 0xBC }
+  - { offset: 0x6FDE4, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager privateShouldResignOnTouchOutside]', symObjAddr: 0xD98, symBinAddr: 0x536C, symSize: 0x404 }
+  - { offset: 0x6FEE9, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setMovedDistance:]', symObjAddr: 0x119C, symBinAddr: 0x5770, symSize: 0x98 }
+  - { offset: 0x6FF3A, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setEnableAutoToolbar:]', symObjAddr: 0x1234, symBinAddr: 0x5808, symSize: 0xD0 }
+  - { offset: 0x6FF7B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager privateIsEnableAutoToolbar]', symObjAddr: 0x1304, symBinAddr: 0x58D8, symSize: 0x3BC }
+  - { offset: 0x7005C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager applicationDidBecomeActive:]', symObjAddr: 0x1A30, symBinAddr: 0x6004, symSize: 0x110 }
+  - { offset: 0x700E3, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager adjustPosition]', symObjAddr: 0x1B40, symBinAddr: 0x6114, symSize: 0x211C }
+  - { offset: 0x70D0A, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke', symObjAddr: 0x3C5C, symBinAddr: 0x8230, symSize: 0x64 }
+  - { offset: 0x70D79, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40w, symObjAddr: 0x3CC0, symBinAddr: 0x8294, symSize: 0x30 }
+  - { offset: 0x70DA2, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40w, symObjAddr: 0x3CF0, symBinAddr: 0x82C4, symSize: 0x28 }
+  - { offset: 0x70DC1, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke.60', symObjAddr: 0x3D18, symBinAddr: 0x82EC, symSize: 0x64 }
+  - { offset: 0x70E30, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke_2', symObjAddr: 0x3D7C, symBinAddr: 0x8350, symSize: 0x1B8 }
+  - { offset: 0x70EFD, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40s48w, symObjAddr: 0x3F34, symBinAddr: 0x8508, symSize: 0x38 }
+  - { offset: 0x70F26, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s48w, symObjAddr: 0x3F6C, symBinAddr: 0x8540, symSize: 0x30 }
+  - { offset: 0x70F45, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke.71', symObjAddr: 0x3F9C, symBinAddr: 0x8570, symSize: 0xC0 }
+  - { offset: 0x70FC1, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke.75', symObjAddr: 0x405C, symBinAddr: 0x8630, symSize: 0x5C }
+  - { offset: 0x71041, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0x40B8, symBinAddr: 0x868C, symSize: 0x8 }
+  - { offset: 0x71068, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x40C0, symBinAddr: 0x8694, symSize: 0x8 }
+  - { offset: 0x71087, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke.76', symObjAddr: 0x40C8, symBinAddr: 0x869C, symSize: 0xF0 }
+  - { offset: 0x71123, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke.81', symObjAddr: 0x41B8, symBinAddr: 0x878C, symSize: 0x170 }
+  - { offset: 0x711C2, size: 0x8, addend: 0x0, symName: '___35-[IQKeyboardManager adjustPosition]_block_invoke.86', symObjAddr: 0x4328, symBinAddr: 0x88FC, symSize: 0x170 }
+  - { offset: 0x71261, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager restorePosition]', symObjAddr: 0x4498, symBinAddr: 0x8A6C, symSize: 0x164 }
+  - { offset: 0x712AD, size: 0x8, addend: 0x0, symName: '___36-[IQKeyboardManager restorePosition]_block_invoke', symObjAddr: 0x45FC, symBinAddr: 0x8BD0, symSize: 0x230 }
+  - { offset: 0x71358, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager reloadLayoutIfNeeded]', symObjAddr: 0x482C, symBinAddr: 0x8E00, symSize: 0x110 }
+  - { offset: 0x713AC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager keyboardWillShow:]', symObjAddr: 0x493C, symBinAddr: 0x8F10, symSize: 0x508 }
+  - { offset: 0x714FC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager keyboardWillHide:]', symObjAddr: 0x4E44, symBinAddr: 0x9418, symSize: 0x3F4 }
+  - { offset: 0x71608, size: 0x8, addend: 0x0, symName: '___38-[IQKeyboardManager keyboardWillHide:]_block_invoke', symObjAddr: 0x5238, symBinAddr: 0x980C, symSize: 0x54C }
+  - { offset: 0x7183D, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40s48w56w, symObjAddr: 0x5784, symBinAddr: 0x9D58, symSize: 0x44 }
+  - { offset: 0x71866, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s48w56w, symObjAddr: 0x57C8, symBinAddr: 0x9D9C, symSize: 0x38 }
+  - { offset: 0x71885, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager registerKeyboardSizeChangeWithIdentifier:sizeHandler:]', symObjAddr: 0x5800, symBinAddr: 0x9DD4, symSize: 0x6C }
+  - { offset: 0x718DB, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager unregisterKeyboardSizeChangeWithIdentifier:]', symObjAddr: 0x586C, symBinAddr: 0x9E40, symSize: 0x20 }
+  - { offset: 0x71920, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager notifyKeyboardSize:]', symObjAddr: 0x588C, symBinAddr: 0x9E60, symSize: 0x154 }
+  - { offset: 0x71989, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager textFieldViewDidBeginEditing:]', symObjAddr: 0x59E0, symBinAddr: 0x9FB4, symSize: 0x524 }
+  - { offset: 0x71AC0, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager textFieldViewDidEndEditing:]', symObjAddr: 0x5F04, symBinAddr: 0xA4D8, symSize: 0x480 }
+  - { offset: 0x71BFE, size: 0x8, addend: 0x0, symName: '___48-[IQKeyboardManager textFieldViewDidEndEditing:]_block_invoke', symObjAddr: 0x6384, symBinAddr: 0xA958, symSize: 0xC4 }
+  - { offset: 0x71C7B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager willChangeStatusBarOrientation:]', symObjAddr: 0x6448, symBinAddr: 0xAA1C, symSize: 0x434 }
+  - { offset: 0x71DCA, size: 0x8, addend: 0x0, symName: '___52-[IQKeyboardManager willChangeStatusBarOrientation:]_block_invoke', symObjAddr: 0x687C, symBinAddr: 0xAE50, symSize: 0xC4 }
+  - { offset: 0x71E47, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager tapRecognized:]', symObjAddr: 0x6940, symBinAddr: 0xAF14, symSize: 0x5C }
+  - { offset: 0x71E8C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager gestureRecognizer:shouldRecognizeSimultaneouslyWithGestureRecognizer:]', symObjAddr: 0x699C, symBinAddr: 0xAF70, symSize: 0x18 }
+  - { offset: 0x71EDA, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager gestureRecognizer:shouldReceiveTouch:]', symObjAddr: 0x69B4, symBinAddr: 0xAF88, symSize: 0x184 }
+  - { offset: 0x71F48, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager resignFirstResponder]', symObjAddr: 0x6B38, symBinAddr: 0xB10C, symSize: 0xE8 }
+  - { offset: 0x71FC2, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager canGoPrevious]', symObjAddr: 0x6C20, symBinAddr: 0xB1F4, symSize: 0xC0 }
+  - { offset: 0x7201C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager canGoNext]', symObjAddr: 0x6CE0, symBinAddr: 0xB2B4, symSize: 0xD0 }
+  - { offset: 0x72076, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager goPrevious]', symObjAddr: 0x6DB0, symBinAddr: 0xB384, symSize: 0x140 }
+  - { offset: 0x72101, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager goNext]', symObjAddr: 0x6EF0, symBinAddr: 0xB4C4, symSize: 0x150 }
+  - { offset: 0x7218C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager responderViews]', symObjAddr: 0x7040, symBinAddr: 0xB614, symSize: 0x23C }
+  - { offset: 0x72216, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager addToolbarIfRequired]', symObjAddr: 0x727C, symBinAddr: 0xB850, symSize: 0xC88 }
+  - { offset: 0x7235F, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager removeToolbarIfRequired]', symObjAddr: 0x7F04, symBinAddr: 0xC4D8, symSize: 0x32C }
+  - { offset: 0x72444, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager reloadInputViews]', symObjAddr: 0x8230, symBinAddr: 0xC804, symSize: 0x58 }
+  - { offset: 0x72478, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager previousAction:]', symObjAddr: 0x8288, symBinAddr: 0xC85C, symSize: 0x23C }
+  - { offset: 0x7252C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager nextAction:]', symObjAddr: 0x84C4, symBinAddr: 0xCA98, symSize: 0x23C }
+  - { offset: 0x725E0, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager doneAction:]', symObjAddr: 0x8700, symBinAddr: 0xCCD4, symSize: 0x220 }
+  - { offset: 0x72685, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager registerTextFieldViewClass:didBeginEditingNotificationName:didEndEditingNotificationName:]', symObjAddr: 0x8920, symBinAddr: 0xCEF4, symSize: 0xD4 }
+  - { offset: 0x726E8, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager unregisterTextFieldViewClass:didBeginEditingNotificationName:didEndEditingNotificationName:]', symObjAddr: 0x89F4, symBinAddr: 0xCFC8, symSize: 0xC4 }
+  - { offset: 0x7274B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager registerAllNotifications]', symObjAddr: 0x8AB8, symBinAddr: 0xD08C, symSize: 0x1B8 }
+  - { offset: 0x7277F, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager unregisterAllNotifications]', symObjAddr: 0x8C70, symBinAddr: 0xD244, symSize: 0x18C }
+  - { offset: 0x727B3, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager showLog:]', symObjAddr: 0x8DFC, symBinAddr: 0xD3D0, symSize: 0x18 }
+  - { offset: 0x72804, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager isEnabled]', symObjAddr: 0x8F6C, symBinAddr: 0xD540, symSize: 0x8 }
+  - { offset: 0x7283B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager keyboardDistanceFromTextField]', symObjAddr: 0x8F74, symBinAddr: 0xD548, symSize: 0x8 }
+  - { offset: 0x72870, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager overrideKeyboardAppearance]', symObjAddr: 0x8F7C, symBinAddr: 0xD550, symSize: 0x8 }
+  - { offset: 0x728A7, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setOverrideKeyboardAppearance:]', symObjAddr: 0x8F84, symBinAddr: 0xD558, symSize: 0x8 }
+  - { offset: 0x728E2, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager keyboardAppearance]', symObjAddr: 0x8F8C, symBinAddr: 0xD560, symSize: 0x8 }
+  - { offset: 0x72919, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setKeyboardAppearance:]', symObjAddr: 0x8F94, symBinAddr: 0xD568, symSize: 0x8 }
+  - { offset: 0x72956, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager isEnableAutoToolbar]', symObjAddr: 0x8F9C, symBinAddr: 0xD570, symSize: 0x8 }
+  - { offset: 0x7298D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarManageBehavior]', symObjAddr: 0x8FA4, symBinAddr: 0xD578, symSize: 0x8 }
+  - { offset: 0x729C4, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarManageBehavior:]', symObjAddr: 0x8FAC, symBinAddr: 0xD580, symSize: 0x8 }
+  - { offset: 0x72A01, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager shouldToolbarUsesTextFieldTintColor]', symObjAddr: 0x8FB4, symBinAddr: 0xD588, symSize: 0x8 }
+  - { offset: 0x72A38, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setShouldToolbarUsesTextFieldTintColor:]', symObjAddr: 0x8FBC, symBinAddr: 0xD590, symSize: 0x8 }
+  - { offset: 0x72A73, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarTintColor]', symObjAddr: 0x8FC4, symBinAddr: 0xD598, symSize: 0x8 }
+  - { offset: 0x72AAA, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarTintColor:]', symObjAddr: 0x8FCC, symBinAddr: 0xD5A0, symSize: 0xC }
+  - { offset: 0x72AEB, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarBarTintColor]', symObjAddr: 0x8FD8, symBinAddr: 0xD5AC, symSize: 0x8 }
+  - { offset: 0x72B22, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarBarTintColor:]', symObjAddr: 0x8FE0, symBinAddr: 0xD5B4, symSize: 0xC }
+  - { offset: 0x72B63, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager shouldShowToolbarPlaceholder]', symObjAddr: 0x8FEC, symBinAddr: 0xD5C0, symSize: 0x8 }
+  - { offset: 0x72B9A, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setShouldShowToolbarPlaceholder:]', symObjAddr: 0x8FF4, symBinAddr: 0xD5C8, symSize: 0x8 }
+  - { offset: 0x72BD5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager placeholderFont]', symObjAddr: 0x8FFC, symBinAddr: 0xD5D0, symSize: 0x8 }
+  - { offset: 0x72C0C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setPlaceholderFont:]', symObjAddr: 0x9004, symBinAddr: 0xD5D8, symSize: 0xC }
+  - { offset: 0x72C4D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager placeholderColor]', symObjAddr: 0x9010, symBinAddr: 0xD5E4, symSize: 0x8 }
+  - { offset: 0x72C84, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setPlaceholderColor:]', symObjAddr: 0x9018, symBinAddr: 0xD5EC, symSize: 0xC }
+  - { offset: 0x72CC5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager placeholderButtonColor]', symObjAddr: 0x9024, symBinAddr: 0xD5F8, symSize: 0x8 }
+  - { offset: 0x72CFC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setPlaceholderButtonColor:]', symObjAddr: 0x902C, symBinAddr: 0xD600, symSize: 0xC }
+  - { offset: 0x72D3D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager shouldResignOnTouchOutside]', symObjAddr: 0x9038, symBinAddr: 0xD60C, symSize: 0x8 }
+  - { offset: 0x72D74, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager resignFirstResponderGesture]', symObjAddr: 0x9040, symBinAddr: 0xD614, symSize: 0x8 }
+  - { offset: 0x72DAB, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setResignFirstResponderGesture:]', symObjAddr: 0x9048, symBinAddr: 0xD61C, symSize: 0xC }
+  - { offset: 0x72DEC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager shouldPlayInputClicks]', symObjAddr: 0x9054, symBinAddr: 0xD628, symSize: 0x8 }
+  - { offset: 0x72E23, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setShouldPlayInputClicks:]', symObjAddr: 0x905C, symBinAddr: 0xD630, symSize: 0x8 }
+  - { offset: 0x72E5E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager layoutIfNeededOnUpdate]', symObjAddr: 0x9064, symBinAddr: 0xD638, symSize: 0x8 }
+  - { offset: 0x72E95, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setLayoutIfNeededOnUpdate:]', symObjAddr: 0x906C, symBinAddr: 0xD640, symSize: 0x8 }
+  - { offset: 0x72ED0, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager isKeyboardShowing]', symObjAddr: 0x9074, symBinAddr: 0xD648, symSize: 0x8 }
+  - { offset: 0x72F07, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager movedDistance]', symObjAddr: 0x907C, symBinAddr: 0xD650, symSize: 0x8 }
+  - { offset: 0x72F3C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager movedDistanceChanged]', symObjAddr: 0x9084, symBinAddr: 0xD658, symSize: 0x8 }
+  - { offset: 0x72F73, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setMovedDistanceChanged:]', symObjAddr: 0x908C, symBinAddr: 0xD660, symSize: 0x8 }
+  - { offset: 0x72FB2, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager previousNextDisplayMode]', symObjAddr: 0x9094, symBinAddr: 0xD668, symSize: 0x8 }
+  - { offset: 0x72FE9, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setPreviousNextDisplayMode:]', symObjAddr: 0x909C, symBinAddr: 0xD670, symSize: 0x8 }
+  - { offset: 0x73026, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarPreviousBarButtonItemImage]', symObjAddr: 0x90A4, symBinAddr: 0xD678, symSize: 0x8 }
+  - { offset: 0x7305D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarPreviousBarButtonItemImage:]', symObjAddr: 0x90AC, symBinAddr: 0xD680, symSize: 0xC }
+  - { offset: 0x7309E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarNextBarButtonItemImage]', symObjAddr: 0x90B8, symBinAddr: 0xD68C, symSize: 0x8 }
+  - { offset: 0x730D5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarNextBarButtonItemImage:]', symObjAddr: 0x90C0, symBinAddr: 0xD694, symSize: 0xC }
+  - { offset: 0x73116, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarDoneBarButtonItemImage]', symObjAddr: 0x90CC, symBinAddr: 0xD6A0, symSize: 0x8 }
+  - { offset: 0x7314D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarDoneBarButtonItemImage:]', symObjAddr: 0x90D4, symBinAddr: 0xD6A8, symSize: 0xC }
+  - { offset: 0x7318E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarPreviousBarButtonItemText]', symObjAddr: 0x90E0, symBinAddr: 0xD6B4, symSize: 0x8 }
+  - { offset: 0x731C5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarPreviousBarButtonItemText:]', symObjAddr: 0x90E8, symBinAddr: 0xD6BC, symSize: 0xC }
+  - { offset: 0x73206, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarPreviousBarButtonItemAccessibilityLabel]', symObjAddr: 0x90F4, symBinAddr: 0xD6C8, symSize: 0x8 }
+  - { offset: 0x7323D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarPreviousBarButtonItemAccessibilityLabel:]', symObjAddr: 0x90FC, symBinAddr: 0xD6D0, symSize: 0xC }
+  - { offset: 0x7327E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarNextBarButtonItemText]', symObjAddr: 0x9108, symBinAddr: 0xD6DC, symSize: 0x8 }
+  - { offset: 0x732B5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarNextBarButtonItemText:]', symObjAddr: 0x9110, symBinAddr: 0xD6E4, symSize: 0xC }
+  - { offset: 0x732F6, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarNextBarButtonItemAccessibilityLabel]', symObjAddr: 0x911C, symBinAddr: 0xD6F0, symSize: 0x8 }
+  - { offset: 0x7332D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarNextBarButtonItemAccessibilityLabel:]', symObjAddr: 0x9124, symBinAddr: 0xD6F8, symSize: 0xC }
+  - { offset: 0x7336E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarDoneBarButtonItemText]', symObjAddr: 0x9130, symBinAddr: 0xD704, symSize: 0x8 }
+  - { offset: 0x733A5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarDoneBarButtonItemText:]', symObjAddr: 0x9138, symBinAddr: 0xD70C, symSize: 0xC }
+  - { offset: 0x733E6, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarDoneBarButtonItemAccessibilityLabel]', symObjAddr: 0x9144, symBinAddr: 0xD718, symSize: 0x8 }
+  - { offset: 0x7341D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarDoneBarButtonItemAccessibilityLabel:]', symObjAddr: 0x914C, symBinAddr: 0xD720, symSize: 0xC }
+  - { offset: 0x7345E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager disabledDistanceHandlingClasses]', symObjAddr: 0x9158, symBinAddr: 0xD72C, symSize: 0x8 }
+  - { offset: 0x73496, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setDisabledDistanceHandlingClasses:]', symObjAddr: 0x9160, symBinAddr: 0xD734, symSize: 0xC }
+  - { offset: 0x734D7, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager enabledDistanceHandlingClasses]', symObjAddr: 0x916C, symBinAddr: 0xD740, symSize: 0x8 }
+  - { offset: 0x7350F, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setEnabledDistanceHandlingClasses:]', symObjAddr: 0x9174, symBinAddr: 0xD748, symSize: 0xC }
+  - { offset: 0x73550, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager disabledToolbarClasses]', symObjAddr: 0x9180, symBinAddr: 0xD754, symSize: 0x8 }
+  - { offset: 0x73588, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setDisabledToolbarClasses:]', symObjAddr: 0x9188, symBinAddr: 0xD75C, symSize: 0xC }
+  - { offset: 0x735C9, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager enabledToolbarClasses]', symObjAddr: 0x9194, symBinAddr: 0xD768, symSize: 0x8 }
+  - { offset: 0x73601, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setEnabledToolbarClasses:]', symObjAddr: 0x919C, symBinAddr: 0xD770, symSize: 0xC }
+  - { offset: 0x73642, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager toolbarPreviousNextAllowedClasses]', symObjAddr: 0x91A8, symBinAddr: 0xD77C, symSize: 0x8 }
+  - { offset: 0x7367A, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setToolbarPreviousNextAllowedClasses:]', symObjAddr: 0x91B0, symBinAddr: 0xD784, symSize: 0xC }
+  - { offset: 0x736BB, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager disabledTouchResignedClasses]', symObjAddr: 0x91BC, symBinAddr: 0xD790, symSize: 0x8 }
+  - { offset: 0x736F3, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setDisabledTouchResignedClasses:]', symObjAddr: 0x91C4, symBinAddr: 0xD798, symSize: 0xC }
+  - { offset: 0x73734, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager enabledTouchResignedClasses]', symObjAddr: 0x91D0, symBinAddr: 0xD7A4, symSize: 0x8 }
+  - { offset: 0x7376C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setEnabledTouchResignedClasses:]', symObjAddr: 0x91D8, symBinAddr: 0xD7AC, symSize: 0xC }
+  - { offset: 0x737AD, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager touchResignedGestureIgnoreClasses]', symObjAddr: 0x91E4, symBinAddr: 0xD7B8, symSize: 0x8 }
+  - { offset: 0x737E5, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setTouchResignedGestureIgnoreClasses:]', symObjAddr: 0x91EC, symBinAddr: 0xD7C0, symSize: 0xC }
+  - { offset: 0x73826, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager enableDebugging]', symObjAddr: 0x91F8, symBinAddr: 0xD7CC, symSize: 0x8 }
+  - { offset: 0x7385E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setEnableDebugging:]', symObjAddr: 0x9200, symBinAddr: 0xD7D4, symSize: 0x8 }
+  - { offset: 0x7389A, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager startingTextViewContentInsets]', symObjAddr: 0x9208, symBinAddr: 0xD7DC, symSize: 0xC }
+  - { offset: 0x738CF, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setStartingTextViewContentInsets:]', symObjAddr: 0x9214, symBinAddr: 0xD7E8, symSize: 0xC }
+  - { offset: 0x7390E, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager startingTextViewScrollIndicatorInsets]', symObjAddr: 0x9220, symBinAddr: 0xD7F4, symSize: 0xC }
+  - { offset: 0x73943, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setStartingTextViewScrollIndicatorInsets:]', symObjAddr: 0x922C, symBinAddr: 0xD800, symSize: 0xC }
+  - { offset: 0x73982, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager isTextViewContentInsetChanged]', symObjAddr: 0x9238, symBinAddr: 0xD80C, symSize: 0x8 }
+  - { offset: 0x739B9, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setIsTextViewContentInsetChanged:]', symObjAddr: 0x9240, symBinAddr: 0xD814, symSize: 0x8 }
+  - { offset: 0x739F4, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager textFieldView]', symObjAddr: 0x9248, symBinAddr: 0xD81C, symSize: 0x18 }
+  - { offset: 0x73A2B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setTextFieldView:]', symObjAddr: 0x9260, symBinAddr: 0xD834, symSize: 0xC }
+  - { offset: 0x73A6C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager topViewBeginOrigin]', symObjAddr: 0x926C, symBinAddr: 0xD840, symSize: 0x8 }
+  - { offset: 0x73AA1, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setTopViewBeginOrigin:]', symObjAddr: 0x9274, symBinAddr: 0xD848, symSize: 0x8 }
+  - { offset: 0x73AE0, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager topViewBeginSafeAreaInsets]', symObjAddr: 0x927C, symBinAddr: 0xD850, symSize: 0xC }
+  - { offset: 0x73B15, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setTopViewBeginSafeAreaInsets:]', symObjAddr: 0x9288, symBinAddr: 0xD85C, symSize: 0xC }
+  - { offset: 0x73B54, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager rootViewController]', symObjAddr: 0x9294, symBinAddr: 0xD868, symSize: 0x18 }
+  - { offset: 0x73B8B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setRootViewController:]', symObjAddr: 0x92AC, symBinAddr: 0xD880, symSize: 0xC }
+  - { offset: 0x73BCC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager rootViewControllerWhilePopGestureRecognizerActive]', symObjAddr: 0x92B8, symBinAddr: 0xD88C, symSize: 0x18 }
+  - { offset: 0x73C03, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setRootViewControllerWhilePopGestureRecognizerActive:]', symObjAddr: 0x92D0, symBinAddr: 0xD8A4, symSize: 0xC }
+  - { offset: 0x73C44, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager topViewBeginOriginWhilePopGestureRecognizerActive]', symObjAddr: 0x92DC, symBinAddr: 0xD8B0, symSize: 0x8 }
+  - { offset: 0x73C79, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setTopViewBeginOriginWhilePopGestureRecognizerActive:]', symObjAddr: 0x92E4, symBinAddr: 0xD8B8, symSize: 0x8 }
+  - { offset: 0x73CB8, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager lastScrollView]', symObjAddr: 0x92EC, symBinAddr: 0xD8C0, symSize: 0x18 }
+  - { offset: 0x73CEF, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setLastScrollView:]', symObjAddr: 0x9304, symBinAddr: 0xD8D8, symSize: 0xC }
+  - { offset: 0x73D30, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager startingContentInsets]', symObjAddr: 0x9310, symBinAddr: 0xD8E4, symSize: 0x14 }
+  - { offset: 0x73D65, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setStartingContentInsets:]', symObjAddr: 0x9324, symBinAddr: 0xD8F8, symSize: 0x14 }
+  - { offset: 0x73DA4, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager startingScrollIndicatorInsets]', symObjAddr: 0x9338, symBinAddr: 0xD90C, symSize: 0x14 }
+  - { offset: 0x73DD9, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setStartingScrollIndicatorInsets:]', symObjAddr: 0x934C, symBinAddr: 0xD920, symSize: 0x14 }
+  - { offset: 0x73E18, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager startingContentOffset]', symObjAddr: 0x9360, symBinAddr: 0xD934, symSize: 0x8 }
+  - { offset: 0x73E4D, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setStartingContentOffset:]', symObjAddr: 0x9368, symBinAddr: 0xD93C, symSize: 0x8 }
+  - { offset: 0x73E8C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager animationDuration]', symObjAddr: 0x9370, symBinAddr: 0xD944, symSize: 0x8 }
+  - { offset: 0x73EC1, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setAnimationDuration:]', symObjAddr: 0x9378, symBinAddr: 0xD94C, symSize: 0x8 }
+  - { offset: 0x73EFF, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager animationCurve]', symObjAddr: 0x9380, symBinAddr: 0xD954, symSize: 0x8 }
+  - { offset: 0x73F36, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager setAnimationCurve:]', symObjAddr: 0x9388, symBinAddr: 0xD95C, symSize: 0x8 }
+  - { offset: 0x73F73, size: 0x8, addend: 0x0, symName: '-[IQKeyboardManager .cxx_destruct]', symObjAddr: 0x9390, symBinAddr: 0xD964, symSize: 0x170 }
+  - { offset: 0x74AA8, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel initWithTextFieldView:textFieldDelegate:textViewDelegate:originalReturnKey:]', symObjAddr: 0x0, symBinAddr: 0xDAD4, symSize: 0xEC }
+  - { offset: 0x74BF5, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel initWithTextFieldView:textFieldDelegate:textViewDelegate:originalReturnKey:]', symObjAddr: 0x0, symBinAddr: 0xDAD4, symSize: 0xEC }
+  - { offset: 0x74C6C, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel textFieldView]', symObjAddr: 0xEC, symBinAddr: 0xDBC0, symSize: 0x18 }
+  - { offset: 0x74CA3, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel setTextFieldView:]', symObjAddr: 0x104, symBinAddr: 0xDBD8, symSize: 0xC }
+  - { offset: 0x74CE4, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel textFieldDelegate]', symObjAddr: 0x110, symBinAddr: 0xDBE4, symSize: 0x18 }
+  - { offset: 0x74D1B, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel setTextFieldDelegate:]', symObjAddr: 0x128, symBinAddr: 0xDBFC, symSize: 0xC }
+  - { offset: 0x74D5C, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel textViewDelegate]', symObjAddr: 0x134, symBinAddr: 0xDC08, symSize: 0x18 }
+  - { offset: 0x74D93, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel setTextViewDelegate:]', symObjAddr: 0x14C, symBinAddr: 0xDC20, symSize: 0xC }
+  - { offset: 0x74DD4, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel originalReturnKeyType]', symObjAddr: 0x158, symBinAddr: 0xDC2C, symSize: 0x8 }
+  - { offset: 0x74E0B, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel setOriginalReturnKeyType:]', symObjAddr: 0x160, symBinAddr: 0xDC34, symSize: 0x8 }
+  - { offset: 0x74E48, size: 0x8, addend: 0x0, symName: '-[IQTextFieldViewInfoModel .cxx_destruct]', symObjAddr: 0x168, symBinAddr: 0xDC3C, symSize: 0x30 }
+  - { offset: 0x74E7B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler init]', symObjAddr: 0x198, symBinAddr: 0xDC6C, symSize: 0x18 }
+  - { offset: 0x74EB2, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler initWithViewController:]', symObjAddr: 0x1B0, symBinAddr: 0xDC84, symSize: 0xF8 }
+  - { offset: 0x74EF9, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldViewCachedInfo:]', symObjAddr: 0x2A8, symBinAddr: 0xDD7C, symSize: 0x174 }
+  - { offset: 0x74F57, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler addResponderFromView:]', symObjAddr: 0x41C, symBinAddr: 0xDEF0, symSize: 0x124 }
+  - { offset: 0x74FC1, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler removeResponderFromView:]', symObjAddr: 0x540, symBinAddr: 0xE014, symSize: 0x124 }
+  - { offset: 0x7502B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler removeTextFieldView:]', symObjAddr: 0x664, symBinAddr: 0xE138, symSize: 0x120 }
+  - { offset: 0x75099, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler addTextFieldView:]', symObjAddr: 0x784, symBinAddr: 0xE258, symSize: 0x11C }
+  - { offset: 0x750F8, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler updateReturnKeyTypeOnTextField:]', symObjAddr: 0x8A0, symBinAddr: 0xE374, symSize: 0x2D0 }
+  - { offset: 0x75172, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler goToNextResponderOrResign:]', symObjAddr: 0xB70, symBinAddr: 0xE644, symSize: 0x318 }
+  - { offset: 0x751FD, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldShouldBeginEditing:]', symObjAddr: 0xE88, symBinAddr: 0xE95C, symSize: 0xE8 }
+  - { offset: 0x75277, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldDidBeginEditing:]', symObjAddr: 0xF70, symBinAddr: 0xEA44, symSize: 0xE0 }
+  - { offset: 0x752ED, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldShouldEndEditing:]', symObjAddr: 0x1050, symBinAddr: 0xEB24, symSize: 0xE8 }
+  - { offset: 0x75367, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldDidEndEditing:]', symObjAddr: 0x1138, symBinAddr: 0xEC0C, symSize: 0xD4 }
+  - { offset: 0x753DD, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldDidEndEditing:reason:]', symObjAddr: 0x120C, symBinAddr: 0xECE0, symSize: 0xDC }
+  - { offset: 0x75464, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textField:shouldChangeCharactersInRange:replacementString:]', symObjAddr: 0x12E8, symBinAddr: 0xEDBC, symSize: 0x11C }
+  - { offset: 0x754FC, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textField:editMenuForCharactersInRange:suggestedActions:]', symObjAddr: 0x1404, symBinAddr: 0xEED8, symSize: 0x124 }
+  - { offset: 0x75594, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textField:willPresentEditMenuWithAnimator:]', symObjAddr: 0x1528, symBinAddr: 0xEFFC, symSize: 0xF0 }
+  - { offset: 0x7561B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textField:willDismissEditMenuWithAnimator:]', symObjAddr: 0x1618, symBinAddr: 0xF0EC, symSize: 0xF0 }
+  - { offset: 0x756A2, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldShouldClear:]', symObjAddr: 0x1708, symBinAddr: 0xF1DC, symSize: 0xE8 }
+  - { offset: 0x7571C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textFieldShouldReturn:]', symObjAddr: 0x17F0, symBinAddr: 0xF2C4, symSize: 0x108 }
+  - { offset: 0x757B2, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textViewShouldBeginEditing:]', symObjAddr: 0x18F8, symBinAddr: 0xF3CC, symSize: 0xE8 }
+  - { offset: 0x7582C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textViewShouldEndEditing:]', symObjAddr: 0x19E0, symBinAddr: 0xF4B4, symSize: 0xE8 }
+  - { offset: 0x758A6, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textViewDidBeginEditing:]', symObjAddr: 0x1AC8, symBinAddr: 0xF59C, symSize: 0xE0 }
+  - { offset: 0x7591C, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textViewDidEndEditing:]', symObjAddr: 0x1BA8, symBinAddr: 0xF67C, symSize: 0xD4 }
+  - { offset: 0x75992, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:shouldChangeTextInRange:replacementText:]', symObjAddr: 0x1C7C, symBinAddr: 0xF750, symSize: 0x180 }
+  - { offset: 0x75A3B, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textViewDidChange:]', symObjAddr: 0x1DFC, symBinAddr: 0xF8D0, symSize: 0xD4 }
+  - { offset: 0x75AB1, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textViewDidChangeSelection:]', symObjAddr: 0x1ED0, symBinAddr: 0xF9A4, symSize: 0xD4 }
+  - { offset: 0x75B27, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:shouldInteractWithURL:inRange:interaction:]', symObjAddr: 0x1FA4, symBinAddr: 0xFA78, symSize: 0x12C }
+  - { offset: 0x75BD0, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:shouldInteractWithTextAttachment:inRange:interaction:]', symObjAddr: 0x20D0, symBinAddr: 0xFBA4, symSize: 0x12C }
+  - { offset: 0x75C79, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:editMenuForTextInRange:suggestedActions:]', symObjAddr: 0x21FC, symBinAddr: 0xFCD0, symSize: 0x124 }
+  - { offset: 0x75D11, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:willPresentEditMenuWithAnimator:]', symObjAddr: 0x2320, symBinAddr: 0xFDF4, symSize: 0xF0 }
+  - { offset: 0x75D98, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:willDismissEditMenuWithAnimator:]', symObjAddr: 0x2410, symBinAddr: 0xFEE4, symSize: 0xF0 }
+  - { offset: 0x75E1F, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:primaryActionForTextItem:defaultAction:]', symObjAddr: 0x2500, symBinAddr: 0xFFD4, symSize: 0x130 }
+  - { offset: 0x75EBB, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:menuConfigurationForTextItem:defaultMenu:]', symObjAddr: 0x2630, symBinAddr: 0x10104, symSize: 0x130 }
+  - { offset: 0x75F57, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:textItemMenuWillDisplayForTextItem:animator:]', symObjAddr: 0x2760, symBinAddr: 0x10234, symSize: 0x114 }
+  - { offset: 0x75FEF, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler textView:textItemMenuWillEndForTextItem:animator:]', symObjAddr: 0x2874, symBinAddr: 0x10348, symSize: 0x114 }
+  - { offset: 0x76087, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler dealloc]', symObjAddr: 0x2988, symBinAddr: 0x1045C, symSize: 0x1E8 }
+  - { offset: 0x760EB, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler lastTextFieldReturnKeyType]', symObjAddr: 0x2B70, symBinAddr: 0x10644, symSize: 0x8 }
+  - { offset: 0x76122, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler setLastTextFieldReturnKeyType:]', symObjAddr: 0x2B78, symBinAddr: 0x1064C, symSize: 0x8 }
+  - { offset: 0x7615F, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler delegate]', symObjAddr: 0x2B80, symBinAddr: 0x10654, symSize: 0x18 }
+  - { offset: 0x76196, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler setDelegate:]', symObjAddr: 0x2B98, symBinAddr: 0x1066C, symSize: 0xC }
+  - { offset: 0x761D7, size: 0x8, addend: 0x0, symName: '-[IQKeyboardReturnKeyHandler .cxx_destruct]', symObjAddr: 0x2BA4, symBinAddr: 0x10678, symSize: 0x2C }
+  - { offset: 0x76318, size: 0x8, addend: 0x0, symName: '-[NSArray(IQ_NSArray_Sort) sortedArrayByTag]', symObjAddr: 0x0, symBinAddr: 0x106A4, symSize: 0x1C }
+  - { offset: 0x76326, size: 0x8, addend: 0x0, symName: '-[NSArray(IQ_NSArray_Sort) sortedArrayByTag]', symObjAddr: 0x0, symBinAddr: 0x106A4, symSize: 0x1C }
+  - { offset: 0x7635B, size: 0x8, addend: 0x0, symName: '___44-[NSArray(IQ_NSArray_Sort) sortedArrayByTag]_block_invoke', symObjAddr: 0x1C, symBinAddr: 0x106C0, symSize: 0x11C }
+  - { offset: 0x763A6, size: 0x8, addend: 0x0, symName: '-[NSArray(IQ_NSArray_Sort) sortedArrayByPosition]', symObjAddr: 0x138, symBinAddr: 0x107DC, symSize: 0x1C }
+  - { offset: 0x763DB, size: 0x8, addend: 0x0, symName: '___49-[NSArray(IQ_NSArray_Sort) sortedArrayByPosition]_block_invoke', symObjAddr: 0x154, symBinAddr: 0x107F8, symSize: 0x15C }
+  - { offset: 0x76614, size: 0x8, addend: 0x0, symName: '-[IQTextView initialize]', symObjAddr: 0x0, symBinAddr: 0x10954, symSize: 0x68 }
+  - { offset: 0x766AF, size: 0x8, addend: 0x0, symName: '-[IQTextView initialize]', symObjAddr: 0x0, symBinAddr: 0x10954, symSize: 0x68 }
+  - { offset: 0x766E2, size: 0x8, addend: 0x0, symName: '-[IQTextView dealloc]', symObjAddr: 0x68, symBinAddr: 0x109BC, symSize: 0x94 }
+  - { offset: 0x76715, size: 0x8, addend: 0x0, symName: '-[IQTextView init]', symObjAddr: 0xFC, symBinAddr: 0x10A50, symSize: 0x70 }
+  - { offset: 0x7674C, size: 0x8, addend: 0x0, symName: '-[IQTextView awakeFromNib]', symObjAddr: 0x16C, symBinAddr: 0x10AC0, symSize: 0x58 }
+  - { offset: 0x7677F, size: 0x8, addend: 0x0, symName: '-[IQTextView refreshPlaceholder]', symObjAddr: 0x1C4, symBinAddr: 0x10B18, symSize: 0x178 }
+  - { offset: 0x767B2, size: 0x8, addend: 0x0, symName: '-[IQTextView setText:]', symObjAddr: 0x33C, symBinAddr: 0x10C90, symSize: 0x58 }
+  - { offset: 0x767F5, size: 0x8, addend: 0x0, symName: '-[IQTextView setAttributedText:]', symObjAddr: 0x394, symBinAddr: 0x10CE8, symSize: 0x58 }
+  - { offset: 0x76838, size: 0x8, addend: 0x0, symName: '-[IQTextView setFont:]', symObjAddr: 0x3EC, symBinAddr: 0x10D40, symSize: 0xA8 }
+  - { offset: 0x7687B, size: 0x8, addend: 0x0, symName: '-[IQTextView setTextAlignment:]', symObjAddr: 0x494, symBinAddr: 0x10DE8, symSize: 0x90 }
+  - { offset: 0x768BE, size: 0x8, addend: 0x0, symName: '-[IQTextView layoutSubviews]', symObjAddr: 0x524, symBinAddr: 0x10E78, symSize: 0xA8 }
+  - { offset: 0x768F1, size: 0x8, addend: 0x0, symName: '-[IQTextView setPlaceholder:]', symObjAddr: 0x5CC, symBinAddr: 0x10F20, symSize: 0x88 }
+  - { offset: 0x76934, size: 0x8, addend: 0x0, symName: '-[IQTextView setAttributedPlaceholder:]', symObjAddr: 0x654, symBinAddr: 0x10FA8, symSize: 0x88 }
+  - { offset: 0x76977, size: 0x8, addend: 0x0, symName: '-[IQTextView setPlaceholderTextColor:]', symObjAddr: 0x6DC, symBinAddr: 0x11030, symSize: 0x78 }
+  - { offset: 0x769BA, size: 0x8, addend: 0x0, symName: '-[IQTextView placeholderInsets]', symObjAddr: 0x754, symBinAddr: 0x110A8, symSize: 0xC0 }
+  - { offset: 0x769F1, size: 0x8, addend: 0x0, symName: '-[IQTextView placeholderExpectedFrame]', symObjAddr: 0x814, symBinAddr: 0x11168, symSize: 0xB4 }
+  - { offset: 0x76A9F, size: 0x8, addend: 0x0, symName: '-[IQTextView placeholderLabel]', symObjAddr: 0x8C8, symBinAddr: 0x1121C, symSize: 0x164 }
+  - { offset: 0x76AD6, size: 0x8, addend: 0x0, symName: '-[IQTextView delegate]', symObjAddr: 0xA2C, symBinAddr: 0x11380, symSize: 0x5C }
+  - { offset: 0x76B0D, size: 0x8, addend: 0x0, symName: '-[IQTextView intrinsicContentSize]', symObjAddr: 0xA88, symBinAddr: 0x113DC, symSize: 0xC4 }
+  - { offset: 0x76B64, size: 0x8, addend: 0x0, symName: '-[IQTextView caretRectForPosition:]', symObjAddr: 0xB4C, symBinAddr: 0x114A0, symSize: 0x1AC }
+  - { offset: 0x76BE6, size: 0x8, addend: 0x0, symName: '-[IQTextView placeholder]', symObjAddr: 0xCF8, symBinAddr: 0x1164C, symSize: 0x10 }
+  - { offset: 0x76C1D, size: 0x8, addend: 0x0, symName: '-[IQTextView setPlaceholderLabel:]', symObjAddr: 0xD08, symBinAddr: 0x1165C, symSize: 0x14 }
+  - { offset: 0x76C5E, size: 0x8, addend: 0x0, symName: '-[IQTextView placeholderTextColor]', symObjAddr: 0xD1C, symBinAddr: 0x11670, symSize: 0x10 }
+  - { offset: 0x76C95, size: 0x8, addend: 0x0, symName: '-[IQTextView attributedPlaceholder]', symObjAddr: 0xD2C, symBinAddr: 0x11680, symSize: 0x10 }
+  - { offset: 0x76CCC, size: 0x8, addend: 0x0, symName: '-[IQTextView .cxx_destruct]', symObjAddr: 0xD3C, symBinAddr: 0x11690, symSize: 0x68 }
+  - { offset: 0x76D94, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem initWithTitle:]', symObjAddr: 0x0, symBinAddr: 0x116F8, symSize: 0x464 }
+  - { offset: 0x76EC6, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem initWithTitle:]', symObjAddr: 0x0, symBinAddr: 0x116F8, symSize: 0x464 }
+  - { offset: 0x76F7C, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setTitleFont:]', symObjAddr: 0x464, symBinAddr: 0x11B5C, symSize: 0xE8 }
+  - { offset: 0x76FBF, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setTitle:]', symObjAddr: 0x54C, symBinAddr: 0x11C44, symSize: 0x94 }
+  - { offset: 0x77002, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setTitleColor:]', symObjAddr: 0x5E0, symBinAddr: 0x11CD8, symSize: 0xC0 }
+  - { offset: 0x77045, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setSelectableTitleColor:]', symObjAddr: 0x6A0, symBinAddr: 0x11D98, symSize: 0xD8 }
+  - { offset: 0x77088, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setInvocation:]', symObjAddr: 0x778, symBinAddr: 0x11E70, symSize: 0x168 }
+  - { offset: 0x770CB, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem updateAccessibility]', symObjAddr: 0x8E0, symBinAddr: 0x11FD8, symSize: 0x130 }
+  - { offset: 0x770FE, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem dealloc]', symObjAddr: 0xA10, symBinAddr: 0x12108, symSize: 0x94 }
+  - { offset: 0x77131, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem titleFont]', symObjAddr: 0xAA4, symBinAddr: 0x1219C, symSize: 0x10 }
+  - { offset: 0x77168, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem titleColor]', symObjAddr: 0xAB4, symBinAddr: 0x121AC, symSize: 0x10 }
+  - { offset: 0x7719F, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem selectableTitleColor]', symObjAddr: 0xAC4, symBinAddr: 0x121BC, symSize: 0x10 }
+  - { offset: 0x771D6, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem titleView]', symObjAddr: 0xAD4, symBinAddr: 0x121CC, symSize: 0x10 }
+  - { offset: 0x7720D, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setTitleView:]', symObjAddr: 0xAE4, symBinAddr: 0x121DC, symSize: 0x14 }
+  - { offset: 0x7724E, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem titleButton]', symObjAddr: 0xAF8, symBinAddr: 0x121F0, symSize: 0x10 }
+  - { offset: 0x77285, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem setTitleButton:]', symObjAddr: 0xB08, symBinAddr: 0x12200, symSize: 0x14 }
+  - { offset: 0x772C6, size: 0x8, addend: 0x0, symName: '-[IQTitleBarButtonItem .cxx_destruct]', symObjAddr: 0xB1C, symBinAddr: 0x12214, symSize: 0x7C }
+  - { offset: 0x7739C, size: 0x8, addend: 0x0, symName: '-[IQToolbar initialize]', symObjAddr: 0x0, symBinAddr: 0x12290, symSize: 0x164 }
+  - { offset: 0x774BF, size: 0x8, addend: 0x0, symName: '-[IQToolbar initialize]', symObjAddr: 0x0, symBinAddr: 0x12290, symSize: 0x164 }
+  - { offset: 0x77538, size: 0x8, addend: 0x0, symName: '-[IQToolbar initWithFrame:]', symObjAddr: 0x164, symBinAddr: 0x123F4, symSize: 0x70 }
+  - { offset: 0x7757B, size: 0x8, addend: 0x0, symName: '-[IQToolbar initWithCoder:]', symObjAddr: 0x1D4, symBinAddr: 0x12464, symSize: 0x70 }
+  - { offset: 0x775C2, size: 0x8, addend: 0x0, symName: '-[IQToolbar dealloc]', symObjAddr: 0x244, symBinAddr: 0x124D4, symSize: 0x58 }
+  - { offset: 0x775F5, size: 0x8, addend: 0x0, symName: '-[IQToolbar previousBarButton]', symObjAddr: 0x29C, symBinAddr: 0x1252C, symSize: 0x80 }
+  - { offset: 0x7762C, size: 0x8, addend: 0x0, symName: '-[IQToolbar nextBarButton]', symObjAddr: 0x31C, symBinAddr: 0x125AC, symSize: 0x80 }
+  - { offset: 0x77663, size: 0x8, addend: 0x0, symName: '-[IQToolbar titleBarButton]', symObjAddr: 0x39C, symBinAddr: 0x1262C, symSize: 0x74 }
+  - { offset: 0x7769A, size: 0x8, addend: 0x0, symName: '-[IQToolbar doneBarButton]', symObjAddr: 0x410, symBinAddr: 0x126A0, symSize: 0x7C }
+  - { offset: 0x776D1, size: 0x8, addend: 0x0, symName: '-[IQToolbar fixedSpaceBarButton]', symObjAddr: 0x48C, symBinAddr: 0x1271C, symSize: 0x88 }
+  - { offset: 0x77708, size: 0x8, addend: 0x0, symName: '-[IQToolbar sizeThatFits:]', symObjAddr: 0x514, symBinAddr: 0x127A4, symSize: 0x4C }
+  - { offset: 0x7775B, size: 0x8, addend: 0x0, symName: '-[IQToolbar setTintColor:]', symObjAddr: 0x560, symBinAddr: 0x127F0, symSize: 0x158 }
+  - { offset: 0x777B5, size: 0x8, addend: 0x0, symName: '-[IQToolbar enableInputClicksWhenVisible]', symObjAddr: 0x6B8, symBinAddr: 0x12948, symSize: 0x18 }
+  - { offset: 0x777E8, size: 0x8, addend: 0x0, symName: '-[IQToolbar setPreviousBarButton:]', symObjAddr: 0x6D0, symBinAddr: 0x12960, symSize: 0x14 }
+  - { offset: 0x77829, size: 0x8, addend: 0x0, symName: '-[IQToolbar setNextBarButton:]', symObjAddr: 0x6E4, symBinAddr: 0x12974, symSize: 0x14 }
+  - { offset: 0x7786A, size: 0x8, addend: 0x0, symName: '-[IQToolbar setDoneBarButton:]', symObjAddr: 0x6F8, symBinAddr: 0x12988, symSize: 0x14 }
+  - { offset: 0x778AB, size: 0x8, addend: 0x0, symName: '-[IQToolbar setFixedSpaceBarButton:]', symObjAddr: 0x70C, symBinAddr: 0x1299C, symSize: 0x14 }
+  - { offset: 0x778EC, size: 0x8, addend: 0x0, symName: '-[IQToolbar .cxx_destruct]', symObjAddr: 0x720, symBinAddr: 0x129B0, symSize: 0x7C }
+  - { offset: 0x779DD, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) setShouldIgnoreScrollingAdjustment:]', symObjAddr: 0x0, symBinAddr: 0x12A2C, symSize: 0x6C }
+  - { offset: 0x779EB, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) setShouldIgnoreScrollingAdjustment:]', symObjAddr: 0x0, symBinAddr: 0x12A2C, symSize: 0x6C }
+  - { offset: 0x77AA5, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) shouldIgnoreScrollingAdjustment]', symObjAddr: 0x6C, symBinAddr: 0x12A98, symSize: 0x54 }
+  - { offset: 0x77B1B, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) setShouldIgnoreContentInsetAdjustment:]', symObjAddr: 0xC0, symBinAddr: 0x12AEC, symSize: 0x6C }
+  - { offset: 0x77B88, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) shouldIgnoreContentInsetAdjustment]', symObjAddr: 0x12C, symBinAddr: 0x12B58, symSize: 0x54 }
+  - { offset: 0x77BE6, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) setShouldRestoreScrollViewContentOffset:]', symObjAddr: 0x180, symBinAddr: 0x12BAC, symSize: 0x6C }
+  - { offset: 0x77C53, size: 0x8, addend: 0x0, symName: '-[UIScrollView(Additions) shouldRestoreScrollViewContentOffset]', symObjAddr: 0x1EC, symBinAddr: 0x12C18, symSize: 0x54 }
+  - { offset: 0x77CB1, size: 0x8, addend: 0x0, symName: '-[UITableView(PreviousNextIndexPath) previousIndexPathOfIndexPath:]', symObjAddr: 0x240, symBinAddr: 0x12C6C, symSize: 0x110 }
+  - { offset: 0x77D18, size: 0x8, addend: 0x0, symName: '-[UICollectionView(PreviousNextIndexPath) previousIndexPathOfIndexPath:]', symObjAddr: 0x350, symBinAddr: 0x12D7C, symSize: 0x110 }
+  - { offset: 0x77DFD, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) setKeyboardDistanceFromTextField:]', symObjAddr: 0x0, symBinAddr: 0x12E8C, symSize: 0x88 }
+  - { offset: 0x77E17, size: 0x8, addend: 0x0, symName: _kIQUseDefaultKeyboardDistance, symObjAddr: 0x4D8, symBinAddr: 0x20EC0, symSize: 0x0 }
+  - { offset: 0x77E54, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) setKeyboardDistanceFromTextField:]', symObjAddr: 0x0, symBinAddr: 0x12E8C, symSize: 0x88 }
+  - { offset: 0x77F39, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) keyboardDistanceFromTextField]', symObjAddr: 0x88, symBinAddr: 0x12F14, symSize: 0x80 }
+  - { offset: 0x77FAF, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) setIgnoreSwitchingByNextPrevious:]', symObjAddr: 0x108, symBinAddr: 0x12F94, symSize: 0x6C }
+  - { offset: 0x7801C, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) ignoreSwitchingByNextPrevious]', symObjAddr: 0x174, symBinAddr: 0x13000, symSize: 0x54 }
+  - { offset: 0x7807A, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) setEnableMode:]', symObjAddr: 0x1C8, symBinAddr: 0x13054, symSize: 0x6C }
+  - { offset: 0x780E7, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) enableMode]', symObjAddr: 0x234, symBinAddr: 0x130C0, symSize: 0x54 }
+  - { offset: 0x78145, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) setShouldResignOnTouchOutsideMode:]', symObjAddr: 0x288, symBinAddr: 0x13114, symSize: 0x6C }
+  - { offset: 0x781B2, size: 0x8, addend: 0x0, symName: '-[UIView(Additions) shouldResignOnTouchOutsideMode]', symObjAddr: 0x2F4, symBinAddr: 0x13180, symSize: 0x54 }
+  - { offset: 0x7828E, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) viewContainingController]', symObjAddr: 0x0, symBinAddr: 0x131D4, symSize: 0xCC }
+  - { offset: 0x782A2, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) viewContainingController]', symObjAddr: 0x0, symBinAddr: 0x131D4, symSize: 0xCC }
+  - { offset: 0x782E9, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) topMostController]', symObjAddr: 0xCC, symBinAddr: 0x132A0, symSize: 0x250 }
+  - { offset: 0x78350, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) parentContainerViewController]', symObjAddr: 0x31C, symBinAddr: 0x134F0, symSize: 0x4E4 }
+  - { offset: 0x7840D, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) superviewOfClassType:]', symObjAddr: 0x800, symBinAddr: 0x139D4, symSize: 0x18 }
+  - { offset: 0x78450, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) superviewOfClassType:belowView:]', symObjAddr: 0x818, symBinAddr: 0x139EC, symSize: 0x270 }
+  - { offset: 0x78507, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) _IQCanBecomeFirstResponder]', symObjAddr: 0xA88, symBinAddr: 0x13C5C, symSize: 0x1DC }
+  - { offset: 0x7854E, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) responderSiblings]', symObjAddr: 0xC64, symBinAddr: 0x13E38, symSize: 0x1E0 }
+  - { offset: 0x785BC, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) deepResponderViews]', symObjAddr: 0xE44, symBinAddr: 0x14018, symSize: 0x320 }
+  - { offset: 0x7861A, size: 0x8, addend: 0x0, symName: '___49-[UIView(IQ_UIView_Hierarchy) deepResponderViews]_block_invoke', symObjAddr: 0x1164, symBinAddr: 0x14338, symSize: 0x194 }
+  - { offset: 0x78752, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) convertTransformToView:]', symObjAddr: 0x1308, symBinAddr: 0x144CC, symSize: 0x1F0 }
+  - { offset: 0x788B6, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) depth]', symObjAddr: 0x14F8, symBinAddr: 0x146BC, symSize: 0x84 }
+  - { offset: 0x788FF, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) subHierarchy]', symObjAddr: 0x157C, symBinAddr: 0x14740, symSize: 0x1C8 }
+  - { offset: 0x78991, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) superHierarchy]', symObjAddr: 0x1744, symBinAddr: 0x14908, symSize: 0x148 }
+  - { offset: 0x78A0B, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) debugHierarchy]', symObjAddr: 0x188C, symBinAddr: 0x14A50, symSize: 0x20C }
+  - { offset: 0x78B8B, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) textFieldSearchBar]', symObjAddr: 0x1A98, symBinAddr: 0x14C5C, symSize: 0xF0 }
+  - { offset: 0x78BD4, size: 0x8, addend: 0x0, symName: '-[UIView(IQ_UIView_Hierarchy) isAlertViewTextField]', symObjAddr: 0x1B88, symBinAddr: 0x14D4C, symSize: 0xE0 }
+  - { offset: 0x78C2E, size: 0x8, addend: 0x0, symName: '-[NSObject(IQ_Logging) _IQDescription]', symObjAddr: 0x1C68, symBinAddr: 0x14E2C, symSize: 0x84 }
+  - { offset: 0x78DCB, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration initWithBarButtonSystemItem:action:]', symObjAddr: 0x0, symBinAddr: 0x14EB0, symSize: 0x70 }
+  - { offset: 0x78DD9, size: 0x8, addend: 0x0, symName: '+[UIImage(IQKeyboardToolbarNextPreviousImage) keyboardPreviousImage]', symObjAddr: 0x200, symBinAddr: 0x150B0, symSize: 0xBC }
+  - { offset: 0x78E03, size: 0x8, addend: 0x0, symName: _keyboardPreviousImage.keyboardUpImage, symObjAddr: 0x103E0, symBinAddr: 0x40028, symSize: 0x0 }
+  - { offset: 0x78E56, size: 0x8, addend: 0x0, symName: '+[UIImage(IQKeyboardToolbarNextPreviousImage) keyboardNextImage]', symObjAddr: 0x2BC, symBinAddr: 0x1516C, symSize: 0xBC }
+  - { offset: 0x78E80, size: 0x8, addend: 0x0, symName: _keyboardNextImage.keyboardDownImage, symObjAddr: 0x103E8, symBinAddr: 0x40030, symSize: 0x0 }
+  - { offset: 0x78ECE, size: 0x8, addend: 0x0, symName: '+[UIView(IQToolbarAddition) flexibleBarButtonItem]', symObjAddr: 0x794, symBinAddr: 0x15644, symSize: 0x74 }
+  - { offset: 0x78EF8, size: 0x8, addend: 0x0, symName: _flexibleBarButtonItem.nilButton, symObjAddr: 0x103F0, symBinAddr: 0x40038, symSize: 0x0 }
+  - { offset: 0x78FE4, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration initWithBarButtonSystemItem:action:]', symObjAddr: 0x0, symBinAddr: 0x14EB0, symSize: 0x70 }
+  - { offset: 0x7903B, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration initWithImage:action:]', symObjAddr: 0x70, symBinAddr: 0x14F20, symSize: 0xA0 }
+  - { offset: 0x79092, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration initWithTitle:action:]', symObjAddr: 0x110, symBinAddr: 0x14FC0, symSize: 0xA0 }
+  - { offset: 0x790E9, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration barButtonSystemItem]', symObjAddr: 0x1B0, symBinAddr: 0x15060, symSize: 0x8 }
+  - { offset: 0x79120, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration image]', symObjAddr: 0x1B8, symBinAddr: 0x15068, symSize: 0x8 }
+  - { offset: 0x79157, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration title]', symObjAddr: 0x1C0, symBinAddr: 0x15070, symSize: 0x8 }
+  - { offset: 0x7918E, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration action]', symObjAddr: 0x1C8, symBinAddr: 0x15078, symSize: 0x8 }
+  - { offset: 0x791C5, size: 0x8, addend: 0x0, symName: '-[IQBarButtonItemConfiguration .cxx_destruct]', symObjAddr: 0x1D0, symBinAddr: 0x15080, symSize: 0x30 }
+  - { offset: 0x791F8, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) keyboardToolbar]', symObjAddr: 0x378, symBinAddr: 0x15228, symSize: 0x174 }
+  - { offset: 0x7931A, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) setShouldHideToolbarPlaceholder:]', symObjAddr: 0x4EC, symBinAddr: 0x1539C, symSize: 0xC4 }
+  - { offset: 0x79387, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) shouldHideToolbarPlaceholder]', symObjAddr: 0x5B0, symBinAddr: 0x15460, symSize: 0x54 }
+  - { offset: 0x793E5, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) setToolbarPlaceholder:]', symObjAddr: 0x604, symBinAddr: 0x154B4, symSize: 0x98 }
+  - { offset: 0x7944D, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) toolbarPlaceholder]', symObjAddr: 0x69C, symBinAddr: 0x1554C, symSize: 0x1C }
+  - { offset: 0x794A5, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) drawingToolbarPlaceholder]', symObjAddr: 0x6B8, symBinAddr: 0x15568, symSize: 0xDC }
+  - { offset: 0x794DC, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addKeyboardToolbarWithTarget:titleText:rightBarButtonConfiguration:previousBarButtonConfiguration:nextBarButtonConfiguration:]', symObjAddr: 0x808, symBinAddr: 0x156B8, symSize: 0x1154 }
+  - { offset: 0x795C6, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addRightButtonOnKeyboardWithText:target:action:]', symObjAddr: 0x195C, symBinAddr: 0x1680C, symSize: 0x18 }
+  - { offset: 0x79625, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addRightButtonOnKeyboardWithText:target:action:shouldShowPlaceholder:]', symObjAddr: 0x1974, symBinAddr: 0x16824, symSize: 0xE4 }
+  - { offset: 0x7969D, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addRightButtonOnKeyboardWithText:target:action:titleText:]', symObjAddr: 0x1A58, symBinAddr: 0x16908, symSize: 0xC4 }
+  - { offset: 0x79726, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addRightButtonOnKeyboardWithImage:target:action:]', symObjAddr: 0x1B1C, symBinAddr: 0x169CC, symSize: 0x18 }
+  - { offset: 0x79785, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addRightButtonOnKeyboardWithImage:target:action:shouldShowPlaceholder:]', symObjAddr: 0x1B34, symBinAddr: 0x169E4, symSize: 0xE4 }
+  - { offset: 0x797FD, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addRightButtonOnKeyboardWithImage:target:action:titleText:]', symObjAddr: 0x1C18, symBinAddr: 0x16AC8, symSize: 0xC4 }
+  - { offset: 0x79886, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addDoneOnKeyboardWithTarget:action:]', symObjAddr: 0x1CDC, symBinAddr: 0x16B8C, symSize: 0x18 }
+  - { offset: 0x798D6, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addDoneOnKeyboardWithTarget:action:shouldShowPlaceholder:]', symObjAddr: 0x1CF4, symBinAddr: 0x16BA4, symSize: 0xB0 }
+  - { offset: 0x7993D, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addDoneOnKeyboardWithTarget:action:titleText:]', symObjAddr: 0x1DA4, symBinAddr: 0x16C54, symSize: 0xAC }
+  - { offset: 0x799B5, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addLeftRightOnKeyboardWithTarget:leftButtonTitle:rightButtonTitle:leftButtonAction:rightButtonAction:]', symObjAddr: 0x1E50, symBinAddr: 0x16D00, symSize: 0x18 }
+  - { offset: 0x79A32, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addLeftRightOnKeyboardWithTarget:leftButtonTitle:rightButtonTitle:leftButtonAction:rightButtonAction:shouldShowPlaceholder:]', symObjAddr: 0x1E68, symBinAddr: 0x16D18, symSize: 0x124 }
+  - { offset: 0x79ACC, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addLeftRightOnKeyboardWithTarget:leftButtonTitle:rightButtonTitle:leftButtonAction:rightButtonAction:titleText:]', symObjAddr: 0x1F8C, symBinAddr: 0x16E3C, symSize: 0x110 }
+  - { offset: 0x79B88, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addCancelDoneOnKeyboardWithTarget:cancelAction:doneAction:]', symObjAddr: 0x209C, symBinAddr: 0x16F4C, symSize: 0x18 }
+  - { offset: 0x79BE7, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addCancelDoneOnKeyboardWithTarget:cancelAction:doneAction:shouldShowPlaceholder:]', symObjAddr: 0x20B4, symBinAddr: 0x16F64, symSize: 0xC4 }
+  - { offset: 0x79C5F, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addCancelDoneOnKeyboardWithTarget:cancelAction:doneAction:titleText:]', symObjAddr: 0x2178, symBinAddr: 0x17028, symSize: 0xD8 }
+  - { offset: 0x79CF9, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextDoneOnKeyboardWithTarget:previousAction:nextAction:doneAction:]', symObjAddr: 0x2250, symBinAddr: 0x17100, symSize: 0x18 }
+  - { offset: 0x79D67, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextDoneOnKeyboardWithTarget:previousAction:nextAction:doneAction:shouldShowPlaceholder:]', symObjAddr: 0x2268, symBinAddr: 0x17118, symSize: 0xD0 }
+  - { offset: 0x79DF0, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextDoneOnKeyboardWithTarget:previousAction:nextAction:doneAction:titleText:]', symObjAddr: 0x2338, symBinAddr: 0x171E8, symSize: 0x150 }
+  - { offset: 0x79EAC, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextRightOnKeyboardWithTarget:rightButtonImage:previousAction:nextAction:rightButtonAction:]', symObjAddr: 0x2488, symBinAddr: 0x17338, symSize: 0x18 }
+  - { offset: 0x79F29, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextRightOnKeyboardWithTarget:rightButtonImage:previousAction:nextAction:rightButtonAction:shouldShowPlaceholder:]', symObjAddr: 0x24A0, symBinAddr: 0x17350, symSize: 0x104 }
+  - { offset: 0x79FC3, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextRightOnKeyboardWithTarget:rightButtonImage:previousAction:nextAction:rightButtonAction:titleText:]', symObjAddr: 0x25A4, symBinAddr: 0x17454, symSize: 0x170 }
+  - { offset: 0x7A090, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextRightOnKeyboardWithTarget:rightButtonTitle:previousAction:nextAction:rightButtonAction:]', symObjAddr: 0x2714, symBinAddr: 0x175C4, symSize: 0x18 }
+  - { offset: 0x7A10D, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextRightOnKeyboardWithTarget:rightButtonTitle:previousAction:nextAction:rightButtonAction:shouldShowPlaceholder:]', symObjAddr: 0x272C, symBinAddr: 0x175DC, symSize: 0x104 }
+  - { offset: 0x7A1A7, size: 0x8, addend: 0x0, symName: '-[UIView(IQToolbarAddition) addPreviousNextRightOnKeyboardWithTarget:rightButtonTitle:previousAction:nextAction:rightButtonAction:titleText:]', symObjAddr: 0x2830, symBinAddr: 0x176E0, symSize: 0x170 }
+  - { offset: 0x7A409, size: 0x8, addend: 0x0, symName: '-[UIViewController(Additions) parentIQContainerViewController]', symObjAddr: 0x0, symBinAddr: 0x17850, symSize: 0x14 }
+  - { offset: 0x7A417, size: 0x8, addend: 0x0, symName: '-[UIViewController(Additions) parentIQContainerViewController]', symObjAddr: 0x0, symBinAddr: 0x17850, symSize: 0x14 }
+  - { offset: 0x7A4AF, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_magic, symObjAddr: 0x28, symBinAddr: 0x17864, symSize: 0x14 }
+  - { offset: 0x7A4C1, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_padding_bytes, symObjAddr: 0x44, symBinAddr: 0x17878, symSize: 0xC }
+  - { offset: 0x7A4D3, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_version, symObjAddr: 0x50, symBinAddr: 0x17884, symSize: 0xC }
+  - { offset: 0x7A516, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0x17890, symSize: 0xC }
+  - { offset: 0x7A524, size: 0x8, addend: 0x0, symName: _lprofProfileDumped, symObjAddr: 0x0, symBinAddr: 0x17890, symSize: 0xC }
+  - { offset: 0x7A560, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0x1789C, symSize: 0xC }
+  - { offset: 0x7A56E, size: 0x8, addend: 0x0, symName: _getValueProfRecordHeaderSize, symObjAddr: 0x0, symBinAddr: 0x1789C, symSize: 0xC }
+  - { offset: 0x7A587, size: 0x8, addend: 0x0, symName: _getValueProfRecordValueData, symObjAddr: 0x1C, symBinAddr: 0x178A8, symSize: 0x14 }
+  - { offset: 0x7A5BE, size: 0x8, addend: 0x0, symName: _getValueProfRecordNext, symObjAddr: 0x170, symBinAddr: 0x178BC, symSize: 0x15C }
+  - { offset: 0x7A5FC, size: 0x8, addend: 0x0, symName: _getFirstValueProfRecord, symObjAddr: 0x2CC, symBinAddr: 0x17A18, symSize: 0x8 }
+  - { offset: 0x7A62A, size: 0x8, addend: 0x0, symName: _lprofSetupValueProfiler, symObjAddr: 0xA10, symBinAddr: 0x17A20, symSize: 0x68 }
+  - { offset: 0x7A696, size: 0x8, addend: 0x0, symName: ___llvm_profile_instrument_target_value, symObjAddr: 0xD50, symBinAddr: 0x17A88, symSize: 0x2CC }
+  - { offset: 0x7A70A, size: 0x8, addend: 0x0, symName: _lprofGetVPDataReader, symObjAddr: 0x1054, symBinAddr: 0x17D54, symSize: 0xC }
+  - { offset: 0x7A71C, size: 0x8, addend: 0x0, symName: _initializeValueProfRuntimeRecord, symObjAddr: 0x1060, symBinAddr: 0x17D60, symSize: 0x210 }
+  - { offset: 0x7A735, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0x17F70, symSize: 0x14 }
+  - { offset: 0x7A74B, size: 0x8, addend: 0x0, symName: _getNumValueDataForSiteWrapper, symObjAddr: 0x1270, symBinAddr: 0x17F70, symSize: 0x14 }
+  - { offset: 0x7A75E, size: 0x8, addend: 0x0, symName: _getValueProfDataSizeWrapper, symObjAddr: 0x1284, symBinAddr: 0x17F84, symSize: 0xE0 }
+  - { offset: 0x7A7FF, size: 0x8, addend: 0x0, symName: _getNumValueSitesRT, symObjAddr: 0x13A0, symBinAddr: 0x180A0, symSize: 0x10 }
+  - { offset: 0x7A811, size: 0x8, addend: 0x0, symName: _getNumValueDataRT, symObjAddr: 0x13B0, symBinAddr: 0x180B0, symSize: 0x148 }
+  - { offset: 0x7A823, size: 0x8, addend: 0x0, symName: _getNextNValueData, symObjAddr: 0x1364, symBinAddr: 0x18064, symSize: 0x3C }
+  - { offset: 0x7A85F, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0x181F8, symSize: 0x1C }
+  - { offset: 0x7A86D, size: 0x8, addend: 0x0, symName: ___llvm_profile_is_continuous_mode_enabled, symObjAddr: 0x0, symBinAddr: 0x181F8, symSize: 0x1C }
+  - { offset: 0x7A87F, size: 0x8, addend: 0x0, symName: ___llvm_profile_enable_continuous_mode, symObjAddr: 0x1C, symBinAddr: 0x18214, symSize: 0x10 }
+  - { offset: 0x7A891, size: 0x8, addend: 0x0, symName: ___llvm_profile_disable_continuous_mode, symObjAddr: 0x2C, symBinAddr: 0x18224, symSize: 0xC }
+  - { offset: 0x7A8A3, size: 0x8, addend: 0x0, symName: ___llvm_profile_set_page_size, symObjAddr: 0x38, symBinAddr: 0x18230, symSize: 0xC }
+  - { offset: 0x7A8B5, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer, symObjAddr: 0x44, symBinAddr: 0x1823C, symSize: 0xC8 }
+  - { offset: 0x7A9B2, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_size_for_buffer_internal, symObjAddr: 0x10C, symBinAddr: 0x18304, symSize: 0x1C8 }
+  - { offset: 0x7AC19, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_data, symObjAddr: 0x2D4, symBinAddr: 0x184CC, symSize: 0x10 }
+  - { offset: 0x7AC2B, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0x184DC, symSize: 0x10 }
+  - { offset: 0x7AC41, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_data_size, symObjAddr: 0x2E4, symBinAddr: 0x184DC, symSize: 0x10 }
+  - { offset: 0x7AC53, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_vtable, symObjAddr: 0x2F4, symBinAddr: 0x184EC, symSize: 0x18 }
+  - { offset: 0x7AC65, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_vtable_section_size, symObjAddr: 0x30C, symBinAddr: 0x18504, symSize: 0x8 }
+  - { offset: 0x7AC77, size: 0x8, addend: 0x0, symName: ___llvm_profile_counter_entry_size, symObjAddr: 0x314, symBinAddr: 0x1850C, symSize: 0x20 }
+  - { offset: 0x7AC98, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_num_counters, symObjAddr: 0x334, symBinAddr: 0x1852C, symSize: 0x4C }
+  - { offset: 0x7ACF1, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_counters_size, symObjAddr: 0x380, symBinAddr: 0x18578, symSize: 0x5C }
+  - { offset: 0x7AD83, size: 0x8, addend: 0x0, symName: ___llvm_profile_get_padding_sizes_for_counters, symObjAddr: 0x3EC, symBinAddr: 0x185D4, symSize: 0x160 }
+  - { offset: 0x7AE5B, size: 0x8, addend: 0x0, symName: _initBufferWriter, symObjAddr: 0x54C, symBinAddr: 0x18734, symSize: 0x10 }
+  - { offset: 0x7AEBB, size: 0x8, addend: 0x0, symName: _getCurFilenameLength, symObjAddr: 0x1C0, symBinAddr: 0x18744, symSize: 0x318 }
+  - { offset: 0x7AF06, size: 0x8, addend: 0x0, symName: _getCurFilename, symObjAddr: 0x4D8, symBinAddr: 0x18A5C, symSize: 0x338 }
+  - { offset: 0x7B00A, size: 0x8, addend: 0x0, symName: _parseAndSetFilename, symObjAddr: 0x918, symBinAddr: 0x18D94, symSize: 0x580 }
+  - { offset: 0x7B27A, size: 0x8, addend: 0x0, symName: _truncateCurrentFile, symObjAddr: 0x1E2C, symBinAddr: 0x19D90, symSize: 0xCC }
+  - { offset: 0x7B2EF, size: 0x8, addend: 0x0, symName: _initializeProfileForContinuousMode, symObjAddr: 0x1EF8, symBinAddr: 0x19E5C, symSize: 0x250 }
+  - { offset: 0x7B508, size: 0x8, addend: 0x0, symName: ___llvm_profile_initialize, symObjAddr: 0xE98, symBinAddr: 0x19314, symSize: 0xBC }
+  - { offset: 0x7B5C6, size: 0x8, addend: 0x0, symName: ___llvm_profile_write_file, symObjAddr: 0xFD8, symBinAddr: 0x193D0, symSize: 0x1B0 }
+  - { offset: 0x7B69F, size: 0x8, addend: 0x0, symName: _writeFile, symObjAddr: 0x1188, symBinAddr: 0x19580, symSize: 0x29C }
+  - { offset: 0x7B951, size: 0x8, addend: 0x0, symName: _createProfileDir, symObjAddr: 0x2148, symBinAddr: 0x1A0AC, symSize: 0x88 }
+  - { offset: 0x7B996, size: 0x8, addend: 0x0, symName: _getProfileFileSizeForMerging, symObjAddr: 0x18BC, symBinAddr: 0x19820, symSize: 0x114 }
+  - { offset: 0x7BA27, size: 0x8, addend: 0x0, symName: _mmapProfileForMerging, symObjAddr: 0x19D0, symBinAddr: 0x19934, symSize: 0xC0 }
+  - { offset: 0x7BAE7, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0x1981C, symSize: 0x4 }
+  - { offset: 0x7BAFD, size: 0x8, addend: 0x0, symName: _writeFileWithoutReturn, symObjAddr: 0x16D0, symBinAddr: 0x1981C, symSize: 0x4 }
+  - { offset: 0x7BB0F, size: 0x8, addend: 0x0, symName: _mmapForContinuousMode, symObjAddr: 0x1A90, symBinAddr: 0x199F4, symSize: 0x260 }
+  - { offset: 0x7BCC4, size: 0x8, addend: 0x0, symName: _fileWriter, symObjAddr: 0x1CF0, symBinAddr: 0x19C54, symSize: 0x13C }
+  - { offset: 0x7BD21, size: 0x8, addend: 0x0, symName: _exitSignalHandler, symObjAddr: 0x21D0, symBinAddr: 0x1A134, symSize: 0x10 }
+  - { offset: 0x7BD74, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0x1A144, symSize: 0xD4 }
+  - { offset: 0x7BD82, size: 0x8, addend: 0x0, symName: _lprofGetLoadModuleSignature, symObjAddr: 0x0, symBinAddr: 0x1A144, symSize: 0xD4 }
+  - { offset: 0x7BE81, size: 0x8, addend: 0x0, symName: ___llvm_profile_check_compatibility, symObjAddr: 0xD4, symBinAddr: 0x1A218, symSize: 0x1D8 }
+  - { offset: 0x7BFA6, size: 0x8, addend: 0x0, symName: ___llvm_profile_merge_from_buffer, symObjAddr: 0x2AC, symBinAddr: 0x1A3F0, symSize: 0x4A4 }
+  - { offset: 0x7C0E6, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0x1A894, symSize: 0xF4 }
+  - { offset: 0x7C0F4, size: 0x8, addend: 0x0, symName: _lprofMergeValueProfData, symObjAddr: 0x0, symBinAddr: 0x1A894, symSize: 0xF4 }
+  - { offset: 0x7C18C, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0x1A988, symSize: 0x70 }
+  - { offset: 0x7C19A, size: 0x8, addend: 0x0, symName: _lprofBufferWriter, symObjAddr: 0x0, symBinAddr: 0x1A988, symSize: 0x70 }
+  - { offset: 0x7C1C1, size: 0x8, addend: 0x0, symName: _lprofBufferIOWrite, symObjAddr: 0x108, symBinAddr: 0x1A9F8, symSize: 0x13C }
+  - { offset: 0x7C22C, size: 0x8, addend: 0x0, symName: _lprofWriteData, symObjAddr: 0x308, symBinAddr: 0x1AB34, symSize: 0xD8 }
+  - { offset: 0x7C329, size: 0x8, addend: 0x0, symName: _lprofWriteDataImpl, symObjAddr: 0x3E0, symBinAddr: 0x1AC0C, symSize: 0x320 }
+  - { offset: 0x7C432, size: 0x8, addend: 0x0, symName: _createHeader, symObjAddr: 0x700, symBinAddr: 0x1AF2C, symSize: 0x1A4 }
+  - { offset: 0x7C514, size: 0x8, addend: 0x0, symName: _writeValueProfData, symObjAddr: 0x8A4, symBinAddr: 0x1B0D0, symSize: 0x15C }
+  - { offset: 0x7C5CE, size: 0x8, addend: 0x0, symName: _writeOneValueProfData, symObjAddr: 0x105C, symBinAddr: 0x1B22C, symSize: 0x408 }
+  - { offset: 0x7C772, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0x1B634, symSize: 0xC }
+  - { offset: 0x7C780, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_data, symObjAddr: 0x0, symBinAddr: 0x1B634, symSize: 0xC }
+  - { offset: 0x7C792, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_data, symObjAddr: 0xC, symBinAddr: 0x1B640, symSize: 0xC }
+  - { offset: 0x7C7A4, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_names, symObjAddr: 0x18, symBinAddr: 0x1B64C, symSize: 0xC }
+  - { offset: 0x7C7B6, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_names, symObjAddr: 0x24, symBinAddr: 0x1B658, symSize: 0xC }
+  - { offset: 0x7C7C8, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_counters, symObjAddr: 0x30, symBinAddr: 0x1B664, symSize: 0xC }
+  - { offset: 0x7C7DA, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_counters, symObjAddr: 0x3C, symBinAddr: 0x1B670, symSize: 0xC }
+  - { offset: 0x7C7EC, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_bitmap, symObjAddr: 0x48, symBinAddr: 0x1B67C, symSize: 0xC }
+  - { offset: 0x7C7FE, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_bitmap, symObjAddr: 0x54, symBinAddr: 0x1B688, symSize: 0xC }
+  - { offset: 0x7C810, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtables, symObjAddr: 0x60, symBinAddr: 0x1B694, symSize: 0xC }
+  - { offset: 0x7C822, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtables, symObjAddr: 0x6C, symBinAddr: 0x1B6A0, symSize: 0xC }
+  - { offset: 0x7C834, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vtabnames, symObjAddr: 0x78, symBinAddr: 0x1B6AC, symSize: 0xC }
+  - { offset: 0x7C846, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vtabnames, symObjAddr: 0x84, symBinAddr: 0x1B6B8, symSize: 0xC }
+  - { offset: 0x7C858, size: 0x8, addend: 0x0, symName: ___llvm_profile_begin_vnodes, symObjAddr: 0x9C, symBinAddr: 0x1B6C4, symSize: 0xC }
+  - { offset: 0x7C86A, size: 0x8, addend: 0x0, symName: ___llvm_profile_end_vnodes, symObjAddr: 0xA8, symBinAddr: 0x1B6D0, symSize: 0xC }
+  - { offset: 0x7C87C, size: 0x8, addend: 0x0, symName: ___llvm_write_binary_ids, symObjAddr: 0xB4, symBinAddr: 0x1B6DC, symSize: 0x8 }
+  - { offset: 0x7C8B8, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0x1B6E4, symSize: 0x1C }
+  - { offset: 0x7C8D4, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_InstrProfilingRuntime.cpp, symObjAddr: 0x0, symBinAddr: 0x1B6E4, symSize: 0x1C }
+  - { offset: 0x7C94D, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0x1B700, symSize: 0x5C }
+  - { offset: 0x7C962, size: 0x8, addend: 0x0, symName: ___llvm_profile_recursive_mkdir, symObjAddr: 0x0, symBinAddr: 0x1B700, symSize: 0x5C }
+  - { offset: 0x7C9A1, size: 0x8, addend: 0x0, symName: _lprofGetHostName, symObjAddr: 0x74, symBinAddr: 0x1B75C, symSize: 0x80 }
+  - { offset: 0x7C9EB, size: 0x8, addend: 0x0, symName: _lprofLockFileHandle, symObjAddr: 0x214, symBinAddr: 0x1B7DC, symSize: 0x94 }
+  - { offset: 0x7CA69, size: 0x8, addend: 0x0, symName: _lprofUnlockFileHandle, symObjAddr: 0x2A8, symBinAddr: 0x1B870, symSize: 0x94 }
+  - { offset: 0x7CAD7, size: 0x8, addend: 0x0, symName: _lprofOpenFileEx, symObjAddr: 0x33C, symBinAddr: 0x1B904, symSize: 0xD4 }
+  - { offset: 0x7CB7C, size: 0x8, addend: 0x0, symName: _lprofFindFirstDirSeparator, symObjAddr: 0x554, symBinAddr: 0x1B9D8, symSize: 0x8 }
+  - { offset: 0x7CBA5, size: 0x8, addend: 0x0, symName: _lprofInstallSignalHandler, symObjAddr: 0x564, symBinAddr: 0x1B9E0, symSize: 0x58 }
+  - { offset: 0x7CBDC, size: 0x8, addend: 0x0, symName: _lprofRestoreSigKill, symObjAddr: 0x5C4, symBinAddr: 0x1BA38, symSize: 0x4 }
+...

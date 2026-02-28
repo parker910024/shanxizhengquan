@@ -21,9 +21,14 @@ class ProfileViewController: ZQViewController {
     private var functionsCard: UIView!
     private var channelKeyOverlay: UIView?
     private let accountLabel = UILabel()
+    private let usernameLabel = UILabel()  // 头部上行：用户名
+    private var logoImageView: UIImageView!  // 头像
 
     private var assets: AssetsModel?
     private var accountInfo: [String: Any] = [:]
+    
+    // 显示/隐藏开关，默认隐秘与安卓一致
+    private var isAssetsVisible = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,8 +39,8 @@ class ProfileViewController: ZQViewController {
         setupScroll()
         setupHeader()
         setupQuickActionsCard()
-//        setupAssetsCard()
-//        setupFunctionsCard()
+        setupAssetsCard()
+        setupFunctionsCard()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -66,19 +71,20 @@ class ProfileViewController: ZQViewController {
         scrollView.alwaysBounceVertical = true
         scrollView.showsVerticalScrollIndicator = false
         scrollView.delaysContentTouches = false
-        scrollView.canCancelContentTouches = false
-        if #available(iOS 11.0, *) {
-            scrollView.contentInsetAdjustmentBehavior = .never
-        }
+        scrollView.canCancelContentTouches = true
+        // 预留底部 tabBar 的空间
+        scrollView.contentInset.bottom = 90
+        scrollView.scrollIndicatorInsets.bottom = 90
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         ])
     }
 
@@ -91,26 +97,29 @@ class ProfileViewController: ZQViewController {
         header.translatesAutoresizingMaskIntoConstraints = false
         headerView = header
 
+        // 头像容器（圆形）
         let logoView = UIView()
         logoView.backgroundColor = themeRed
         logoView.layer.cornerRadius = 22
+        logoView.clipsToBounds = true
         header.addSubview(logoView)
         logoView.translatesAutoresizingMaskIntoConstraints = false
-        let logoLabel = UILabel()
-        logoLabel.text = "证"
-        logoLabel.font = UIFont.boldSystemFont(ofSize: 18)
-        logoLabel.textColor = .white
-        logoLabel.textAlignment = .center
-        logoView.addSubview(logoLabel)
-        logoLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let phoneLabel = UILabel()
-        let phone = UserAuthManager.shared.currentPhone ?? "1877777718"
-        phoneLabel.text = phone
-        phoneLabel.font = UIFont.boldSystemFont(ofSize: 16)
-        phoneLabel.textColor = textPrimary
-        header.addSubview(phoneLabel)
-        phoneLabel.translatesAutoresizingMaskIntoConstraints = false
+        // 头像 ImageView：默认显示本地 logoIcon，后台有 avatar 则覆盖
+        let imgView = UIImageView(image: UIImage(named: "logoIcon"))
+        imgView.contentMode = .scaleAspectFill
+        imgView.clipsToBounds = true
+        logoView.addSubview(imgView)
+        imgView.translatesAutoresizingMaskIntoConstraints = false
+        self.logoImageView = imgView
+
+        // 对齐安卓：上行显示 username（非手机号）
+        let username = UserAuthManager.shared.currentUsername ?? UserAuthManager.shared.currentPhone ?? "--"
+        usernameLabel.text = username
+        usernameLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        usernameLabel.textColor = textPrimary
+        header.addSubview(usernameLabel)
+        usernameLabel.translatesAutoresizingMaskIntoConstraints = false
 
         
         let uid = UserAuthManager.shared.userID
@@ -143,12 +152,14 @@ class ProfileViewController: ZQViewController {
             logoView.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             logoView.widthAnchor.constraint(equalToConstant: 44),
             logoView.heightAnchor.constraint(equalToConstant: 44),
-            logoLabel.centerXAnchor.constraint(equalTo: logoView.centerXAnchor),
-            logoLabel.centerYAnchor.constraint(equalTo: logoView.centerYAnchor),
+            imgView.topAnchor.constraint(equalTo: logoView.topAnchor),
+            imgView.leadingAnchor.constraint(equalTo: logoView.leadingAnchor),
+            imgView.trailingAnchor.constraint(equalTo: logoView.trailingAnchor),
+            imgView.bottomAnchor.constraint(equalTo: logoView.bottomAnchor),
 
-            phoneLabel.leadingAnchor.constraint(equalTo: logoView.trailingAnchor, constant: 14),
-            phoneLabel.bottomAnchor.constraint(equalTo: logoView.centerYAnchor, constant: -2),
-            accountLabel.leadingAnchor.constraint(equalTo: phoneLabel.leadingAnchor),
+            usernameLabel.leadingAnchor.constraint(equalTo: logoView.trailingAnchor, constant: 14),
+            usernameLabel.bottomAnchor.constraint(equalTo: logoView.centerYAnchor, constant: -2),
+            accountLabel.leadingAnchor.constraint(equalTo: usernameLabel.leadingAnchor),
             accountLabel.topAnchor.constraint(equalTo: logoView.centerYAnchor, constant: 4),
 
             settingsBtn.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
@@ -176,7 +187,8 @@ class ProfileViewController: ZQViewController {
     }
 
     @objc private func settingsTapped() {
-        let vc = SettingsViewController()
+        // 对齐安卓：设置图标跳转到个人资料页面
+        let vc = PersonalProfileViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
@@ -291,8 +303,15 @@ class ProfileViewController: ZQViewController {
     // 股质余额: 市值
     private var quickActionsCard: UIView!
     private var assetsCard: UIView!
+    
+    // 用于缓存 7 个会随闭眼睁眼变动的数字 Label
     private var balanceLabel: UILabel!
-    private var balanceHidden = false
+    private var availableLabel: UILabel!
+    private var withdrawableLabel: UILabel!
+    private var xinguLabel: UILabel!
+    private var marketValueLabel: UILabel!
+    private var totalykLabel: UILabel!
+    private var fdykLabel: UILabel!
 
     private func setupAssetsCard() {
         let card = makeCard()
@@ -316,7 +335,6 @@ class ProfileViewController: ZQViewController {
         eyeBtn.translatesAutoresizingMaskIntoConstraints = false
 
         balanceLabel = UILabel()
-        balanceLabel.text = "\(assets?.propertyMoneyTotal ?? 0.00)"
         balanceLabel.font = UIFont.boldSystemFont(ofSize: 28)
         balanceLabel.textColor = textPrimary
         balanceLabel.textAlignment = .left
@@ -325,6 +343,7 @@ class ProfileViewController: ZQViewController {
 
         var xgsgTitle = "新股申购"
         if !FeatureSwitchManager.shared.nameXgsg.isEmpty { xgsgTitle = FeatureSwitchManager.shared.nameXgsg }
+        
         let row1Labels = ["可用", "可取", xgsgTitle]
         let row2Labels = ["总市值", "总盈亏", "浮动盈亏"]
         let alignments: [NSTextAlignment] = [.left, .center, .right]
@@ -338,24 +357,23 @@ class ProfileViewController: ZQViewController {
         row2Stack.distribution = .fillEqually
         row2Stack.alignment = .fill
         row2Stack.spacing = 0
-        for (i, l) in row1Labels.enumerated() {
-            if i == 0 {
-                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.balance ?? 0.00)", alignment: alignments[i]))
-            } else if i == 1 {
-                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(String(format: "%.2f", ((assets?.balance ?? 0.0) - (assets?.freezeProfit ?? 0.0))))", alignment: alignments[i]))
-            } else {
-                row1Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.xinguTotal ?? 0.0)", alignment: alignments[i]))
-            }
-        }
-        for (i, l) in row2Labels.enumerated() {
-            if i == 0 {
-                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: String(format: "%.2f", ((assets?.balance ?? 0.0) + (assets?.freezeProfit ?? 0.0))), alignment: alignments[i]))
-            } else if i == 1 {
-                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.totalyk ?? 0.00)", alignment: alignments[i]))
-            } else {
-                row2Stack.addArrangedSubview(makeAssetItem(label: l, value: "\(assets?.fdyk ?? 0.00)", alignment: alignments[i]))
-            }
-        }
+        
+        // 创建各部位的 Label 并装载到内存
+        availableLabel = makeDataLabel(alignment: alignments[0])
+        withdrawableLabel = makeDataLabel(alignment: alignments[1])
+        xinguLabel = makeDataLabel(alignment: alignments[2])
+        marketValueLabel = makeDataLabel(alignment: alignments[0])
+        totalykLabel = makeDataLabel(alignment: alignments[1])
+        fdykLabel = makeDataLabel(alignment: alignments[2])
+        
+        row1Stack.addArrangedSubview(makeAssetItem(label: row1Labels[0], valueLabel: availableLabel, alignment: alignments[0]))
+        row1Stack.addArrangedSubview(makeAssetItem(label: row1Labels[1], valueLabel: withdrawableLabel, alignment: alignments[1]))
+        row1Stack.addArrangedSubview(makeAssetItem(label: row1Labels[2], valueLabel: xinguLabel, alignment: alignments[2]))
+        
+        row2Stack.addArrangedSubview(makeAssetItem(label: row2Labels[0], valueLabel: marketValueLabel, alignment: alignments[0]))
+        row2Stack.addArrangedSubview(makeAssetItem(label: row2Labels[1], valueLabel: totalykLabel, alignment: alignments[1]))
+        row2Stack.addArrangedSubview(makeAssetItem(label: row2Labels[2], valueLabel: fdykLabel, alignment: alignments[2]))
+        
         card.addSubview(row1Stack)
         card.addSubview(row2Stack)
         row1Stack.translatesAutoresizingMaskIntoConstraints = false
@@ -377,8 +395,7 @@ class ProfileViewController: ZQViewController {
         
         var nameDzjy = "大宗交易"
         if !FeatureSwitchManager.shared.nameDzjy.isEmpty { nameDzjy = FeatureSwitchManager.shared.nameDzjy }
-        var nameXxps = "配售记录"
-        if !FeatureSwitchManager.shared.nameXxps.isEmpty { nameXxps = FeatureSwitchManager.shared.nameXxps }
+        let nameXxps = "配售记录"
 
         let btn4 = makePillButton(title: "打新记录", imageName: "打新记录", color: UIColor(red: 1.0, green: 50/255, blue: 126/255, alpha: 1.0))
         let btn5 = makePillButton(title: nameXxps, imageName: "配售记录", color: UIColor(red: 1.0, green: 156/255, blue: 17/255, alpha: 1.0))
@@ -439,7 +456,16 @@ class ProfileViewController: ZQViewController {
         ])
     }
 
-    private func makeAssetItem(label: String, value: String, alignment: NSTextAlignment = .center) -> UIView {
+    private func makeDataLabel(alignment: NSTextAlignment) -> UILabel {
+        let v = UILabel()
+        v.font = UIFont.systemFont(ofSize: 16)
+        v.textColor = textPrimary
+        v.textAlignment = alignment
+        v.numberOfLines = 1
+        return v
+    }
+
+    private func makeAssetItem(label: String, valueLabel: UILabel, alignment: NSTextAlignment = .center) -> UIView {
         let wrap = UIStackView()
         wrap.axis = .vertical
         wrap.spacing = 4
@@ -451,14 +477,8 @@ class ProfileViewController: ZQViewController {
         l.textColor = textSecondary
         l.textAlignment = alignment
         l.numberOfLines = 1
-        let v = UILabel()
-        v.text = value
-        v.font = UIFont.systemFont(ofSize: 16)
-        v.textColor = textPrimary
-        v.textAlignment = alignment
-        v.numberOfLines = 1
         wrap.addArrangedSubview(l)
-        wrap.addArrangedSubview(v)
+        wrap.addArrangedSubview(valueLabel)
         let container = UIView()
         container.addSubview(wrap)
         wrap.translatesAutoresizingMaskIntoConstraints = false
@@ -492,9 +512,34 @@ class ProfileViewController: ZQViewController {
     }
 
     @objc private func toggleBalanceVisibility(_ sender: UIButton) {
-        balanceHidden.toggle()
-        sender.isSelected = balanceHidden
-        balanceLabel.text = balanceHidden ? "****" : "\(assets?.balance ?? 0.00)"
+        isAssetsVisible.toggle()
+        sender.isSelected = isAssetsVisible
+        bindAssetViews()
+    }
+    
+    // 原本刷新数据时的回调，改成由方法承载
+    private func bindAssetViews() {
+        let hidden = "****"
+        if !isAssetsVisible || assets == nil {
+            let val = assets == nil ? "0.00" : hidden
+            balanceLabel.text = val
+            availableLabel.text = val
+            withdrawableLabel.text = val
+            xinguLabel.text = val
+            marketValueLabel.text = val
+            totalykLabel.text = val
+            fdykLabel.text = val
+            return
+        }
+        
+        guard let price = assets else { return }
+        balanceLabel.text = String(format: "%.2f", price.propertyMoneyTotal ?? 0.0)
+        availableLabel.text = String(format: "%.2f", price.balance ?? 0.0)
+        withdrawableLabel.text = String(format: "%.2f", max(0.0, (price.balance ?? 0.0) - (price.freezeProfit ?? 0.0)))
+        xinguLabel.text = String(format: "%.2f", price.xinguTotal ?? 0.0)
+        marketValueLabel.text = String(format: "%.2f", price.cityValue ?? 0.0)
+        totalykLabel.text = String(format: "%.2f", price.totalyk ?? 0.0)
+        fdykLabel.text = String(format: "%.2f", price.fdyk ?? 0.0)
     }
 
     @objc private func fundRecordTapped() {
@@ -504,7 +549,9 @@ class ProfileViewController: ZQViewController {
     }
 
     @objc private func tradeRecordTapped() {
-        let vc = TradeRecordViewController()
+        // 对齐安卓：跳转到持仓记录的历史持仓 tab
+        let vc = MyHoldingsViewController()
+        vc.initialTab = 1 // 历史持仓
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
@@ -571,6 +618,7 @@ class ProfileViewController: ZQViewController {
             ("银行卡", "creditcard"),
             ("线上合同", "envelope"),
             ("交易密码", "lock"),
+            ("登录密码", "key"),
             ("客服中心", "headphones"),
             ("退出账户", "rectangle.portrait.and.arrow.right")
         ]
@@ -615,7 +663,7 @@ class ProfileViewController: ZQViewController {
             row2.leadingAnchor.constraint(equalTo: row2Wrapper.leadingAnchor),
             row2.topAnchor.constraint(equalTo: row2Wrapper.topAnchor),
             row2.bottomAnchor.constraint(equalTo: row2Wrapper.bottomAnchor),
-            row2.widthAnchor.constraint(equalTo: row1.widthAnchor, multiplier: 0.75),
+            row2.trailingAnchor.constraint(equalTo: row2Wrapper.trailingAnchor),
 
             contentView.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: 20)
         ])
@@ -654,7 +702,7 @@ class ProfileViewController: ZQViewController {
 
     @objc private func functionTapped(_ g: UITapGestureRecognizer) {
         guard let v = g.view else { return }
-        let titles = ["实名认证", "个人资料", "银行卡", "线上合同", "交易密码", "客服中心", "退出账户"]
+        let titles = ["实名认证", "个人资料", "银行卡", "线上合同", "交易密码", "登录密码", "客服中心", "退出账户"]
         guard v.tag >= 0, v.tag < titles.count else { return }
         let title = titles[v.tag]
         switch title {
@@ -686,6 +734,10 @@ class ProfileViewController: ZQViewController {
             navigationController?.pushViewController(vc, animated: true)
         case "交易密码":
             let vc = TransactionPasswordViewController()
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
+        case "登录密码":
+            let vc = LoginPasswordViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case "客服中心":
@@ -734,7 +786,8 @@ class ProfileViewController: ZQViewController {
                 }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    UIApplication.shared.open(url)
+                    let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }
@@ -874,25 +927,23 @@ class ProfileViewController: ZQViewController {
         let v = UIView()
         v.backgroundColor = cardBg
         v.layer.cornerRadius = 12
-        v.layer.shadowColor = UIColor.black.cgColor
-        v.layer.shadowOffset = CGSize(width: 0, height: 2)
-        v.layer.shadowRadius = 8
-        v.layer.shadowOpacity = 0.08
+        // 对齐安卓：cardElevation=0dp，无阴影
+        v.layer.shadowOpacity = 0
         return v
     }
 }
 
 extension ProfileViewController {
     func requestAssets() {
+        guard UserAuthManager.shared.isLoggedIn else { return }
         SecureNetworkManager.shared.request(
             api: Api.getUserPrice_all_api,
             method: .get,
             params: [:]
-        ) { [unowned self] result in
+        ) { [weak self] result in
+            guard let self = self else { return }
             switch result {
             case .success(let res):
-                debugPrint("raw =", res.raw) // 原始响应
-                debugPrint("decrypted =", res.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                 let dict = res.decrypted
                 if dict?["code"] as? NSNumber != 1 {
                     DispatchQueue.main.async {
@@ -904,12 +955,15 @@ extension ProfileViewController {
                     if let dict = res.decrypted, let list = dict["data"] as? [String: Any], let json = list["list"] {
                         let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
                         let assetsModel = try JSONDecoder().decode(AssetsModel.self, from: jsonData)
-                        self.assets = assetsModel
-                        self.setupAssetsCard()
-                        self.setupFunctionsCard()
+                        DispatchQueue.main.async {
+                            self.assets = assetsModel
+                            self.bindAssetViews()
+                        }
                     }
                 } catch {
-                    Toast.showError(error.localizedDescription)
+                    DispatchQueue.main.async {
+                        Toast.showError(error.localizedDescription)
+                    }
                 }
             case .failure(let error):
                 debugPrint("error =", error.localizedDescription, #function)
@@ -932,11 +986,26 @@ extension ProfileViewController {
                     return
                 }
                 if let dict = result.decrypted, let list = dict["data"] as? [String: Any], let info = list["list"] as? [String: Any] {
-                    self.accountInfo = info
-                    if accountInfo["is_auth"] as? Int == 1 {
-                        accountLabel.text = "已实名"
-                    } else {
-                        accountLabel.text = "未实名"
+                    DispatchQueue.main.async {
+                        self.accountInfo = info
+                        // 对齐安卓：上行显示原始 username（不加密）
+                        let rawUsername = info["username"] as? String ?? ""
+                        if !rawUsername.isEmpty {
+                            self.usernameLabel.text = rawUsername
+                        }
+                        // 对齐安卓：下行优先显示 nickname，其次 "已实名"/"未实名"
+                        let nickname = info["nickname"] as? String ?? ""
+                        if !nickname.isEmpty {
+                            self.accountLabel.text = nickname
+                        } else if info["is_auth"] as? Int == 1 {
+                            self.accountLabel.text = "已实名"
+                        } else {
+                            self.accountLabel.text = "未实名"
+                        }
+                        // 对齐安卓：从 avatar 字段加载头像
+                        if let avatarUrl = info["avatar"] as? String, !avatarUrl.isEmpty {
+                            self.loadAvatarImage(from: avatarUrl)
+                        }
                     }
                 }
             } catch {
@@ -963,6 +1032,21 @@ extension ProfileViewController {
 //                Toast.showError(error.localizedDescription)
 //            }
 //        }
+    }
+
+    /// 从后台 URL 加载头像（对齐安卓）
+    private func loadAvatarImage(from urlString: String) {
+        var finalUrl = urlString
+        if !finalUrl.hasPrefix("http") {
+            finalUrl = "https://" + finalUrl
+        }
+        guard let url = URL(string: finalUrl) else { return }
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+            guard let self = self, let data = data, let image = UIImage(data: data) else { return }
+            DispatchQueue.main.async {
+                self.logoImageView.image = image
+            }
+        }.resume()
     }
 
     func requestAuthenticationDetail() {

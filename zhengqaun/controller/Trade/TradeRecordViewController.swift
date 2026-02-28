@@ -21,6 +21,7 @@ struct TradeRecordItem {
 class TradeRecordViewController: ZQViewController {
     private let tableView = UITableView(frame: .zero, style: .plain)
     private var records: [TradeRecordItem] = []
+    private let emptyLabel = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,7 +67,8 @@ class TradeRecordViewController: ZQViewController {
                 }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    UIApplication.shared.open(url)
+                    let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }
@@ -88,6 +90,19 @@ class TradeRecordViewController: ZQViewController {
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+        
+        // 空状态
+        emptyLabel.text = "暂无数据"
+        emptyLabel.font = UIFont.systemFont(ofSize: 14)
+        emptyLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        emptyLabel.textAlignment = .center
+        emptyLabel.isHidden = true
+        view.addSubview(emptyLabel)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
 
@@ -159,11 +174,16 @@ class TradeRecordViewController: ZQViewController {
                 
                 self.records = tempRecords
                 
-                self.tableView.reloadData()
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    self.emptyLabel.isHidden = !self.records.isEmpty
+                }
                     
             case .failure(let err):
-                Toast.showInfo(err.localizedDescription)
-                break
+                DispatchQueue.main.async {
+                    Toast.showInfo(err.localizedDescription)
+                    self.emptyLabel.isHidden = false
+                }
             }
         }
     }

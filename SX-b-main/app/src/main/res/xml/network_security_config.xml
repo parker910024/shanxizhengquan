@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <base-config cleartextTrafficPermitted="true" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">112.213.108.32</domain>
+        <domain includeSubdomains="true">shuzilm.cn</domain>
+        <domain includeSubdomains="true">telecome.cn</domain>
+    </domain-config>
+</network-security-config>

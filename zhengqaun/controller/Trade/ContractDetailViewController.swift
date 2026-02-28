@@ -2,39 +2,50 @@
 //  ContractDetailViewController.swift
 //  zhengqaun
 //
-//  Created by admin on 2026/1/6.
+//  合同详情 - 对齐安卓 ContractDetailActivity
 //
 
 import SVProgressHUD
 import UIKit
+import WebKit
 
 class ContractDetailViewController: ZQViewController {
     var contract: Contract?
+    var contractType: Int = 1  // 对齐安卓：1=服务协议 2=保密协议（type==2 时隐藏甲乙方信息）
     private var signatureImage: UIImage?
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
-    private let companyNameLabel = UILabel()
-    private let agreementTitleLabel = UILabel()
-    private let contentLabel = UILabel()
+    
+    // 使用 WKWebView 替代 UILabel 来渲染 HTML 内容（对齐安卓 WebView）
+    private let webView = WKWebView()
+    private var webViewHeightConstraint: NSLayoutConstraint!
+    
+    // 签名区域
     private let signatureContainer = UIView()
     private let signatureImageView = UIImageView()
     private let signaturePlaceholderLabel = UILabel()
     private let submitButton = UIButton(type: .system)
     private var scrollViewBottomConstraint: NSLayoutConstraint!
     
+    // 模板数据（对齐安卓：从 getContractTemplateOne/Two 加载甲方信息）
+    private var templateData: [String: Any] = [:]
+    // 认证信息（对齐安卓：从 authenticationDetail 加载乙方信息）
+    private var authData: [String: Any] = [:]
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupUI()
-        loadData()
+        loadAllData()
     }
     
     private func setupNavigationBar() {
-        gk_navTitle = "合同详情"
-        gk_navBackgroundColor = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0) // #1976D2
-        gk_navTitleColor = .white
-        gk_statusBarStyle = .lightContent
+        gk_navTitle = contract?.name ?? "合同详情"
+        gk_navBackgroundColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
+        gk_statusBarStyle = .default
+        gk_backStyle = .black
     }
     
     private func setupUI() {
@@ -45,62 +56,14 @@ class ContractDetailViewController: ZQViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentView.translatesAutoresizingMaskIntoConstraints = false
         
-        // Logo - 创建一个简单的logo视图
-        let logoContainer = UIView()
-        logoContainer.backgroundColor = .white
-        contentView.addSubview(logoContainer)
-        logoContainer.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Logo文字
-        let logoTextLabel = UILabel()
-        logoTextLabel.text = contract?.title
-        logoTextLabel.font = UIFont.boldSystemFont(ofSize: 24)
-        logoTextLabel.textColor = UIColor(red: 0.1, green: 0.47, blue: 0.82, alpha: 1.0)
-        logoContainer.addSubview(logoTextLabel)
-        logoTextLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        let logoSubLabel = UILabel()
-        logoSubLabel.text = ""
-        logoSubLabel.font = UIFont.systemFont(ofSize: 12)
-        logoSubLabel.textColor = Constants.Color.textSecondary
-        logoContainer.addSubview(logoSubLabel)
-        logoSubLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            logoContainer.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            logoContainer.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            logoContainer.widthAnchor.constraint(equalToConstant: 200),
-            logoContainer.heightAnchor.constraint(equalToConstant: 60),
-            
-            logoTextLabel.topAnchor.constraint(equalTo: logoContainer.topAnchor),
-            logoTextLabel.centerXAnchor.constraint(equalTo: logoContainer.centerXAnchor),
-            
-            logoSubLabel.topAnchor.constraint(equalTo: logoTextLabel.bottomAnchor, constant: 4),
-            logoSubLabel.centerXAnchor.constraint(equalTo: logoContainer.centerXAnchor)
-        ])
-        
-        // 公司名称
-        companyNameLabel.text = contract?.partyA
-        companyNameLabel.font = UIFont.boldSystemFont(ofSize: 20)
-        companyNameLabel.textColor = Constants.Color.textPrimary
-        companyNameLabel.textAlignment = .center
-        contentView.addSubview(companyNameLabel)
-        companyNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 协议标题
-        agreementTitleLabel.text = contract?.name
-        agreementTitleLabel.font = UIFont.boldSystemFont(ofSize: 18)
-        agreementTitleLabel.textColor = Constants.Color.stockRise // 红色
-        agreementTitleLabel.textAlignment = .center
-        contentView.addSubview(agreementTitleLabel)
-        agreementTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 合同内容
-        contentLabel.font = UIFont.systemFont(ofSize: 15)
-        contentLabel.textColor = Constants.Color.textPrimary
-        contentLabel.numberOfLines = 0
-        contentView.addSubview(contentLabel)
-        contentLabel.translatesAutoresizingMaskIntoConstraints = false
+        // WebView 用于渲染合同 HTML 内容
+        webView.navigationDelegate = self
+        webView.scrollView.isScrollEnabled = false
+        webView.isOpaque = false
+        webView.backgroundColor = .white
+        contentView.addSubview(webView)
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        webViewHeightConstraint = webView.heightAnchor.constraint(equalToConstant: 300)
         
         // 签名区域
         signatureContainer.backgroundColor = .white
@@ -136,7 +99,6 @@ class ContractDetailViewController: ZQViewController {
         view.addSubview(submitButton)
         submitButton.translatesAutoresizingMaskIntoConstraints = false
         
-        // scrollView的底部约束会根据是否有按钮动态调整
         scrollViewBottomConstraint = scrollView.bottomAnchor.constraint(equalTo: submitButton.topAnchor, constant: -20)
         
         NSLayoutConstraint.activate([
@@ -151,22 +113,16 @@ class ContractDetailViewController: ZQViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            companyNameLabel.topAnchor.constraint(equalTo: logoContainer.bottomAnchor, constant: 16),
-            companyNameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            companyNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            webView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            webView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            webViewHeightConstraint,
             
-            agreementTitleLabel.topAnchor.constraint(equalTo: companyNameLabel.bottomAnchor, constant: 12),
-            agreementTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            agreementTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
-            contentLabel.topAnchor.constraint(equalTo: agreementTitleLabel.bottomAnchor, constant: 24),
-            contentLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            contentLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
-            signatureContainer.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 24),
+            signatureContainer.topAnchor.constraint(equalTo: webView.bottomAnchor, constant: 16),
             signatureContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             signatureContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             signatureContainer.heightAnchor.constraint(equalToConstant: 200),
+            signatureContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             
             signatureImageView.topAnchor.constraint(equalTo: signatureContainer.topAnchor, constant: 8),
             signatureImageView.leadingAnchor.constraint(equalTo: signatureContainer.leadingAnchor, constant: 8),
@@ -176,110 +132,298 @@ class ContractDetailViewController: ZQViewController {
             signaturePlaceholderLabel.centerXAnchor.constraint(equalTo: signatureContainer.centerXAnchor),
             signaturePlaceholderLabel.centerYAnchor.constraint(equalTo: signatureContainer.centerYAnchor),
             
-            // 提交按钮：始终居中，左右间距20
             submitButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             submitButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             submitButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             submitButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             submitButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-        
-        // 设置内容底部约束
-        let bottomConstraint = signatureContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
-        bottomConstraint.priority = .required
-        bottomConstraint.isActive = true
     }
     
-    private func loadData() {
+    // MARK: - 加载所有数据（对齐安卓：loadContractDetail + loadContractTemplate + loadAuthInfo）
+    
+    private func loadAllData() {
         guard let contract = contract else { return }
         
-        // 设置合同内容
-        var content = contract.content
-        content = content.replacingOccurrences(of: "甲方:", with: "甲方: \(contract.partyA)")
-        content = content.replacingOccurrences(of: "地址:江苏省南京市江东中路228号", with: "地址: \(contract.partyAAddress)")
-        content = content.replacingOccurrences(of: "乙方:测试", with: "乙方: \(contract.partyB)")
-        content = content.replacingOccurrences(of: "地址:包宝宝", with: "地址: \(contract.partyBAddress)")
-        content = content.replacingOccurrences(of: "身份证号:420521198402154410", with: "身份证号: \(contract.partyBIdCard)")
+        SVProgressHUD.show()
+        let group = DispatchGroup()
         
-        contentLabel.attributedText = htmlToAttributedString(content)
+        // 1. 加载合同模板（甲方信息）
+        let contractType = contract.id  // 用 contract 中传入的 type
+        group.enter()
+        loadTemplate(type: 1) { [weak self] in
+            self?.loadTemplate(type: 2) {
+                group.leave()
+            }
+        }
         
-        // 如果已签名，显示签名图片，不允许重新签名
-        if contract.status == .signed {
-            signaturePlaceholderLabel.isHidden = true
-            signatureImageView.isHidden = false
-            submitButton.isHidden = true // 已签名不需要提交按钮
+        // 2. 加载认证信息（乙方信息）
+        group.enter()
+        SecureNetworkManager.shared.request(
+            api: Api.authenticationDetail_api,
+            method: .get,
+            params: ["page": 1, "size": 10]
+        ) { [weak self] result in
+            if case .success(let res) = result,
+               let dict = res.decrypted,
+               let data = dict["data"] as? [String: Any],
+               let detail = data["detail"] as? [String: Any] {
+                self?.authData = detail
+            }
+            group.leave()
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            SVProgressHUD.dismiss()
+            self?.renderContract()
+        }
+    }
+    
+    private func loadTemplate(type: Int, completion: @escaping () -> Void) {
+        let api = type == 1 ? "/api/stock/one" : "/api/stock/two"
+        SecureNetworkManager.shared.request(
+            api: api,
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            if case .success(let res) = result,
+               let dict = res.decrypted,
+               let data = dict["data"] as? [String: Any],
+               let info = data["info"] as? [String: Any] {
+                // 只有当模板数据为空时才赋值（优先用 type 1）
+                if self?.templateData.isEmpty == true {
+                    self?.templateData = info
+                }
+            }
+            completion()
+        }
+    }
+    
+    // MARK: - 渲染合同（对齐安卓 buildContractHtml）
+    
+    private func renderContract() {
+        guard let contract = contract else { return }
+        
+        let isSigned = contract.status == .signed
+        
+        // 对齐安卓：已签订隐藏签名面板和提交按钮
+        if isSigned {
+            signatureContainer.isHidden = true
+            submitButton.isHidden = true
+            signatureContainer.heightAnchor.constraint(equalToConstant: 0).isActive = true
             
-            // 禁用签名区域的点击
-            signatureContainer.isUserInteractionEnabled = false
-            
-            // 调整scrollView底部约束到底部
+            // 调整 scrollView 底部到安全区
             scrollViewBottomConstraint.isActive = false
             scrollViewBottomConstraint = scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
             scrollViewBottomConstraint.isActive = true
-            
-            guard let url = URL(string: contract.signImage) else { return }
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                guard let data = data, let img = UIImage(data: data) else { return }
-                DispatchQueue.main.async { [unowned self] in
-                    self.signatureImageView.image = img
-                }
-            }.resume()
         } else {
-            // 未签名状态
+            signatureContainer.isHidden = false
+            submitButton.isHidden = false
             signaturePlaceholderLabel.isHidden = false
             signatureImageView.isHidden = true
-            submitButton.isHidden = false // 未签名显示提交按钮
-            
-            // 启用签名区域的点击
             signatureContainer.isUserInteractionEnabled = true
-            
-            // 调整scrollView底部约束到按钮上方
-            scrollViewBottomConstraint.isActive = false
-            scrollViewBottomConstraint = scrollView.bottomAnchor.constraint(equalTo: submitButton.topAnchor, constant: -20)
-            scrollViewBottomConstraint.isActive = true
         }
+        
+        // 构建 HTML（对齐安卓 buildContractHtml）
+        let html = buildContractHtml(contract: contract, isSigned: isSigned)
+        webView.loadHTMLString(html, baseURL: nil)
     }
     
-    @objc private func signatureTapped() {
-        // 检查合同状态，已签名不允许重新签名
-        guard let contract = contract, contract.status != .signed else {
-            return
+    private func buildContractHtml(contract: Contract, isSigned: Bool) -> String {
+        // 甲方信息（来自模板）
+        let jiaName = templateData["jia_name"] as? String
+            ?? templateData["company_title"] as? String
+            ?? templateData["company_short_name"] as? String
+            ?? contract.partyA
+        let jiaAddress = templateData["jia_address"] as? String ?? contract.partyAAddress
+        let jiaSign = templateData["jia_sign"] as? String ?? ""
+        let jiaZhang = templateData["jia_zhang"] as? String ?? ""
+        let logo = templateData["logo"] as? String ?? ""
+        let templateTitle = templateData["title"] as? String ?? contract.name
+        let templateContent = templateData["content"] as? String ?? contract.content
+        
+        // 解析图片 URL
+        func resolveTemplateImageUrl(_ path: String) -> String {
+            let raw = path.trimmingCharacters(in: .whitespacesAndNewlines)
+            if raw.isEmpty { return "" }
+            if raw.hasPrefix("http://") || raw.hasPrefix("https://") { return raw }
+            var normalized = raw
+            if normalized.hasPrefix("/") { normalized.removeFirst() }
+            var base = vpnDataModel.shared.selectAddress ?? ""
+            if base.hasSuffix("/") { base.removeLast() }
+            return base + "/" + normalized
         }
+        
+        let logoUrl = resolveTemplateImageUrl(logo)
+        let jiaZhangUrl = resolveTemplateImageUrl(jiaZhang)
+        let jiaSignUrl = resolveTemplateImageUrl(jiaSign)
+        
+        let logoHtml = logoUrl.isEmpty ? "" : "<div style=\"text-align:center;margin-bottom:16px;\"><img src=\"\(logoUrl)\" style=\"max-width:200px;height:auto;\" onerror=\"this.style.display='none'\" /></div>"
+        
+        // 乙方信息（来自合同详情或认证信息）
+        let yiName = contract.partyB.isEmpty
+            ? (authData["name"] as? String ?? "")
+            : contract.partyB
+        let yiAddress = contract.partyBAddress.isEmpty
+            ? ""
+            : contract.partyBAddress
+        let yiIdNumber = contract.partyBIdCard.isEmpty
+            ? (authData["id_card"] as? String ?? "")
+            : contract.partyBIdCard
+        
+        let signDate = contract.signDate != nil
+            ? DateFormatter.localizedString(from: contract.signDate!, dateStyle: .medium, timeStyle: .none)
+            : "--"
+        
+        // 签名图 URL
+        let yiSignUrl = isSigned ? contract.signImage : ""
+        let processedYiSignUrl = yiSignUrl.isEmpty ? "" : resolveTemplateImageUrl(yiSignUrl)
+        
+        // 构建甲乙方信息 HTML（对齐安卓 baseInfoHtml）
+        // 对齐安卓：contractType == 2（保密协议书）时不显示甲乙方信息
+        let baseInfoHtml: String
+        if contractType == 2 {
+            baseInfoHtml = ""
+        } else {
+            baseInfoHtml = """
+            <div class="base-info">
+                <div><span class="label">甲方：</span>\(jiaName.isEmpty ? "--" : jiaName)</div>
+                <div><span class="label">甲方地址：</span>\(jiaAddress.isEmpty ? "--" : jiaAddress)</div>
+                <div><span class="label">乙方：</span>\(yiName.isEmpty ? "--" : yiName)</div>
+                <div><span class="label">乙方地址：</span>\(yiAddress.isEmpty ? "--" : yiAddress)</div>
+                <div><span class="label">身份证号：</span>\(yiIdNumber.isEmpty ? "--" : yiIdNumber)</div>
+            </div>
+            """
+        }
+        
+        // 构建签名区 HTML（对齐安卓 signatureHtml，添加甲方章和签名）
+        let jiaZhangImg = jiaZhangUrl.isEmpty ? "" : "<img src=\"\(jiaZhangUrl)\" style=\"position:absolute;left:-6px;top:-8px;width:110px;height:110px;object-fit:contain;z-index:1;\" onerror=\"this.style.display='none'\" />"
+        let jiaSignImg = jiaSignUrl.isEmpty ? "" : "<img src=\"\(jiaSignUrl)\" style=\"position:absolute;left:70px;top:44px;width:140px;height:40px;object-fit:contain;z-index:2;\" onerror=\"this.style.display='none'\" />"
+        
+        let signatureHtml = """
+        <div class="sign-area">
+            <div class="sign-row">
+                <div class="sign-col sign-col-left">
+                    \(jiaZhangImg)
+                    \(jiaSignImg)
+                    <div class="sign-line">甲方：\(jiaName.isEmpty ? "--" : jiaName)</div>
+                    <div class="sign-line">甲方代表(签字)</div>
+                    <div class="sign-line">\(signDate)</div>
+                </div>
+                <div class="sign-col sign-col-right">
+                    <div class="sign-line">乙方：\(yiName.isEmpty ? "--" : yiName)</div>
+                    <div class="sign-line">乙方代表(签字)</div>
+                    \(isSigned && !processedYiSignUrl.isEmpty ? "<img src=\"\(processedYiSignUrl)\" class=\"sign-user\" onerror=\"this.style.display='none'\" />" : "")
+                    <div class="sign-line">\(signDate)</div>
+                </div>
+            </div>
+        </div>
+        """
+        
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: 14px;
+                    line-height: 1.8;
+                    color: #333333;
+                    padding: 16px;
+                    margin: 0;
+                    background: #FFFFFF;
+                }
+                h2 {
+                    text-align: center;
+                    margin: 0 0 20px 0;
+                    color: #333333;
+                }
+                .base-info {
+                    margin: 12px 0 18px;
+                    padding: 10px 12px;
+                    border: 1px solid #EEEEEE;
+                    border-radius: 8px;
+                    background: #FAFAFA;
+                    color: #333333;
+                    word-break: break-all;
+                }
+                .base-info div { margin: 4px 0; }
+                .base-info .label { color: #666666; }
+                .sign-area { margin-top: 28px; }
+                .sign-row { display: flex; gap: 48px; }
+                .sign-col {
+                    position: relative;
+                    flex: 1;
+                    min-height: 120px;
+                    color: #000000;
+                    font-size: 14px;
+                }
+                .sign-col-right {
+                    padding-left: 8px;
+                }
+                .sign-line {
+                    line-height: 24px;
+                    height: 24px;
+                    margin: 10px 0;
+                    white-space: nowrap;
+                }
+                .sign-user {
+                    position: absolute;
+                    left: 70px;
+                    top: 44px;
+                    width: 140px;
+                    height: 40px;
+                    object-fit: contain;
+                    z-index: 2;
+                }
+                img { max-width: 100%; }
+            </style>
+        </head>
+        <body>
+            \(logoHtml)
+            <h2>\(templateTitle)</h2>
+            \(baseInfoHtml)
+            <div>\(templateContent)</div>
+            \(signatureHtml)
+        </body>
+        </html>
+        """
+    }
+    
+    // MARK: - 签名交互
+    
+    @objc private func signatureTapped() {
+        guard let contract = contract, contract.status != .signed else { return }
         
         let vc = SignatureViewController()
         vc.modalPresentationStyle = .fullScreen
-        // 不传递任何签名作为背景，让用户从空白开始签名
-        // 这样可以确保清除按钮能清除所有内容
         vc.existingSignature = nil
         
-        // 清除未提交的签名数据（如果有的话）
         signatureImage = nil
         signatureImageView.image = nil
         
-        // 清除UserDefaults中未提交的签名数据（如果之前测试时保存过）
         UserDefaults.standard.removeObject(forKey: "contract_signature_\(contract.id)")
         
         vc.onSignatureComplete = { [weak self] image in
-            guard let self = self, let _ = self.contract else { return }
+            guard let self = self else { return }
             self.signatureImage = image
             self.signatureImageView.image = image
             self.signatureImageView.isHidden = false
             self.signaturePlaceholderLabel.isHidden = true
-            self.submitButton.isHidden = false // 确保提交按钮显示
-            
-            // 注意：这里不保存到UserDefaults，只有点击确认提交后才保存
+            self.submitButton.isHidden = false
         }
         present(vc, animated: true)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 确保是竖屏
         restorePortraitIfNeeded()
     }
     
     private func restorePortraitIfNeeded() {
-        // 检查当前方向，如果不是竖屏则恢复
         let currentOrientation = UIApplication.shared.statusBarOrientation
         if currentOrientation != .portrait, currentOrientation != .unknown {
             if #available(iOS 16.0, *) {
@@ -314,7 +458,6 @@ class ContractDetailViewController: ZQViewController {
     }
     
     private func performSubmit(signatureImage: UIImage, contract: Contract) {
-        // 保存签名图片到UserDefaults（只有确认提交后才保存）
         if let imageData = signatureImage.pngData() {
             UserDefaults.standard.set(imageData, forKey: "contract_signature_\(contract.id)")
         }
@@ -345,69 +488,16 @@ class ContractDetailViewController: ZQViewController {
                 Toast.showError(error.localizedDescription)
             }
         }
-     }
-    
-    private func htmlToAttributedString(_ html: String) -> NSAttributedString? {
-        // 清理HTML，移除script和style标签
-        var cleanHTML = html
-        cleanHTML = cleanHTML.replacingOccurrences(of: "<script[^>]*>.*?</script>", with: "", options: [.regularExpression, .caseInsensitive])
-        cleanHTML = cleanHTML.replacingOccurrences(of: "<style[^>]*>.*?</style>", with: "", options: [.regularExpression, .caseInsensitive])
-        
-        // 添加基础CSS样式
-        let cssStyle = """
-        <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
-            color: #1C1C1C;
-        }
-        p {
-            margin: 0 0 12px 0;
-        }
-        strong {
-            font-weight: bold;
-        }
-        </style>
-        """
-        
-        let htmlWithStyle = cssStyle + cleanHTML
-        
-        // 使用NSAttributedString的HTML初始化方法
-        guard let data = htmlWithStyle.data(using: .utf8) else {
-            return nil
-        }
-        
-        do {
-            let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-                .documentType: NSAttributedString.DocumentType.html,
-                .characterEncoding: String.Encoding.utf8.rawValue
-            ]
-            
-            let attributedString = try NSAttributedString(
-                data: data,
-                options: options,
-                documentAttributes: nil
-            )
-            
-            // 创建可变属性字符串，以便进一步自定义样式
-            let mutableAttributedString = NSMutableAttributedString(attributedString: attributedString)
-            
-            // 设置段落样式
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineSpacing = 4
-            paragraphStyle.paragraphSpacing = 8
-            
-            mutableAttributedString.addAttribute(
-                .paragraphStyle,
-                value: paragraphStyle,
-                range: NSRange(location: 0, length: mutableAttributedString.length)
-            )
-            
-            return mutableAttributedString
-        } catch {
-            print("HTML解析错误: \(error)")
-            return nil
+    }
+}
+
+// MARK: - WKNavigationDelegate（自动调整 WebView 高度）
+extension ContractDetailViewController: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.evaluateJavaScript("document.body.scrollHeight") { [weak self] result, _ in
+            guard let self = self, let height = result as? CGFloat else { return }
+            self.webViewHeightConstraint.constant = height + 20
+            self.view.layoutIfNeeded()
         }
     }
 }

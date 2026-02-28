@@ -24,7 +24,7 @@ class LoginViewController: UIViewController {
     private let logoImageView = UIImageView()
     
     /// true = 手机号登录，false = 用户名登录；由外部在 present 前设置，与注册页 isPhoneRegistration 一致
-    var isPhoneLogin: Bool = true {
+    var isPhoneLogin: Bool = false {
         didSet { updateAccountRowForMode() }
     }
     
@@ -148,7 +148,7 @@ class LoginViewController: UIViewController {
         loginFormContainer.addSubview(loginPasswordLabel)
         loginPasswordLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        loginPasswordTextField.placeholder = "请输入登录密码"
+        loginPasswordTextField.setZqPlaceholder("请输入登录密码")
         loginPasswordTextField.font = UIFont.systemFont(ofSize: 15)
         loginPasswordTextField.textColor = Constants.Color.textPrimary
         loginPasswordTextField.borderStyle = .none
@@ -212,11 +212,11 @@ class LoginViewController: UIViewController {
     private func updateAccountRowForMode() {
         if isPhoneLogin {
             loginAccountLabel.text = "手机号码"
-            loginAccountTextField.placeholder = "请输入手机号码"
+            loginAccountTextField.setZqPlaceholder("请输入手机号码")
             loginAccountTextField.keyboardType = .phonePad
         } else {
             loginAccountLabel.text = "用户名"
-            loginAccountTextField.placeholder = "请输入用户名"
+            loginAccountTextField.setZqPlaceholder("请输入用户名")
             loginAccountTextField.keyboardType = .default
         }
     }

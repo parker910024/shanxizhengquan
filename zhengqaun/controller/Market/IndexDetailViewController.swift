@@ -218,6 +218,8 @@ class IndexDetailViewController: ZQViewController {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsVerticalScrollIndicator = false
+        scrollView.backgroundColor = .white
+        contentView.backgroundColor = .white
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: customNavBar.bottomAnchor),
@@ -853,10 +855,12 @@ class IndexDetailViewController: ZQViewController {
         tabScroll.addSubview(newsTabIndicator)
 
         // TableView
+        newsTableView.backgroundColor = .white
         newsTableView.dataSource = self
         newsTableView.delegate = self
         newsTableView.register(IndexNewsCell.self, forCellReuseIdentifier: "NewsCell")
         newsTableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        newsTableView.separatorStyle = .none
         newsTableView.isScrollEnabled = false
         newsTableView.rowHeight = UITableView.automaticDimension
         newsTableView.estimatedRowHeight = 90
@@ -974,152 +978,137 @@ class IndexDetailViewController: ZQViewController {
     // ===================================================================
 
     /// 将 indexCode / indexAllcode 转换为东方财富 secId（市场前缀.代码）
-    /// 逻辑与 Android SecIdResolver 一致
     private func resolveSecId() -> String {
         let code = indexCode
         let allcode = indexAllcode.lowercased()
-
-        // 已经是 "市场.代码" 格式（如 90.BK0XXX），直接返回
-        if indexAllcode.contains(".") {
-            return indexAllcode
-        }
-
-        // 北交所
+        if indexAllcode.contains(".") { return indexAllcode }
         if allcode.hasPrefix("bj") { return "0.\(code)" }
-
-        // 上交所 sh prefix
         if allcode.hasPrefix("sh") { return "1.\(code)" }
-
-        // 深交所 sz prefix
         if allcode.hasPrefix("sz") { return "0.\(code)" }
-
-        // 指数：特定代码归属上交所
         let shIndexCodes = Set(["000001","000016","000300","000905","000852","000688"])
         if shIndexCodes.contains(code) { return "1.\(code)" }
         if code.hasPrefix("399") || code.hasPrefix("899") { return "0.\(code)" }
-
-        // 普通股票
         if code.hasPrefix("6") || code.hasPrefix("5") || code.hasPrefix("9") { return "1.\(code)" }
-
-        // 深交所默认（000/001/002/003/300 等）
         return "0.\(code)"
     }
 
-    /// 加载指数行情详细数据 —— 直接调用东方财富 push2 API，与 Android EastMoneyDetailRepository 一致
+    /// 加载行情详细数据 —— 对齐安卓：切换至新浪财经 API (hq.sinajs.cn)
     private func loadIndexDetail() {
-        let secId = resolveSecId()
-        let ut = "fa5fd1943c7b386f172d6893dbfba10b"
-        let fields = "f43,f44,f45,f46,f47,f48,f51,f52,f57,f58,f60,f116,f117,f168,f169,f170"
-        let urlStr = "https://push2.eastmoney.com/api/qt/stock/get"
-            + "?secid=\(secId)&fltt=2&invt=2&ut=\(ut)&fields=\(fields)"
+        guard !indexAllcode.isEmpty else { return }
+        
+        // 转换代码格式: bj899050 -> bj899050, sh600519 -> sh600519
+        let code = indexCode
+        let prefix = indexAllcode.prefix(2).lowercased()
+        let market = (prefix == "sh") ? "sh" : (prefix == "bj" ? "bj" : "sz")
+        let sinaCode = "\(market)\(code)"
+        
+        let urlStr = "https://hq.sinajs.cn/list=\(sinaCode)"
         guard let url = URL(string: urlStr) else { return }
-
-        var req = URLRequest(url: url)
-        req.setValue(
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-            + "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-            forHTTPHeaderField: "User-Agent"
-        )
-        req.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
-
+        
+        var req = URLRequest(url: url, timeoutInterval: 10)
+        req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+        req.setValue("https://finance.sina.com.cn", forHTTPHeaderField: "Referer")
+        
         URLSession.shared.dataTask(with: req) { [weak self] data, _, error in
-            guard let self else { return }
-            if let error = error {
-                print("[指数详情] EastMoney 请求失败: \(error.localizedDescription)")
-                return
-            }
-            guard let data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let d = json["data"] as? [String: Any] else {
-                print("[指数详情] EastMoney 响应解析失败")
-                return
-            }
-
-            // 将 JSON 值解析为 Double（兼容 Int / Double / String 三种类型）
-            func dbl(_ key: String) -> Double? {
-                guard let v = d[key] else { return nil }
-                if let n = v as? Double { return n }
-                if let n = v as? Int    { return Double(n) }
-                if let s = v as? String { return Double(s) }
-                return nil
-            }
-
-            let price    = dbl("f43")   // 最新价
-            let high     = dbl("f44")   // 最高
-            let low      = dbl("f45")   // 最低
-            let open     = dbl("f46")   // 今开
-            let vol      = dbl("f47")   // 成交量（手）
-            let amt      = dbl("f48")   // 成交额（元）
-            let lu       = dbl("f51")   // 涨停价
-            let ld       = dbl("f52")   // 跌停价
-            let preClose = dbl("f60")   // 昨收
-            let change   = dbl("f169")  // 涨跌额
-            let changePct = dbl("f170") // 涨跌幅（%）
-
-            // 格式化为两位小数字符串
-            func fmt2(_ v: Double?) -> String {
-                guard let v else { return "--" }
-                return String(format: "%.2f", v)
-            }
-
-            // 成交量格式化（与 Android formatVolume 一致）
-            func fmtVolume(_ v: Double?) -> String {
-                guard let v else { return "--" }
-                let a = abs(v)
-                if a >= 1e8 { return String(format: "%.2f亿", v / 1e8) }
-                if a >= 1e4 { return String(format: "%.2f万", v / 1e4) }
+            guard let self = self, let data = data else { return }
+            
+            // 新浪接口返回 GBK 编码
+            let cfEnc = CFStringEncodings.GB_18030_2000
+            let enc = CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEnc.rawValue))
+            guard let rawStr = String(data: data, encoding: String.Encoding(rawValue: enc)),
+                  let startIdx = rawStr.firstIndex(of: "\""),
+                  let endIdx = rawStr.lastIndex(of: "\""),
+                  startIdx < endIdx else { return }
+            
+            let content = String(rawStr[rawStr.index(after: startIdx)..<endIdx])
+            let fields = content.components(separatedBy: ",")
+            /*
+             新浪字段索引：
+             0:名称, 1:今开, 2:昨收, 3:当前价, 4:最高, 5:最低, 8:成交量(股), 9:成交额(元), 30:日期, 31:时间
+             */
+            guard fields.count >= 30 else { return }
+            
+            let name     = fields[0]
+            let open     = Double(fields[1]) ?? 0.0
+            let preClose = Double(fields[2]) ?? 0.0
+            let price    = Double(fields[3]) ?? 0.0
+            let high     = Double(fields[4]) ?? 0.0
+            let low      = Double(fields[5]) ?? 0.0
+            let vol      = (Double(fields[8]) ?? 0.0) / 100.0 // 股 -> 手
+            let amt      = Double(fields[9]) ?? 0.0
+            
+            let change   = (price > 0 && preClose > 0) ? (price - preClose) : 0.0
+            let changePct = (price > 0 && preClose > 0) ? (change / preClose * 100.0) : 0.0
+            
+            // 本地计算涨跌停 (对齐安卓 SinaStockRepository.calculateLimitUp/Down)
+            let limitUp   = self.calculateLimitPrice(code: code, preClose: preClose, isUp: true)
+            let limitDown = self.calculateLimitPrice(code: code, preClose: preClose, isUp: false)
+            
+            // 格式化工具
+            func fmt2(_ v: Double) -> String { return String(format: "%.2f", v) }
+            func fmtVol(_ v: Double) -> String {
+                if v >= 1e8 { return String(format: "%.2fe亿", v / 1e8) }
+                if v >= 1e4 { return String(format: "%.2f万", v / 1e4) }
                 return String(format: "%.0f", v)
             }
-
-            // 成交额格式化（与 Android formatAmount 一致）
-            func fmtAmount(_ v: Double?) -> String {
-                guard let v else { return "--" }
-                let a = abs(v)
-                if a >= 1e12 { return String(format: "%.2f万亿", v / 1e12) }
-                if a >= 1e8  { return String(format: "%.2f亿", v / 1e8) }
-                if a >= 1e4  { return String(format: "%.2f万", v / 1e4) }
+            func fmtAmt(_ v: Double) -> String {
+                if v >= 1e8 { return String(format: "%.2f亿", v / 1e8) }
+                if v >= 1e4 { return String(format: "%.2f万", v / 1e4) }
                 return String(format: "%.2f", v)
-            }
-
-            // 振幅 = (最高 - 最低) / 昨收 × 100%（与 Android SnapshotData.amplitudePct 一致）
-            func amplitudePct() -> String {
-                guard let h = high, let l = low, let p = preClose, p != 0 else { return "--" }
-                return String(format: "%.2f%%", (h - l) / p * 100.0)
             }
 
             DispatchQueue.main.async {
+                if !name.isEmpty && self.indexName.isEmpty { self.gk_navTitle = name }
+                
                 // 刷新价格区
-                if let price, let change {
-                    let isRise = change >= 0
-                    let color = isRise ? self.themeRed : self.stockGreen
-                    let sign  = isRise ? "+" : ""
-                    self.indexPrice         = fmt2(price)
-                    self.indexChange        = fmt2(change)
-                    self.indexChangePercent = fmt2(changePct)
-
-                    self.priceLabel.text    = self.indexPrice
-                    self.priceLabel.textColor = color
-                    self.changeAmtLabel.text  = "\(sign)\(self.indexChange)"
-                    self.changeAmtLabel.textColor = color
-                    self.changePctLabel.text  = "\(sign)\(self.indexChangePercent)%"
-                    self.changePctLabel.textColor = color
-                }
-
-                // 刷新指标网格
+                let isRise = change >= 0
+                let color  = isRise ? self.themeRed : self.stockGreen
+                let sign   = isRise ? "+" : ""
+                
+                self.priceLabel.text = fmt2(price)
+                self.priceLabel.textColor = color
+                self.changeAmtLabel.text = String(format: "%@%.2f", sign, change)
+                self.changeAmtLabel.textColor = color
+                self.changePctLabel.text = String(format: "%@%.2f%%", sign, changePct)
+                self.changePctLabel.textColor = color
+                
+                // 刷新 3x3 矩阵
                 self.todayOpen      = fmt2(open)
                 self.lowest         = fmt2(low)
                 self.yesterdayClose = fmt2(preClose)
-                self.volume         = fmtVolume(vol)
-                self.limitUp        = fmt2(lu)
-                self.turnover       = fmtAmount(amt)
-                self.limitDown      = fmt2(ld)
-                self.amplitude      = amplitudePct()
+                self.volume         = fmtVol(vol)
+                self.limitUp        = fmt2(limitUp)
+                self.turnover       = fmtAmt(amt)
+                self.limitDown      = fmt2(limitDown)
                 self.highest        = fmt2(high)
-
+                
+                // 振幅
+                if high > 0 && low > 0 && preClose > 0 {
+                    self.amplitude = String(format: "%.2f%%", (high - low) / preClose * 100.0)
+                } else {
+                    self.amplitude = "0.00%"
+                }
+                
                 self.refreshMetrics()
                 self.populateChart()
             }
         }.resume()
+    }
+
+    /// 本地计算涨跌停价格 (对齐安卓 getLimitPct)
+    private func calculateLimitPrice(code: String, preClose: Double, isUp: Bool) -> Double {
+        guard preClose > 0 else { return 0 }
+        let pct: Double
+        if code.hasPrefix("688") || code.hasPrefix("300") {
+            pct = 0.20
+        } else if code.hasPrefix("4") || code.hasPrefix("8") || code.hasPrefix("920") {
+            pct = 0.30
+        } else {
+            pct = 0.10
+        }
+        let delta = preClose * pct
+        let result = isUp ? (preClose + delta) : (preClose - delta)
+        return Darwin.round(result * 100.0) / 100.0 // 四舍五入保留两位
     }
 
     /// 检查是否已加入自选

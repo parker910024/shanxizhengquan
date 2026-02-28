@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Message 消息 (Figma 山西证券新版 4-884 / 4-907) -->
+    <dimen name="message_list_h_padding">16dp</dimen>
+    <dimen name="message_list_v_padding">12dp</dimen>
+    <dimen name="message_item_divider_height">1dp</dimen>
+    <dimen name="message_detail_h_margin">16dp</dimen>
+    <dimen name="message_detail_title_top">24dp</dimen>
+    <dimen name="message_detail_content_top">16dp</dimen>
+    <dimen name="message_detail_time_top">16dp</dimen>
+
+    <!-- 行情页面板块 Grid 间距 -->
+    <dimen name="sector_grid_spacing">1dp</dimen>
+
+    <!-- 持仓记录页面 - 红色标签相关尺寸 -->
+    <dimen name="position_label_margin_start">8dp</dimen>
+    <dimen name="position_label_width">20dp</dimen>
+    <dimen name="position_data_margin">5dp</dimen>
+    <!-- Header占位宽度 = label_margin_start + label_width + data_margin = 8 + 20 + 5 = 33dp -->
+    <dimen name="position_header_offset">33dp</dimen>
+    <!-- 右侧边距 -->
+    <dimen name="position_data_margin_end">5dp</dimen>
+</resources>

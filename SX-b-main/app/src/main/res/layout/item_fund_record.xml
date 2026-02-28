@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="16dp">
+
+    <!-- 第一行: 类型(左) + 变动资金:金额(右) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#303030"
+            android:textSize="15sp"
+            tools:text="平仓收益" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="变动资金："
+            android:textColor="#303030"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#303030"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="9,039,600.00" />
+
+    </LinearLayout>
+
+    <!-- 第二行: 日期时间 -->
+    <TextView
+        android:id="@+id/tv_datetime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="#606060"
+        android:textSize="13sp"
+        tools:text="2026-01-21 10:02:06" />
+
+    <!-- 第三行: 详情 -->
+    <TextView
+        android:id="@+id/tv_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:lineSpacingExtra="4dp"
+        android:textColor="#606060"
+        android:textSize="13sp"
+        tools:text="卖出股票，603352/C至信，占用本金：9039600.00，总手续费:903.96，递延费:0.00，印花税:4519.80，盈亏:7464600.00，总盈亏：7459176.24" />
+
+    <!-- 分割线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="#F0F0F0" />
+
+</LinearLayout>

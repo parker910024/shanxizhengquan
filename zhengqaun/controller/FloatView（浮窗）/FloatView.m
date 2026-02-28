@@ -93,6 +93,7 @@
     [self addGestureRecognizer:tap];
     [self initLabel];
     [self.fatherView addSubview:self];
+    [self.fatherView bringSubviewToFront:self];
 }
 
 - (void)initLabel

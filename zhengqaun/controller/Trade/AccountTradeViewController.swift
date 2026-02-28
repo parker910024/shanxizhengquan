@@ -33,7 +33,7 @@ class AccountTradeViewController: ZQViewController {
     private var sellButton: UIButton!
     private var underline: UIView!
     private var underlineLeading: NSLayoutConstraint?
-    private var selectedIndex: Int = 0 // 0: 买入, 1: 卖出
+    var selectedIndex: Int = 0 // 0: 买入, 1: 卖出
     
     // 买入页面
     private let buyView = UIView()
@@ -115,14 +115,15 @@ class AccountTradeViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = navBlue
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "账户交易"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
         gk_navItemLeftSpace = 15
         gk_navItemRightSpace = 15
+        gk_backStyle = .black
     }
     
     private func setupSegment() {
@@ -1600,44 +1601,53 @@ class AccountTradeViewController: ZQViewController {
     private func fetchStockDetail(for code: String) {
         guard !code.isEmpty else { return }
         
-        let marketId: String
+        let prefix: String
         switch exchange {
-        case "沪": marketId = "1"
-        case "深": marketId = "0"
-        case "京": marketId = "0"
-        default:   marketId = code.hasPrefix("6") ? "1" : "0"
+        case "沪": prefix = "sh"
+        case "京": prefix = "bj"
+        default:   prefix = code.hasPrefix("6") ? "sh" : "sz"
         }
-        let secid = "\(marketId).\(code)"
-        let fields = "f43,f44,f46,f60"
-        let urlStr = "https://push2.eastmoney.com/api/qt/stock/get?secid=\(secid)&fields=\(fields)&ut=fa5fd1943c7b386f172d6893dbfba10b"
+        let sinaCode = "\(prefix)\(code)"
         
+        let urlStr = "https://hq.sinajs.cn/list=\(sinaCode)"
         guard let url = URL(string: urlStr) else { return }
-        var request = URLRequest(url: url)
-        request.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+        
+        var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("https://finance.sina.com.cn", forHTTPHeaderField: "Referer")
         
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self, let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let d = json["data"] as? [String: Any] else {
-                return
-            }
+            guard let self = self, let data = data else { return }
+            
+            // 新浪接口返回 GBK 编码
+            let cfEnc = CFStringEncodings.GB_18030_2000
+            let enc = CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEnc.rawValue))
+            guard let rawStr = String(data: data, encoding: String.Encoding(rawValue: enc)),
+                  let startIdx = rawStr.firstIndex(of: "\""),
+                  let endIdx = rawStr.lastIndex(of: "\""),
+                  startIdx < endIdx else { return }
+            
+            let content = String(rawStr[rawStr.index(after: startIdx)..<endIdx])
+            let fields = content.components(separatedBy: ",")
+            guard fields.count >= 30 else { return }
+            
+            let name     = fields[0]
+            let preClose = Double(fields[2]) ?? 0.0
+            let price    = Double(fields[3]) ?? 0.0
+            
             DispatchQueue.main.async {
-                // 东财返回的分时最新价并不在上述 fields 中，如果有传过来的 currentPrice 先继续使用
-                let price = self.currentPrice
+                self.stockName = name.isEmpty ? self.stockName : name
+                self.currentPrice = String(format: "%.2f", price)
                 
-                self.buyPriceLabel?.text = price
-                self.buyCurrentPriceLabel?.text = price
-                self.sellCurrentPriceLabel?.text = price
+                self.buyPriceLabel?.text = self.currentPrice
+                self.buyCurrentPriceLabel?.text = self.currentPrice
+                self.sellCurrentPriceLabel?.text = self.currentPrice
                 
-                // 仅在非外部指定持仓时才去使用最新价作为买入价显示
                 if !self.useProvidedHoldings {
-                    self.buyPriceSellLabel?.text = price
+                    self.buyPriceSellLabel?.text = self.currentPrice
                 }
                 
-                self.stockName = d["f58"] as? String ?? self.stockName
-                
-                if let yClose = d["f60"] as? Double, yClose > 0 {
+                if preClose > 0 {
                     let limitPercent: Double
                     if code.hasPrefix("30") || code.hasPrefix("68") {
                         limitPercent = 0.20
@@ -1649,8 +1659,8 @@ class AccountTradeViewController: ZQViewController {
                         limitPercent = 0.10
                     }
                     
-                    self.limitUpPrice = String(format: "%.2f", yClose * (1 + limitPercent))
-                    self.limitDownPrice = String(format: "%.2f", yClose * (1 - limitPercent))
+                    self.limitUpPrice = String(format: "%.2f", preClose * (1 + limitPercent))
+                    self.limitDownPrice = String(format: "%.2f", preClose * (1 - limitPercent))
                 }
                 
                 self.updateLimitUpDown()

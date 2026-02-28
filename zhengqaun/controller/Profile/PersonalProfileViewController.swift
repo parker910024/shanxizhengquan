@@ -2,7 +2,7 @@
 //  PersonalProfileViewController.swift
 //  zhengqaun
 //
-//  个人资料页：头像、手机号、账号、登录密码/交易密码/系统版本、退出登录
+//  个人资料页：账号、交易密码/登录密码/系统版本、退出登录（对齐安卓 ProfileActivity）
 //
 
 import UIKit
@@ -12,18 +12,16 @@ class PersonalProfileViewController: ZQViewController {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
-    private let avatarContainer = UIView()
-    private let avatarImageView = UIImageView()
-    private let avatarHintLabel = UILabel()
-
     private let listStack = UIStackView()
     private let separatorColor = UIColor(red: 0.94, green: 0.94, blue: 0.94, alpha: 1.0)
     private let logoutButton = UIButton(type: .system)
+    private var avatarImageView: UIImageView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupUI()
+        loadAvatarFromServer()
     }
     
     
@@ -60,42 +58,59 @@ class PersonalProfileViewController: ZQViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
 
-        // 头像区域
-        avatarContainer.backgroundColor = .clear
+        // 对齐安卓：顶部居中头像区域
+        let avatarContainer = UIView()
+        avatarContainer.backgroundColor = .white
         contentView.addSubview(avatarContainer)
         avatarContainer.translatesAutoresizingMaskIntoConstraints = false
 
-        avatarImageView.image = UIImage.init(named: "logoIcon")
-        avatarImageView.layer.cornerRadius = 40
-        avatarImageView.clipsToBounds = true
-        avatarImageView.contentMode = .scaleAspectFill
-        avatarImageView.isUserInteractionEnabled = true
-        avatarContainer.addSubview(avatarImageView)
-        avatarImageView.translatesAutoresizingMaskIntoConstraints = false
+        // 头像：圆形容器 + 默认本地 logoIcon
+        let avatarSize: CGFloat = 64
+        let avatarView = UIView()
+        avatarView.backgroundColor = UIColor(red: 200/255, green: 30/255, blue: 30/255, alpha: 1.0)
+        avatarView.layer.cornerRadius = avatarSize / 2
+        avatarView.clipsToBounds = true
+        avatarContainer.addSubview(avatarView)
+        avatarView.translatesAutoresizingMaskIntoConstraints = false
 
-        avatarHintLabel.text = "点击更换头像"
-        avatarHintLabel.font = UIFont.systemFont(ofSize: 14)
-        avatarHintLabel.textColor = Constants.Color.textTertiary
-        avatarContainer.addSubview(avatarHintLabel)
-        avatarHintLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let avatarTap = UITapGestureRecognizer(target: self, action: #selector(avatarTapped))
-        avatarContainer.addGestureRecognizer(avatarTap)
-        avatarContainer.isUserInteractionEnabled = true
+        // 头像 ImageView：默认显示本地 logoIcon，后台有 avatar 则覆盖
+        let imgView = UIImageView(image: UIImage(named: "logoIcon"))
+        imgView.contentMode = .scaleAspectFill
+        imgView.clipsToBounds = true
+        avatarView.addSubview(imgView)
+        imgView.translatesAutoresizingMaskIntoConstraints = false
+        self.avatarImageView = imgView
 
         NSLayoutConstraint.activate([
-            avatarContainer.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
-            avatarContainer.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            avatarImageView.topAnchor.constraint(equalTo: avatarContainer.topAnchor),
-            avatarImageView.centerXAnchor.constraint(equalTo: avatarContainer.centerXAnchor),
-            avatarImageView.widthAnchor.constraint(equalToConstant: 80),
-            avatarImageView.heightAnchor.constraint(equalToConstant: 80),
-            avatarHintLabel.topAnchor.constraint(equalTo: avatarImageView.bottomAnchor, constant: 8),
-            avatarHintLabel.centerXAnchor.constraint(equalTo: avatarContainer.centerXAnchor),
-            avatarHintLabel.bottomAnchor.constraint(equalTo: avatarContainer.bottomAnchor)
+            avatarContainer.topAnchor.constraint(equalTo: contentView.topAnchor),
+            avatarContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            avatarContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            avatarContainer.heightAnchor.constraint(equalToConstant: avatarSize + 48),
+
+            avatarView.centerXAnchor.constraint(equalTo: avatarContainer.centerXAnchor),
+            avatarView.centerYAnchor.constraint(equalTo: avatarContainer.centerYAnchor),
+            avatarView.widthAnchor.constraint(equalToConstant: avatarSize),
+            avatarView.heightAnchor.constraint(equalToConstant: avatarSize),
+
+            imgView.topAnchor.constraint(equalTo: avatarView.topAnchor),
+            imgView.leadingAnchor.constraint(equalTo: avatarView.leadingAnchor),
+            imgView.trailingAnchor.constraint(equalTo: avatarView.trailingAnchor),
+            imgView.bottomAnchor.constraint(equalTo: avatarView.bottomAnchor)
         ])
 
-        // 信息列表：手机号、账号、登录密码、交易密码、系统版本
+        // 分隔条（对齐安卓 8dp 灰色分隔）
+        let avatarSeparator = UIView()
+        avatarSeparator.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        contentView.addSubview(avatarSeparator)
+        avatarSeparator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            avatarSeparator.topAnchor.constraint(equalTo: avatarContainer.bottomAnchor),
+            avatarSeparator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            avatarSeparator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            avatarSeparator.heightAnchor.constraint(equalToConstant: 8)
+        ])
+
+        // 信息列表
         listStack.axis = .vertical
         listStack.spacing = 0
         listStack.backgroundColor = .white
@@ -103,14 +118,13 @@ class PersonalProfileViewController: ZQViewController {
         listStack.translatesAutoresizingMaskIntoConstraints = false
 
         let rowHeight: CGFloat = 52
-        let phone = UserAuthManager.shared.currentPhone ?? "1877777777"
-        let account = UserAuthManager.shared.userID.isEmpty ? "T008754664" : "T\(UserAuthManager.shared.userID)"
+        // 对齐安卓：账号显示完整（不脱敏），用 currentPhone（存的是完整 username）而非 currentUsername（存的是脱敏后的 nickname）
+        let account = UserAuthManager.shared.currentPhone ?? UserAuthManager.shared.currentUsername ?? "--"
         let items: [(String, String?, Bool)] = [
-            ("手机号", maskPhone(phone), false),
             ("账号", account, false),
-            ("交易密码", "修改>", true),
-            ("登录密码", "修改>", true),
-            ("系统版本", "V25.1.1>", true)
+            ("登录密码", "修改", true),
+            ("交易密码", "修改", true),
+            ("系统版本", "V1.0", false)
         ]
         for (idx, item) in items.enumerated() {
             let row = makeInfoRow(title: item.0, value: item.1, showArrow: item.2, tag: idx)
@@ -125,7 +139,7 @@ class PersonalProfileViewController: ZQViewController {
         }
 
         NSLayoutConstraint.activate([
-            listStack.topAnchor.constraint(equalTo: avatarContainer.bottomAnchor, constant: 32),
+            listStack.topAnchor.constraint(equalTo: avatarSeparator.bottomAnchor),
             listStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             listStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
@@ -181,32 +195,21 @@ class PersonalProfileViewController: ZQViewController {
         return row
     }
 
-    private func maskPhone(_ phone: String) -> String {
-        guard phone.count >= 11 else { return phone }
-        let start = phone.prefix(3)
-        let end = phone.suffix(4)
-        return "\(start)****\(end)"
-    }
 
-    @objc private func avatarTapped() {
-        // TODO: 选择/拍照更换头像
-    }
+
+
 
     @objc private func infoRowTapped(_ g: UITapGestureRecognizer) {
         guard let row = g.view else { return }
         switch row.tag {
-        case 2:
-            let vc = TransactionPasswordViewController()
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
-        case 3:
+        case 1: // 登录密码
             let vc = LoginPasswordViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
-            break
-        case 4:
-            // 系统版本 -> 关于/版本说明（若有）
-            break
+        case 2: // 交易密码
+            let vc = TransactionPasswordViewController()
+            vc.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(vc, animated: true)
         default:
             break
         }
@@ -223,5 +226,36 @@ class PersonalProfileViewController: ZQViewController {
             }
         })
         present(alert, animated: true)
+    }
+
+    /// 从后台加载头像（对齐安卓）
+    private func loadAvatarFromServer() {
+        SecureNetworkManager.shared.request(
+            api: Api.user_info_api,
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any],
+                      let info = data["list"] as? [String: Any],
+                      var avatarUrl = info["avatar"] as? String,
+                      !avatarUrl.isEmpty else { return }
+                if !avatarUrl.hasPrefix("http") {
+                    avatarUrl = "https://" + avatarUrl
+                }
+                guard let url = URL(string: avatarUrl) else { return }
+                URLSession.shared.dataTask(with: url) { [weak self] imgData, _, _ in
+                    guard let self = self, let imgData = imgData, let image = UIImage(data: imgData) else { return }
+                    DispatchQueue.main.async {
+                        self.avatarImageView.image = image
+                    }
+                }.resume()
+            case .failure:
+                break
+            }
+        }
     }
 }

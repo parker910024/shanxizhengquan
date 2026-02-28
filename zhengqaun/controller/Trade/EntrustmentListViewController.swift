@@ -9,12 +9,13 @@ import UIKit
 
 /// 单条委托
 struct EntrustmentItem {
-    let exchange: String   // 京、深、沪
+    let id: Int
     let stockName: String
     let stockCode: String
-    let buySellCategory: String  // 如 "证券买入(大宗)"，买入类用红色
+    let buySellCategory: String  // 如 "证券买入(大宗)"
     let isBuy: Bool
-    let currentStatus: String   // 如 "挂单"
+    let currentStatus: String    // 如 "挂单"
+    let statusId: Int            // 2为委托中，其他为完结
     let entrustedQuantity: String
     let entrustedPrice: String
 }
@@ -22,7 +23,11 @@ struct EntrustmentItem {
 class EntrustmentListViewController: ZQViewController {
 
     private let tableView = UITableView(frame: .zero, style: .plain)
+    private let emptyLabel = UILabel()
     private var list: [EntrustmentItem] = []
+    
+    private var blockTradeName: String = "大宗"
+    private var cancelingIds = Set<Int>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,15 +57,38 @@ class EntrustmentListViewController: ZQViewController {
         tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        emptyLabel.text = "加载中..."
+        emptyLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        emptyLabel.font = UIFont.systemFont(ofSize: 14)
+        emptyLabel.textAlignment = .center
+        view.addSubview(emptyLabel)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
+            tableView.topAnchor.constraint(equalTo: gk_navigationBar.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            emptyLabel.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
 
     private func loadData() {
+        SecureNetworkManager.shared.request(api: "/api/deal/getConfig", method: .get, params: [:]) { [weak self] res in
+            if case .success(let success) = res,
+               let dict = success.decrypted,
+               let data = dict["data"] as? [String: Any],
+               let name = data["dz_syname"] as? String, !name.isEmpty {
+                self?.blockTradeName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            self?.fetchList()
+        }
+    }
+
+    private func fetchList() {
         SecureNetworkManager.shared.request(
             api: "/api/deal/getNowWarehouse_weituo",
             method: .get,
@@ -76,51 +104,46 @@ class EntrustmentListViewController: ZQViewController {
                 }
                 
                 self.list = items.compactMap { item in
+                    let id = item["id"] as? Int ?? 0
                     let title = item["title"] as? String ?? "--"
                     let code = item["code"] as? String ?? "--"
-                    let allcode = item["allcode"] as? String ?? ""
                     let buyPrice = item["buyprice"] as? Double ?? 0
                     let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
                     let cjlx = item["cjlx"] as? String ?? "--"
                     let buytype = "\(item["buytype"] ?? "1")"
                     
-                    // 根据 type 推导交易所
-                    let typeVal = item["type"] as? Int ?? 0
-                    let exchangeStr: String
-                    switch typeVal {
-                    case 1, 5: exchangeStr = "沪"
-                    case 2, 3: exchangeStr = "深"
-                    case 4:    exchangeStr = "京"
-                    default:
-                        if allcode.lowercased().hasPrefix("sh") { exchangeStr = "沪" }
-                        else if allcode.lowercased().hasPrefix("bj") { exchangeStr = "京" }
-                        else { exchangeStr = "深" }
-                    }
+                    let statusId = item["status"] as? Int ?? 2
+                    let isBuy = true // 委托界面目前仅限买入展示红色
                     
-                    // 判断买卖类别
-                    let isBuy = (item["status"] as? Int ?? 2) == 2  // 委托中
                     let categoryText: String
                     if buytype == "7" {
-                        categoryText = isBuy ? "证券买入(大宗)" : "证券卖出(大宗)"
+                        categoryText = "证券买入(\(self.blockTradeName))"
+                    } else if buytype == "1" {
+                        categoryText = "证券买入"
                     } else {
-                        categoryText = isBuy ? "证券买入" : "证券卖出"
+                        categoryText = buytype.isEmpty ? "--" : buytype
                     }
                     
                     return EntrustmentItem(
-                        exchange: exchangeStr,
+                        id: id,
                         stockName: title,
                         stockCode: code,
                         buySellCategory: categoryText,
                         isBuy: isBuy,
-                        currentStatus: cjlx,
+                        currentStatus: cjlx.isEmpty ? "委托" : cjlx,
+                        statusId: statusId,
                         entrustedQuantity: number,
-                        entrustedPrice: String(format: "%.2f", buyPrice)
+                        entrustedPrice: buyPrice > 0 ? String(format: "%.2f", buyPrice) : "--"
                     )
                 }
                 
                 self.tableView.reloadData()
+                self.emptyLabel.text = "暂无委托记录"
+                self.emptyLabel.isHidden = !self.list.isEmpty
                 
-            case .failure(_): break
+            case .failure(_):
+                self.emptyLabel.text = "加载失败"
+                self.emptyLabel.isHidden = !self.list.isEmpty
             }
         }
     }
@@ -135,8 +158,37 @@ extension EntrustmentListViewController: UITableViewDataSource, UITableViewDeleg
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! EntrustmentListCell
-        cell.configure(with: list[indexPath.row])
+        let item = list[indexPath.row]
+        let isCanceling = cancelingIds.contains(item.id)
+        cell.configure(with: item, isCanceling: isCanceling)
+        cell.onCancelAction = { [weak self] in
+            self?.performCancel(for: item)
+        }
         return cell
+    }
+    
+    private func performCancel(for item: EntrustmentItem) {
+        guard item.statusId == 2 && item.id > 0 else { return }
+        guard !cancelingIds.contains(item.id) else { return }
+        
+        cancelingIds.insert(item.id)
+        tableView.reloadData()
+        
+        SecureNetworkManager.shared.request(api: "/api/deal/cheAll", method: .get, params: ["id": "\(item.id)"]) { [weak self] result in
+            guard let self = self else { return }
+            self.cancelingIds.remove(item.id)
+            if case .success(let res) = result, res.statusCode == 200 {
+                DispatchQueue.main.async {
+                    Toast.show("撤单成功")
+                    self.fetchList()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    Toast.show("撤单失败")
+                    self.tableView.reloadData()
+                }
+            }
+        }
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -151,18 +203,29 @@ extension EntrustmentListViewController: UITableViewDataSource, UITableViewDeleg
 // MARK: - EntrustmentListCell
 class EntrustmentListCell: UITableViewCell {
 
+    var onCancelAction: (() -> Void)?
+
     private let card = UIView()
-    private let exchangeBadge = UILabel()
-    private let nameLabel = UILabel()
-    private let codeLabel = UILabel()
-    private let categoryLabel = UILabel()
-    private let categoryValueLabel = UILabel()
-    private let statusLabel = UILabel()
+    
+    // 行1
+    private let titleLabel = UILabel()
+    private let statusHintLabel = UILabel()
     private let statusValueLabel = UILabel()
-    private let quantityLabel = UILabel()
-    private let quantityValueLabel = UILabel()
-    private let priceLabel = UILabel()
+    
+    // 行2
+    private let categoryHintLabel = UILabel()
+    private let categoryTagContainer = UIView()
+    private let categoryTagLabel = UILabel()
+    
+    private let priceHintLabel = UILabel()
     private let priceValueLabel = UILabel()
+    
+    // 行3
+    private let quantityHintLabel = UILabel()
+    private let quantityValueLabel = UILabel()
+    private let cancelButton = UIButton(type: .custom)
+    
+    private let divider = UIView()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -179,109 +242,139 @@ class EntrustmentListCell: UITableViewCell {
         contentView.backgroundColor = .clear
 
         card.backgroundColor = .white
-        card.layer.cornerRadius = 8
         contentView.addSubview(card)
         card.translatesAutoresizingMaskIntoConstraints = false
 
-        exchangeBadge.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        exchangeBadge.textColor = .white
-        exchangeBadge.textAlignment = .center
-        exchangeBadge.layer.cornerRadius = 4
-        exchangeBadge.clipsToBounds = true
-        card.addSubview(exchangeBadge)
-        exchangeBadge.translatesAutoresizingMaskIntoConstraints = false
+        let darkColor = UIColor(red: 0.19, green: 0.19, blue: 0.19, alpha: 1.0)
+        let grayColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        titleLabel.textColor = darkColor
+        
+        statusHintLabel.font = UIFont.systemFont(ofSize: 12)
+        statusHintLabel.textColor = grayColor
+        statusHintLabel.text = "当前状态"
+        
+        statusValueLabel.font = UIFont.systemFont(ofSize: 12)
+        statusValueLabel.textColor = darkColor
 
-        nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        nameLabel.textColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1)
-        card.addSubview(nameLabel)
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        codeLabel.font = UIFont.systemFont(ofSize: 14)
-        codeLabel.textColor = UIColor(red: 0.45, green: 0.45, blue: 0.45, alpha: 1)
-        card.addSubview(codeLabel)
-        codeLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let row1 = makeDetailRow(label: categoryLabel, value: categoryValueLabel)
-        let row2 = makeDetailRow(label: statusLabel, value: statusValueLabel)
-        let row3 = makeDetailRow(label: quantityLabel, value: quantityValueLabel)
-        let row4 = makeDetailRow(label: priceLabel, value: priceValueLabel)
-        categoryLabel.text = "买卖类别"
-        statusLabel.text = "当前状态"
-        quantityLabel.text = "委托数量"
-        priceLabel.text = "委托价格"
-
-        let leftStack = UIStackView(arrangedSubviews: [row1, row3])
-        leftStack.axis = .vertical
-        leftStack.spacing = 10
-        leftStack.alignment = .leading
-        let rightStack = UIStackView(arrangedSubviews: [row2, row4])
-        rightStack.axis = .vertical
-        rightStack.spacing = 10
-        rightStack.alignment = .leading
-        let detailRow = UIStackView(arrangedSubviews: [leftStack, rightStack])
-        detailRow.axis = .horizontal
-        detailRow.distribution = .fillEqually
-        detailRow.spacing = 16
-        detailRow.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(detailRow)
-
-        let pad: CGFloat = 16
-        let headerBottom: CGFloat = 12
+        let row1 = UIStackView(arrangedSubviews: [titleLabel, UIView(), statusHintLabel, statusValueLabel])
+        row1.axis = .horizontal
+        row1.alignment = .center
+        row1.spacing = 4
+        
+        categoryHintLabel.font = UIFont.systemFont(ofSize: 12)
+        categoryHintLabel.textColor = grayColor
+        categoryHintLabel.text = "买卖类型 "
+        
+        categoryTagContainer.layer.borderWidth = 0.5
+        categoryTagContainer.layer.cornerRadius = 2
+        categoryTagLabel.font = UIFont.systemFont(ofSize: 11)
+        categoryTagContainer.addSubview(categoryTagLabel)
+        categoryTagLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            card.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
-
-            exchangeBadge.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: pad),
-            exchangeBadge.topAnchor.constraint(equalTo: card.topAnchor, constant: pad),
-            exchangeBadge.widthAnchor.constraint(equalToConstant: 28),
-            exchangeBadge.heightAnchor.constraint(equalToConstant: 22),
-
-            nameLabel.leadingAnchor.constraint(equalTo: exchangeBadge.trailingAnchor, constant: 10),
-            nameLabel.centerYAnchor.constraint(equalTo: exchangeBadge.centerYAnchor),
-
-            codeLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
-            codeLabel.centerYAnchor.constraint(equalTo: exchangeBadge.centerYAnchor),
-            codeLabel.trailingAnchor.constraint(lessThanOrEqualTo: card.trailingAnchor, constant: -pad),
-
-            detailRow.topAnchor.constraint(equalTo: exchangeBadge.bottomAnchor, constant: headerBottom),
-            detailRow.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: pad),
-            detailRow.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -pad),
-            detailRow.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -pad)
+            categoryTagLabel.leadingAnchor.constraint(equalTo: categoryTagContainer.leadingAnchor, constant: 4),
+            categoryTagLabel.trailingAnchor.constraint(equalTo: categoryTagContainer.trailingAnchor, constant: -4),
+            categoryTagLabel.topAnchor.constraint(equalTo: categoryTagContainer.topAnchor, constant: 1),
+            categoryTagLabel.bottomAnchor.constraint(equalTo: categoryTagContainer.bottomAnchor, constant: -1)
+        ])
+        
+        priceHintLabel.font = UIFont.systemFont(ofSize: 12)
+        priceHintLabel.textColor = grayColor
+        priceHintLabel.text = "委托价格 "
+        
+        priceValueLabel.font = UIFont.systemFont(ofSize: 12)
+        priceValueLabel.textColor = darkColor
+        
+        let row2 = UIStackView(arrangedSubviews: [categoryHintLabel, categoryTagContainer, UIView(), priceHintLabel, priceValueLabel])
+        row2.axis = .horizontal
+        row2.alignment = .center
+        
+        quantityHintLabel.font = UIFont.systemFont(ofSize: 12)
+        quantityHintLabel.textColor = grayColor
+        quantityHintLabel.text = "委托数量 "
+        
+        quantityValueLabel.font = UIFont.systemFont(ofSize: 12)
+        quantityValueLabel.textColor = darkColor
+        
+        cancelButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 12)
+        cancelButton.layer.cornerRadius = 4
+        cancelButton.clipsToBounds = true
+        cancelButton.addTarget(self, action: #selector(onCancelBtnTapped), for: .touchUpInside)
+        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            cancelButton.widthAnchor.constraint(equalToConstant: 54),
+            cancelButton.heightAnchor.constraint(equalToConstant: 26)
+        ])
+        
+        let row3 = UIStackView(arrangedSubviews: [quantityHintLabel, quantityValueLabel, UIView(), cancelButton])
+        row3.axis = .horizontal
+        row3.alignment = .center
+        
+        divider.backgroundColor = UIColor(red: 0.93, green: 0.93, blue: 0.93, alpha: 1.0)
+        card.addSubview(divider)
+        divider.translatesAutoresizingMaskIntoConstraints = false
+        
+        let mainStack = UIStackView(arrangedSubviews: [row1, row2, row3])
+        mainStack.axis = .vertical
+        mainStack.spacing = 6
+        card.addSubview(mainStack)
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            card.topAnchor.constraint(equalTo: contentView.topAnchor),
+            card.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            mainStack.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
+            mainStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            mainStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            mainStack.bottomAnchor.constraint(equalTo: divider.topAnchor, constant: -12),
+            
+            divider.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            divider.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            divider.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            divider.heightAnchor.constraint(equalToConstant: 0.5)
         ])
     }
-
-    private func makeDetailRow(label: UILabel, value: UILabel) -> UIView {
-        label.font = UIFont.systemFont(ofSize: 13)
-        label.textColor = UIColor(red: 0.35, green: 0.35, blue: 0.35, alpha: 1)
-        value.font = UIFont.systemFont(ofSize: 13)
-        value.textColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1)
-        let row = UIStackView(arrangedSubviews: [label, value])
-        row.axis = .horizontal
-        row.spacing = 6
-        row.alignment = .center
-        return row
+    
+    @objc private func onCancelBtnTapped() {
+        onCancelAction?()
     }
 
-    private static func exchangeColor(_ exchange: String) -> UIColor {
-        switch exchange {
-        case "京": return UIColor(red: 0.85, green: 0.45, blue: 0.75, alpha: 1.0)
-        case "深": return UIColor(red: 0.25, green: 0.45, blue: 0.85, alpha: 1.0)
-        case "沪": return UIColor(red: 0.95, green: 0.55, blue: 0.25, alpha: 1.0)
-        default: return UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
-        }
-    }
-
-    func configure(with item: EntrustmentItem) {
-        exchangeBadge.text = item.exchange
-        exchangeBadge.backgroundColor = Self.exchangeColor(item.exchange)
-        nameLabel.text = item.stockName
-        codeLabel.text = item.stockCode
-        categoryValueLabel.text = item.buySellCategory
-        categoryValueLabel.textColor = item.isBuy ? UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0) : UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1)
+    func configure(with item: EntrustmentItem, isCanceling: Bool) {
+        titleLabel.text = "\(item.stockName)  \(item.stockCode)"
         statusValueLabel.text = item.currentStatus
-        quantityValueLabel.text = item.entrustedQuantity
+        
+        categoryTagLabel.text = item.buySellCategory
+        let riseRed = UIColor(red: 230/255.0, green: 0, blue: 18/255.0, alpha: 1.0)
+        if item.isBuy {
+            categoryTagLabel.textColor = riseRed
+            categoryTagContainer.layer.borderColor = riseRed.cgColor
+            categoryTagContainer.backgroundColor = riseRed.withAlphaComponent(0.05)
+        } else {
+            let fallGreen = UIColor(red: 0.2, green: 0.6, blue: 0.2, alpha: 1.0)
+            categoryTagLabel.textColor = fallGreen
+            categoryTagContainer.layer.borderColor = fallGreen.cgColor
+            categoryTagContainer.backgroundColor = fallGreen.withAlphaComponent(0.05)
+        }
+        
         priceValueLabel.text = item.entrustedPrice
+        quantityValueLabel.text = item.entrustedQuantity
+        
+        let canCancel = item.statusId == 2 && item.id > 0
+        cancelButton.isHidden = !canCancel
+        cancelButton.isEnabled = !isCanceling
+        
+        if canCancel {
+            if isCanceling {
+                cancelButton.setTitle("撤单中", for: .normal)
+                cancelButton.backgroundColor = riseRed.withAlphaComponent(0.5)
+            } else {
+                cancelButton.setTitle("撤 单", for: .normal)
+                cancelButton.backgroundColor = riseRed
+            }
+        }
     }
 }

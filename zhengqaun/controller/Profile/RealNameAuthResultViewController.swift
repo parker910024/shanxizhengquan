@@ -51,6 +51,7 @@ class RealNameAuthResultViewController: ZQViewController {
     }
     var name: String = ""
     var idCard: String = ""
+    var rejectReason: String = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -103,7 +104,7 @@ class RealNameAuthResultViewController: ZQViewController {
 
     // MARK: - 认证成功态（passIcon 70x70 + 恭喜您认证通过 + 确认）
     private func setupSuccessView() {
-        successContainer.backgroundColor = .white
+        successContainer.backgroundColor = Constants.Color.backgroundMain
         view.addSubview(successContainer)
         successContainer.translatesAutoresizingMaskIntoConstraints = false
 
@@ -133,18 +134,18 @@ class RealNameAuthResultViewController: ZQViewController {
             successContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             successContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
-            passIcon.topAnchor.constraint(equalTo: successContainer.topAnchor, constant: 60),
+            passIcon.topAnchor.constraint(equalTo: successContainer.topAnchor, constant: 40),
             passIcon.centerXAnchor.constraint(equalTo: successContainer.centerXAnchor),
-            passIcon.widthAnchor.constraint(equalToConstant: 70),
-            passIcon.heightAnchor.constraint(equalToConstant: 70),
+            passIcon.widthAnchor.constraint(equalToConstant: 80),
+            passIcon.heightAnchor.constraint(equalToConstant: 80),
 
             successMessageLabel.topAnchor.constraint(equalTo: passIcon.bottomAnchor, constant: 24),
             successMessageLabel.centerXAnchor.constraint(equalTo: successContainer.centerXAnchor),
 
-            confirmButton.topAnchor.constraint(equalTo: successMessageLabel.bottomAnchor, constant: 40),
-            confirmButton.centerXAnchor.constraint(equalTo: successContainer.centerXAnchor),
-            confirmButton.widthAnchor.constraint(equalToConstant: 200),
-            confirmButton.heightAnchor.constraint(equalToConstant: 50)
+            confirmButton.topAnchor.constraint(equalTo: successMessageLabel.bottomAnchor, constant: 48),
+            confirmButton.leadingAnchor.constraint(equalTo: successContainer.leadingAnchor, constant: 32),
+            confirmButton.trailingAnchor.constraint(equalTo: successContainer.trailingAnchor, constant: -32),
+            confirmButton.heightAnchor.constraint(equalToConstant: 48)
         ])
         successContainer.isHidden = true
     }
@@ -185,7 +186,7 @@ class RealNameAuthResultViewController: ZQViewController {
         stampLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            sectionLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            sectionLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
             sectionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             
             nameContainer.topAnchor.constraint(equalTo: sectionLabel.bottomAnchor, constant: 16),
@@ -250,10 +251,10 @@ class RealNameAuthResultViewController: ZQViewController {
         statusButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            statusButton.topAnchor.constraint(equalTo: idCardContainer.bottomAnchor, constant: 40),
-            statusButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            statusButton.widthAnchor.constraint(equalToConstant: 200),
-            statusButton.heightAnchor.constraint(equalToConstant: 50)
+            statusButton.topAnchor.constraint(equalTo: idCardContainer.bottomAnchor, constant: 48),
+            statusButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 32),
+            statusButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -32),
+            statusButton.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
     
@@ -286,9 +287,9 @@ class RealNameAuthResultViewController: ZQViewController {
             updateRejectedUI()
         }
         
-        // 更新证件信息（显示星号）
-        nameLabel.text = maskString(name, showCount: 0)
-        idCardLabel.text = maskString(idCard, showCount: 0)
+        // 更新证件信息
+        nameLabel.text = name.isEmpty ? "" : maskString(name, showCount: 1)
+        idCardLabel.text = idCard.isEmpty ? "" : maskString(idCard, showCount: 4)
     }
     
     private func updatePendingUI() {
@@ -404,18 +405,20 @@ class RealNameAuthResultViewController: ZQViewController {
         scrollView.isHidden = false
         statusStamp.isHidden = false
         stampLabel.text = "审核失败"
-        statusStamp.transform = CGAffineTransform(rotationAngle: -0.1) // 稍微旋转
+        statusStamp.transform = CGAffineTransform(rotationAngle: -0.1)
         
-        // 更新印章颜色和形状
-        updateStampColor(Constants.Color.stockRise) // 红色
+        updateStampColor(Constants.Color.stockRise)
         
-        statusButton.setTitle("审核失败", for: .normal)
+        let reasonText = rejectReason.isEmpty ? "认证失败" : "认证失败\n\(rejectReason)"
+        statusButton.setTitle("重新实名认证", for: .normal)
         statusButton.setTitleColor(.white, for: .normal)
         statusButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        statusButton.backgroundColor = Constants.Color.stockRise // 红色
+        statusButton.backgroundColor = Constants.Color.stockRise
         statusButton.isEnabled = true
         
-        // 强制更新布局
+        // 如果有原因，可以考虑更新提示文字或通过 stampLabel 展示
+        // 这里的 noticeLabel 已经在 setupNotice 中设置了
+        
         DispatchQueue.main.async { [weak self] in
             self?.updateStampShape()
             self?.addStampTexture()
@@ -461,7 +464,7 @@ class RealNameAuthResultViewController: ZQViewController {
     
     private func maskString(_ string: String, showCount: Int = 0) -> String {
         guard string.count > showCount else {
-            return String(repeating: "*", count: string.count)
+            return string
         }
         
         let visiblePart = String(string.prefix(showCount))

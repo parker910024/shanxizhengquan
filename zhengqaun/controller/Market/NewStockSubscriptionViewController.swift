@@ -35,19 +35,20 @@ class NewStockSubscriptionViewController: ZQViewController {
     }
     
     private func setupNavigationBar() {
-        gk_navBackgroundColor = navBlue
-        gk_navTintColor = .white
+        gk_navBackgroundColor = .white
+        gk_navTintColor = Constants.Color.textPrimary
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        gk_navTitleColor = .white
+        gk_navTitleColor = Constants.Color.textPrimary
         gk_navTitle = "新股申购"
-        gk_navLineHidden = true
+        gk_navLineHidden = false
         gk_navItemLeftSpace = 15
         gk_navItemRightSpace = 15
+        gk_backStyle = .black
         
         // 右侧"申购记录"按钮
         let recordButton = UIButton(type: .system)
         recordButton.setTitle("申购记录", for: .normal)
-        recordButton.setTitleColor(.white, for: .normal)
+        recordButton.setTitleColor(Constants.Color.textPrimary, for: .normal)
         recordButton.titleLabel?.font = UIFont.systemFont(ofSize: 15)
         recordButton.addTarget(self, action: #selector(recordButtonTapped), for: .touchUpInside)
         gk_navRightBarButtonItem = UIBarButtonItem(customView: recordButton)
@@ -106,13 +107,22 @@ class NewStockSubscriptionViewController: ZQViewController {
                 
                 var newStocks: [NewStockSubscription] = []
                 for item in list {
-                    // 真实数据包在 sub_info 的第一项里
-                    guard let subInfoArr = item["sub_info"] as? [[String: Any]],
-                          let realItem = subInfoArr.first else { continue }
+                    // 真实数据可能包在 sub_info 的第一项里，也可能直接在 item 中
+                    let realItem: [String: Any]
+                    if let subInfoArr = item["sub_info"] as? [[String: Any]],
+                       let first = subInfoArr.first {
+                        realItem = first
+                    } else {
+                        // 容错：直接从 item 中解析
+                        realItem = item
+                    }
                     
                     let idStr = "\(realItem["id"] ?? "")"
                     let name = realItem["name"] as? String ?? (realItem["title"] as? String ?? "")
                     let code = realItem["sgcode"] as? String ?? (realItem["code"] as? String ?? "")
+                    
+                    // 跳过无效数据
+                    guard !name.isEmpty || !code.isEmpty else { continue }
                     
                     let fx_price = realItem["fx_price"]
                     let cai_buy  = realItem["cai_buy"]
@@ -120,7 +130,7 @@ class NewStockSubscriptionViewController: ZQViewController {
                     
                     let winningRate = "\(realItem["zq_rate"] ?? "0.00")%"
                     
-                    // 发行总数，可能返回的数字较大，如果需要转万股，可以处理下
+                    // 发行总数
                     let fxNum = realItem["fx_num"]
                     var fxNumStr = "0万股"
                     if let fxNumInt = fxNum as? Int {

@@ -11,6 +11,10 @@ class TradeViewController: ZQViewController {
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let sectionSpacing: CGFloat = 10
     
+    // 隐藏状态标识，与其数据缓存
+    private var isAssetsVisible = false
+    private var lastUserPriceDict: [String: Any]?
+    
     // UI 引用，用于更新数据
     private var amountLabel: UILabel!
     private var todayLabel: UILabel!
@@ -108,27 +112,52 @@ class TradeViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any],
                       let list = data["list"] as? [String: Any] else { return }
                 
-                let balance = list["balance"] as? Double ?? 0.0
-                let cityValue = list["city_value"] as? Double ?? 0.0
-                let fdyk = list["fdyk"] as? Double ?? 0.0
-                let totalAsset = list["property_money_total"] as? Double ?? 0.0
-                
+                self.lastUserPriceDict = list
                 DispatchQueue.main.async {
-                    self.amountLabel?.text = String(format: "%.2f", cityValue)
-                    
-                    let fdykPrefix = fdyk >= 0 ? "+" : ""
-                    self.holdLabel?.text = "持仓盈亏\(fdykPrefix)\(String(format: "%.2f", fdyk))"
-                    
-                    // 今日盈亏如果是独立字段可以配，这儿用返回的总计/浮动
-                    self.todayLabel?.text = "今日盈亏\(fdykPrefix)\(String(format: "%.2f", fdyk))"
-                    
-                    self.accountTitle?.text = String(format: "账户资产 %.2f", totalAsset)
-                    self.availableTitle?.text = String(format: "可用资产 %.2f", balance)
+                    self.bindAssetViews()
                 }
             case .failure(let err):
                 print("加载交易资产失败:", err.localizedDescription)
             }
         }
+    }
+    
+    @objc private func toggleAssetsVisibility(_ sender: UIButton) {
+        isAssetsVisible.toggle()
+        sender.isSelected = isAssetsVisible
+        bindAssetViews()
+    }
+
+    private func bindAssetViews() {
+        let hidden = "****"
+        
+        // 当隐身或无数据时
+        if !isAssetsVisible || lastUserPriceDict == nil {
+            let value = (lastUserPriceDict == nil) ? "0.00" : hidden
+            amountLabel?.text = value
+            holdLabel?.text = "持仓盈亏\(value)"
+            todayLabel?.text = "累计盈亏\(value)"
+            accountTitle?.text = "账户资产 \(value)"
+            availableTitle?.text = "可用资产 \(value)"
+            return
+        }
+        
+        guard let list = lastUserPriceDict else { return }
+        let balance = list["balance"] as? Double ?? 0.0
+        let cityValue = list["city_value"] as? Double ?? 0.0
+        let fdyk = list["fdyk"] as? Double ?? 0.0
+        let totalyk = list["totalyk"] as? Double ?? 0.0
+        let totalAsset = list["property_money_total"] as? Double ?? 0.0
+        
+        amountLabel?.text = String(format: "%.2f", cityValue)
+        let fdykPrefix = fdyk >= 0 ? "+" : ""
+        holdLabel?.text = "持仓盈亏\(fdykPrefix)\(String(format: "%.2f", fdyk))"
+        
+        let totalykPrefix = totalyk >= 0 ? "+" : ""
+        todayLabel?.text = "累计盈亏\(totalykPrefix)\(String(format: "%.2f", totalyk))"
+        
+        accountTitle?.text = String(format: "账户资产 %.2f", totalAsset)
+        availableTitle?.text = String(format: "可用资产 %.2f", balance)
     }
 
     private func setupTableView() {
@@ -177,7 +206,7 @@ class TradeViewController: ZQViewController {
         products.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            redCard.topAnchor.constraint(equalTo: wrap.topAnchor,constant: 20),
+            redCard.topAnchor.constraint(equalTo: wrap.topAnchor, constant: 0),
             redCard.leadingAnchor.constraint(equalTo: wrap.leadingAnchor, constant: 16),
             redCard.trailingAnchor.constraint(equalTo: wrap.trailingAnchor, constant: -16),
             redCard.heightAnchor.constraint(equalToConstant: 118),
@@ -217,16 +246,19 @@ class TradeViewController: ZQViewController {
         card.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let eyeBtn = UIButton(type: .system)
-        eyeBtn.setImage(UIImage(systemName: "eye"), for: .normal)
+        let eyeBtn = UIButton(type: .custom)
+        eyeBtn.setImage(UIImage(systemName: "eye.slash"), for: .normal)
+        eyeBtn.setImage(UIImage(systemName: "eye"), for: .selected)
         eyeBtn.tintColor = .white
+        eyeBtn.addTarget(self, action: #selector(toggleAssetsVisibility(_:)), for: .touchUpInside)
         card.addSubview(eyeBtn)
         eyeBtn.translatesAutoresizingMaskIntoConstraints = false
 
         let accountLabel = UILabel()
-        accountLabel.text = "T007975614"
+        // 对齐安卓：右上角显示真实用户名
+        accountLabel.text = UserAuthManager.shared.currentPhone ?? UserAuthManager.shared.currentUsername ?? ""
         accountLabel.font = UIFont.systemFont(ofSize: 15)
-        accountLabel.isHidden = true
+        accountLabel.isHidden = false
         accountLabel.textColor = .white
         card.addSubview(accountLabel)
         accountLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -249,7 +281,7 @@ class TradeViewController: ZQViewController {
         self.amountLabel = amountLabel
 
         let todayLabel = UILabel()
-        todayLabel.text = "今日盈亏+0.00"
+        todayLabel.text = "累计盈亏+0.00"
         todayLabel.font = UIFont.systemFont(ofSize: 15)
         todayLabel.textColor = UIColor.white.withAlphaComponent(0.95)
         card.addSubview(todayLabel)
@@ -382,18 +414,20 @@ class TradeViewController: ZQViewController {
     private func buildQuickActionsGrid() -> UIView {
         let wrap = UIView()
         wrap.backgroundColor = .white
-        let titlesRow1 = ["买入", "卖出", "撤单", "持仓", "查询"]
+        // 对齐安卓按钮顺序：买入→卖出→查询→持仓→撤单
+        let titlesRow1 = ["买入", "卖出", "查询", "持仓", "撤单"]
         let titlesRow2 = ["委托", "成交", "对账单", "银证转账", "更多"]
-        let icons = ["jy-icon-1", "jy-icon-2", "jy-icon-5", "jy-icon-4", "jy-icon-3",
+        let icons = ["jy-icon-1", "jy-icon-2", "jy-icon-3", "jy-icon-4", "jy-icon-5",
                     "jy-icon-6", "jy-icon-7", "jy-icon-8", "jy-icon-9", "jy-icon-10"]
         var row1Views: [UIView] = []
         var row2Views: [UIView] = []
+        // 对齐安卓颜色顺序：买入(红)→卖出(蓝)→查询(橙)→持仓(棕)→撤单(灰)
         let row1Colors: [UIColor] = [
             UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 1.0),
             UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1.0),
-            UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0),
+            UIColor(red: 0.85, green: 0.5, blue: 0.2, alpha: 1.0),
             UIColor(red: 0.55, green: 0.38, blue: 0.25, alpha: 1.0),
-            UIColor(red: 0.85, green: 0.5, blue: 0.2, alpha: 1.0)
+            UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
         ]
         let row2TextColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0)
         for (i, t) in titlesRow1.enumerated() {
@@ -467,33 +501,32 @@ class TradeViewController: ZQViewController {
         case 0: // 买入
             let vc = StockSearchViewController()
             vc.tradeType = .buy
+            vc.buyMode = true
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
-        case 1: // 卖出
-            let vc = StockSearchViewController()
-            vc.tradeType = .sell
+        case 1: // 卖出（对齐安卓：跳转到持仓列表）
+            let vc = MyHoldingsViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
-        case 2: // 撤单
+        case 2: // 查询
             let vc = StockSearchViewController()
-//            vc.tradeType = .buy
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 3: // 持仓
             let vc = MyHoldingsViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
-        case 4: // 查询
-            let vc = StockSearchViewController()
+        case 4: // 撤单（对齐安卓：跳转到独立撤单页面）
+            let vc = CancelOrderViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 5: // 委托
             let vc = EntrustmentListViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
-        case 6: // 成交
-            let vc = StockSearchViewController()
-//            vc.tradeType = .sell
+        case 6: // 成交（对齐安卓：跳转到我的持仓-历史持仓）
+            let vc = MyHoldingsViewController()
+            vc.initialTab = 1 // 历史持仓
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 7: // 对账单
@@ -506,9 +539,7 @@ class TradeViewController: ZQViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 9: // 更多
-            let vc = SettingsViewController()
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
+            self.tabBarController?.selectedIndex = 4
         default:
             break
         }
@@ -560,16 +591,20 @@ class TradeViewController: ZQViewController {
     @objc private func productCardTapped(_ g: UITapGestureRecognizer) {
         guard let card = g.view else { return }
         switch card.tag {
-        case 0: // 新股新债
-            let vc = NewStockSubscriptionViewController()
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
-        case 1: // 场外撮合交易
-            let vc = BlockTradingListViewController()
-            vc.hidesBottomBarWhenPushed = true
-            navigationController?.pushViewController(vc, animated: true)
-//        case 2, 3: // 国债逆回购、智汇现金理财
-//            break
+        case 0: // 新股新债 → 跳转到行情页新股申购 tab（对齐安卓）
+            if let tabBar = self.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
+               let marketNav = vcs[1] as? UINavigationController,
+               let marketVC = marketNav.viewControllers.first as? MarketViewController {
+                tabBar.selectedIndex = 1
+                marketVC.switchToTab(index: 1)
+            }
+        case 1: // 场外撮合交易 → 跳转到行情页撮合交易 tab（对齐安卓）
+            if let tabBar = self.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
+               let marketNav = vcs[1] as? UINavigationController,
+               let marketVC = marketNav.viewControllers.first as? MarketViewController {
+                tabBar.selectedIndex = 1
+                marketVC.switchToTab(index: 3)
+            }
         default:
             break
         }
@@ -669,7 +704,7 @@ extension TradeViewController: UITableViewDelegate {
         case "银证转出":
             vc = BankSecuritiesTransferViewController()
         case "更多功能":
-            vc = SettingsViewController()
+            self.tabBarController?.selectedIndex = 4
         default:
             break
         }

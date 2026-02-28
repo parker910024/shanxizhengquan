@@ -1,0 +1,50 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url = "https://jitpack.io" }
+        maven {
+            url = "http://maven.metaapp.cn/repository/maven-releases/"
+            allowInsecureProtocol = true  // 注意这里改为 allowInsecureProtocol
+        }
+        maven { url = "https://repo1.maven.org/maven2/" }
+        maven { url = "https://maven.aliyun.com/repository/public/" }
+        maven { url = "https://maven.aliyun.com/repository/google/" }
+        maven { url = "https://maven.aliyun.com/repository/jcenter/" }
+        maven { url = "https://maven.aliyun.com/nexus/content/repositories/releases/" }
+        maven { url = "https://maven.aliyun.com/nexus/content/groups/public/" }
+        maven { url = "https://s01.oss.sonatype.org/content/groups/public" }
+        mavenLocal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        flatDir { dirs("${rootProject.projectDir}/app/libs") }
+        maven { url = "https://maven.aliyun.com/repository/public/" }
+        google()
+        mavenCentral()
+        maven { url = "https://jitpack.io" }
+        maven { url = "https://raw.githubusercontent.com/DevedHu/maven-repo/main/repository" }
+        maven {
+            url = "http://maven.metaapp.cn/repository/maven-releases/"
+            allowInsecureProtocol = true
+        }
+        maven { url = "https://repo1.maven.org/maven2/" }
+        maven { url = "https://maven.aliyun.com/repository/google/" }
+        maven { url = "https://maven.aliyun.com/repository/jcenter/" }
+        maven { url = "https://maven.aliyun.com/nexus/content/repositories/releases/" }
+        maven { url = "https://maven.aliyun.com/nexus/content/groups/public/" }
+        maven { url = "https://s01.oss.sonatype.org/content/groups/public" }
+        mavenLocal()
+    }
+}
+
+rootProject.name = "SX"
+include(":app")
+include(":libs")
+include(":libs:lib-base")
+include(":libs:lib-components")
+include(":libs:lib-net")
+include(":libs:lib-tools")

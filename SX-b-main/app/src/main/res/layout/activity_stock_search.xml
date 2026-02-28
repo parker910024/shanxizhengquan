@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <include
+        android:id="@+id/title_bar"
+        layout="@layout/include_title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 鎼滅储妗嗚儗鏅?-->
+    <View
+        android:id="@+id/view_search_bg"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_search_input"
+        app:layout_constraintEnd_toStartOf="@id/tv_search"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_bar" />
+
+    <!-- 鎼滅储鍥炬爣 -->
+    <ImageView
+        android:id="@+id/iv_search_icon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="12dp"
+        android:src="@drawable/ic_search_black"
+        app:layout_constraintBottom_toBottomOf="@id/view_search_bg"
+        app:layout_constraintStart_toStartOf="@id/view_search_bg"
+        app:layout_constraintTop_toTopOf="@id/view_search_bg" />
+
+    <!-- 鎼滅储杈撳叆妗?-->
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="12dp"
+        android:background="@null"
+        android:hint="@string/stock_search_hint"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:maxLines="1"
+        android:textColor="#1A1A1A"
+        android:textColorHint="#808080"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="@id/view_search_bg"
+        app:layout_constraintEnd_toEndOf="@id/view_search_bg"
+        app:layout_constraintStart_toEndOf="@id/iv_search_icon"
+        app:layout_constraintTop_toTopOf="@id/view_search_bg" />
+
+    <!-- 鎼滅储鎸夐挳 -->
+    <TextView
+        android:id="@+id/tv_search"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
+        android:text="@string/stock_search_btn"
+        android:textColor="#2B2B2B"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/view_search_bg" />
+
+    <!-- 鑲＄エ鍒楄〃鏍囬 -->
+    <TextView
+        android:id="@+id/tv_list_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/stock_search_list_title"
+        android:textColor="#1A1A1A"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/view_search_bg"
+        tools:visibility="visible" />
+
+    <!-- 琛ㄥご -->
+    <LinearLayout
+        android:id="@+id/layout_table_header"
+        android:layout_width="0dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_list_title"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tv_header_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/stock_search_header_name"
+            android:textColor="#666666"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_header_code"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/stock_search_header_code"
+            android:textColor="#666666"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_header_latter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="@string/stock_search_header_latter"
+            android:textColor="#666666"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <!-- 鎼滅储缁撴灉鍒楄〃 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_search_results"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/nav_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_table_header"
+        tools:itemCount="10"
+        tools:listitem="@layout/item_stock_search_result"
+        tools:visibility="visible" />
+
+    <!-- 鐑棬鎼滅储鏍囬 -->
+    <TextView
+        android:id="@+id/tv_hot_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/stock_search_hot"
+        android:textColor="#1A1A1A"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/view_search_bg"
+        tools:visibility="visible" />
+
+    <!-- 鐑棬鎼滅储鍒楄〃 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_hot_stocks"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/nav_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_hot_title"
+        app:spanCount="3"
+        tools:itemCount="6"
+        tools:listitem="@layout/item_stock_search_hot"
+        tools:visibility="visible" />
+
+    <ex.ss.lib.base.view.ImmersiveNavigationBarHolder
+        android:id="@+id/nav_bar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -177,8 +177,8 @@ class RegisterViewController: UIViewController {
         payPasswordEyeButton.tintColor = Constants.Color.textTertiary
         payPasswordEyeButton.addTarget(self, action: #selector(togglePayPassword), for: .touchUpInside)
         
-        // 极速开卡按钮
-        submitButton.setTitle("极速开卡", for: .normal)
+        // 极速开户按钮
+        submitButton.setTitle("极速开户", for: .normal)
         submitButton.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
         submitButton.setTitleColor(.white, for: .normal)
         submitButton.backgroundColor = themeRed
@@ -211,11 +211,11 @@ class RegisterViewController: UIViewController {
     private func updateAccountRowForMode() {
         if isPhoneRegistration {
             accountIconView.image = UIImage(systemName: "phone")
-            accountField.placeholder = "请输入手机号"
+            accountField.setZqPlaceholder("请输入手机号")
             accountField.keyboardType = .phonePad
         } else {
             accountIconView.image = UIImage(systemName: "person.crop.circle")
-            accountField.placeholder = "请输入用户名"
+            accountField.setZqPlaceholder("请输入用户名")
             accountField.keyboardType = .default
         }
     }
@@ -227,7 +227,7 @@ class RegisterViewController: UIViewController {
         container.addSubview(iconView)
         iconView.translatesAutoresizingMaskIntoConstraints = false
         
-        field.placeholder = placeholder
+        field.setZqPlaceholder(placeholder)
         field.font = UIFont.systemFont(ofSize: 15)
         field.textColor = Constants.Color.textPrimary
         field.borderStyle = .none
@@ -470,4 +470,7 @@ class RegisterViewController: UIViewController {
             zhunbeiImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -32)
         ])
     }
+    
+    // MARK: - Helper
+    
 }

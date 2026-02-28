@@ -1311,97 +1311,105 @@ class StockDetailViewController: ZQViewController {
         }
     }
     
-    // MARK: - 东财公开接口：获取完整行情数据
+    // MARK: - 行情数据：切换至新浪财经 API (对齐安卓)
     private func fetchEastMoneyQuote() {
-        // 根据 exchange 推导 secid
-        let marketId: String
+        guard !stockCode.isEmpty else { return }
+        
+        let prefix: String
         switch exchange {
-        case "沪": marketId = "1"
-        case "京": marketId = "0"
-        default:   marketId = "0"  // 深
+        case "沪": prefix = "sh"
+        case "京": prefix = "bj"
+        default:   prefix = "sz"
         }
-        let secid = "\(marketId).\(stockCode)"
+        let sinaCode = "\(prefix)\(stockCode)"
         
-        // f31-f40: 买卖五档, f43:最高 f44:最低 f46:今开 f60:昨收
-        // f47:成交量 f48:成交额 f168:换手率 f162:市盈率 f167:市净率
-        // f116:总市值 f117:流通市值 f169:振幅
-        let fields = "f43,f44,f46,f47,f48,f60,f116,f117,f162,f167,f168,f169,f31,f32,f33,f34,f35,f36,f37,f38,f39,f40,f170,f171"
-        let urlStr = "https://push2.eastmoney.com/api/qt/stock/get?secid=\(secid)&fields=\(fields)&ut=fa5fd1943c7b386f172d6893dbfba10b"
-        
+        let urlStr = "https://hq.sinajs.cn/list=\(sinaCode)"
         guard let url = URL(string: urlStr) else { return }
-        var request = URLRequest(url: url)
-        request.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
         
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self, let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let d = json["data"] as? [String: Any] else {
-                return
+        var req = URLRequest(url: url, timeoutInterval: 10)
+        req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+        req.setValue("https://finance.sina.com.cn", forHTTPHeaderField: "Referer")
+        
+        URLSession.shared.dataTask(with: req) { [weak self] data, _, error in
+            guard let self = self, let data = data else { return }
+            
+            // 新浪接口返回 GBK 编码
+            let cfEnc = CFStringEncodings.GB_18030_2000
+            let enc = CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEnc.rawValue))
+            guard let rawStr = String(data: data, encoding: String.Encoding(rawValue: enc)),
+                  let startIdx = rawStr.firstIndex(of: "\""),
+                  let endIdx = rawStr.lastIndex(of: "\""),
+                  startIdx < endIdx else { return }
+            
+            let content = String(rawStr[rawStr.index(after: startIdx)..<endIdx])
+            let fields = content.components(separatedBy: ",")
+            /*
+             新浪字段索引：
+             0:名称, 1:今开, 2:昨收, 3:当前价, 4:最高, 5:最低, 8:成交量(股), 9:成交额(元), 30:日期, 31:时间
+             */
+            guard fields.count >= 30 else { return }
+            
+            let name     = fields[0]
+            let open     = Double(fields[1]) ?? 0.0
+            let preClose = Double(fields[2]) ?? 0.0
+            let price    = Double(fields[3]) ?? 0.0
+            let high     = Double(fields[4]) ?? 0.0
+            let low      = Double(fields[5]) ?? 0.0
+            let vol      = (Double(fields[8]) ?? 0.0) / 100.0 // 股 -> 手
+            let amt      = Double(fields[9]) ?? 0.0
+            
+            self.currentPrice = price
+            self.yesterdayClose = preClose
+            self.todayOpen = open
+            self.highest = high
+            self.lowest = low
+            self.change = (price > 0 && preClose > 0) ? (price - preClose) : 0.0
+            self.changePercent = (price > 0 && preClose > 0) ? (self.change / preClose * 100.0) : 0.0
+            self.isRising = self.change >= 0
+            
+            // 格式化成交量/额 (对齐安卓)
+            func fmtVol(_ v: Double) -> String {
+                if v >= 1e8 { return String(format: "%.2f亿手", v / 1e8) }
+                if v >= 1e4 { return String(format: "%.2f万手", v / 1e4) }
+                return String(format: "%.0f手", v)
             }
+            func fmtAmt(_ v: Double) -> String {
+                if v >= 1e8 { return String(format: "%.2f亿", v / 1e8) }
+                if v >= 1e4 { return String(format: "%.2f万", v / 1e4) }
+                return String(format: "%.2f", v)
+            }
+            
+            self.volume = fmtVol(vol)
+            self.turnover = fmtAmt(amt)
+            
+            // 计算振幅与市值（市值暂用 Android 默认逻辑计算或界面展示占位）
+            if high > 0 && low > 0 && preClose > 0 {
+                self.amplitude = (high - low) / preClose * 100.0
+            }
+
             DispatchQueue.main.async {
-                // 价格相关（东财单位: 分 → 除以100，部分字段本身就是元）
-                // 东财 push2 的 stock/get 返回值已是正常数值无需除 100
-                if let high = d["f43"] as? Double, high > 0 { self.highest = high }
-                if let low = d["f44"] as? Double, low > 0 { self.lowest = low }
-                if let open = d["f46"] as? Double, open > 0 { self.todayOpen = open }
-                if let yClose = d["f60"] as? Double, yClose > 0 { self.yesterdayClose = yClose }
-                
-                // 成交量/额
-                if let vol = d["f47"] as? Double {
-                    if vol >= 10000 {
-                        self.volume = String(format: "%.2f万手", vol / 10000.0)
-                    } else {
-                        self.volume = String(format: "%.0f手", vol)
-                    }
+                if !name.isEmpty && self.stockName.isEmpty {
+                    self.stockNameLabel.text = name
                 }
-                if let amount = d["f48"] as? Double {
-                    if amount >= 100_000_000 {
-                        self.turnover = String(format: "%.2f亿", amount / 100_000_000.0)
-                    } else if amount >= 10_000 {
-                        self.turnover = String(format: "%.2f万", amount / 10_000.0)
-                    } else {
-                        self.turnover = String(format: "%.0f", amount)
-                    }
-                }
-                
-                // 指标
-                if let tr = d["f168"] as? Double { self.turnoverRate = tr }
-                if let pe = d["f162"] as? Double { self.peRatio = pe }
-                if let pb = d["f167"] as? Double { self.pbRatio = pb }
-                if let amp = d["f169"] as? Double { self.amplitude = amp }
-                
-                // 市值
-                if let totalMV = d["f116"] as? Double {
-                    if totalMV >= 100_000_000 {
-                        self.totalMarketCap = String(format: "%.2f亿", totalMV / 100_000_000.0)
-                    } else if totalMV >= 10_000 {
-                        self.totalMarketCap = String(format: "%.2f万", totalMV / 10_000.0)
-                    } else {
-                        self.totalMarketCap = String(format: "%.0f", totalMV)
-                    }
-                }
-                if let circMV = d["f117"] as? Double {
-                    if circMV >= 100_000_000 {
-                        self.circulatingMarketCap = String(format: "%.2f亿", circMV / 100_000_000.0)
-                    } else if circMV >= 10_000 {
-                        self.circulatingMarketCap = String(format: "%.2f万", circMV / 10_000.0)
-                    } else {
-                        self.circulatingMarketCap = String(format: "%.0f", circMV)
-                    }
-                }
-                
-                // 更新 Overview 指标区域
                 self.updateOverview()
-                
-                // 更新买卖五档
-                // 卖5-卖1: f31/f32, f33/f34, f35/f36, f37/f38, f39/f40
-                // 买1-买5: f170 之后... 实际上 push2 的五档字段：
-                // 卖: f31(卖5价) f32(卖5量) f33(卖4价) f34(卖4量) f35(卖3价) f36(卖3量) f37(卖2价) f38(卖2量) f39(卖1价) f40(卖1量)
-                // 买: 需要额外字段，通常五档在 push2 用不同的 fields
-                // 这里仅更新卖盘部分，如果有数据的话
             }
         }.resume()
+    }
+
+    /// 本地计算涨跌停价格 (对齐安卓 getLimitPct)
+    private func calculateLimitPrice(isUp: Bool) -> Double {
+        guard yesterdayClose > 0 else { return 0 }
+        let pct: Double
+        if stockCode.hasPrefix("688") || stockCode.hasPrefix("300") {
+            pct = 0.20
+        } else if stockCode.hasPrefix("4") || stockCode.hasPrefix("8") || stockCode.hasPrefix("920") {
+            pct = 0.30
+        } else {
+            pct = 0.10
+        }
+        let delta = yesterdayClose * pct
+        let result = isUp ? (yesterdayClose + delta) : (yesterdayClose - delta)
+        return Darwin.round(result * 100.0) / 100.0
     }
     
     // MARK: - 更新 UI
@@ -1538,7 +1546,8 @@ class StockDetailViewController: ZQViewController {
                 if !kfUrl.hasPrefix("http") { kfUrl = "https://" + kfUrl }
                 guard let url = URL(string: kfUrl) else { return }
                 DispatchQueue.main.async {
-                    UIApplication.shared.open(url)
+                    let safari = SFSafariViewController(url: url)
+                    self.navigationController?.present(safari, animated: true)
                 }
             case .failure(_):
                 DispatchQueue.main.async { Toast.show("获取客服地址失败") }
