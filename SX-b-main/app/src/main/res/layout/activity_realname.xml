@@ -45,15 +45,13 @@
                     android:textColor="#191919"
                     android:textSize="15sp" />
 
-                <EditText
-                    android:id="@+id/et_nationality"
+                <TextView
+                    android:id="@+id/tv_nationality"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@null"
                     android:gravity="end"
-                    android:hint="@string/realname_nationality_hint"
+                    android:text="@string/realname_nationality_value"
                     android:textColor="#191919"
-                    android:textColorHint="#999999"
                     android:textSize="15sp" />
             </LinearLayout>
 

@@ -112,8 +112,9 @@ object IPOViewModel {
         scope.launch {
             val response = Remote.callApi { getBlockTradeList(page) }
             if (response.isSuccess() && response.data != null) {
-                _blockTradeListLiveData.postValue(response.data!!.list)
-                _blockTradeBalanceLiveData.postValue(response.data!!.balance)
+                val data = response.data!!
+                _blockTradeListLiveData.postValue(data.list)
+                _blockTradeBalanceLiveData.postValue(data.getBalanceDouble())
             } else {
                 _blockTradeListLiveData.postValue(emptyList())
             }
@@ -151,9 +152,8 @@ object IPOViewModel {
     fun loadBlockTradeHistory(page: Int = 1) {
         scope.launch {
             val response = Remote.callApi { getBlockTradeHistory(page) }
-            if (response.isSuccess()) {
-                _blockTradeHistoryLiveData.postValue(response.data)
-            }
+            // 成功时更新数据，失败时 postValue(null) 让 UI 退出 loading 显示"暂无数据"
+            _blockTradeHistoryLiveData.postValue(if (response.isSuccess()) response.data else null)
         }
     }
 

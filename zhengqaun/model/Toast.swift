@@ -124,7 +124,17 @@ class Toast {
     
     /// 显示错误提示
     static func showError(_ message: String, duration: TimeInterval = 2.0) {
-        show("✕ \(message)", duration: duration)
+        var displayMessage = message
+        // 将系统常见的解码/网络异常提示统一替换为友好提示
+        if message.contains("The data couldn’t be read") || 
+           message.contains("The data couldn't be read") || 
+           message.contains("it is missing") ||
+           message.contains("The file couldn’t be saved") ||
+           message.contains("数据格式不正确") ||
+           message.contains("The data is not in the correct format") {
+            displayMessage = "网络不佳"
+        }
+        show("✕ \(displayMessage)", duration: duration)
     }
     
     /// 显示信息提示

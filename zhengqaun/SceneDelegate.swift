@@ -54,7 +54,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate , FloatViewDelegate{
             window.rootViewController = next
         }, completion: nil)
         
-        let floatView = FloatView(radius: 26, point: CGPointMake(window.frame.size.width-60, window.frame.size.height/3), image: UIImage(named: "logoIcon"), in: window)
+        let floatView = FloatView(radius: 26, point: CGPointMake(window.frame.size.width-60, window.frame.size.height/3), image: UIImage(named: "yw_game_logo"), in: window)
         // 使用水平展开模式
         floatView?.subViewShowType = .horizontal
         floatView?.delegate = self

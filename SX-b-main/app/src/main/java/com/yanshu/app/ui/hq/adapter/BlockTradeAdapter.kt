@@ -28,12 +28,17 @@ class BlockTradeAdapter(
 
     class VH(val binding: ItemBlockTradeBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: BlockTradeItem) {
-            binding.tvMarketTag.text = item.getMarketTag()
+            binding.tvMarketTag.text = item.getMarketTag().ifEmpty { "—" }
             binding.tvName.text = item.title
             binding.tvCode.text = item.code
-            binding.tvPrice.text = "¥${item.cai_buy}"
-            binding.tvTotal.text = item.max_num.toString()
+            binding.tvCurrentPrice.text = item.cai_price
+            binding.tvPrice.text = item.cai_buy
+            binding.tvRate.text = formatRate(item.rate)
         }
+
+        /** 折扣率：整数不显示小数，否则保留两位 */
+        private fun formatRate(rate: Double): String =
+            if (rate == rate.toLong().toDouble()) rate.toLong().toString() else "%.2f".format(rate)
     }
 
     companion object {

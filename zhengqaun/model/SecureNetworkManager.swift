@@ -13,6 +13,14 @@ final class SecureNetworkManager {
 
     // 单例
     static let shared = SecureNetworkManager()
+
+    // 全局防丢签网络会话 (直连时使用，放行所有证书防 TLS 错误)
+    private let trustAllSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        return URLSession(configuration: config, delegate: TrustAllSessionDelegate(), delegateQueue: nil)
+    }()
+
+    // MARK: - 初始化
     private init() {}
 
     var vpnSession : URLSession?
@@ -34,7 +42,7 @@ final class SecureNetworkManager {
         api: String,
         method: HTTPMethod,
         params: [String: Any],
-        session: URLSession = .shared,
+        session: URLSession? = nil,
         completion: @escaping (Result<(decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?), Error>) -> Void
     ) {
         let token = UserAuthManager.shared.token
@@ -63,7 +71,7 @@ final class SecureNetworkManager {
             api: api,
             plainJSON: plainJSON,
             token: token,
-            session: session,
+            session: session ?? self.trustAllSession,
             completion: { result in
                 switch result {
                 case .success(let res):
@@ -90,7 +98,7 @@ final class SecureNetworkManager {
         plainJSON: String,
         token: String = "",
         unixString: String? = nil,
-        session: URLSession = .shared,
+        session: URLSession,
         completion: @escaping (Result<(decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?), Error>) -> Void
     ) {
         // 1. unixString 处理（默认当前分钟）
@@ -164,7 +172,13 @@ final class SecureNetworkManager {
             }
             let deliver: () -> Void = {
                 if let error = error {
-                    completion(.failure(error))
+                    let errStr = (error as NSError).localizedDescription
+                    if errStr.contains("TLS") || errStr.contains("secure connection") || errStr.contains("network") {
+                        let customErr = NSError(domain: "SecureNetworkManager", code: -1009, userInfo: [NSLocalizedDescriptionKey: "网络不佳"])
+                        completion(.failure(customErr))
+                    } else {
+                        completion(.failure(error))
+                    }
                     return
                 }
 
@@ -214,8 +228,9 @@ final class SecureNetworkManager {
         method: HTTPMethod,
         params: [String: Any],
         unixString: String? = nil,
-        session: URLSession = .shared) async throws -> (decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?) {
+        session: URLSession? = nil) async throws -> (decrypted: [String: Any]?, raw: String, statusCode: Int, unixUsed: String?) {
             let token = UserAuthManager.shared.token
+            let actualSession = session ?? self.trustAllSession
 
         let payload: [String: Any] = [
             "url": api,
@@ -252,7 +267,7 @@ final class SecureNetworkManager {
                     }
                     vpnSession =  URLSessionNetworkProxy.newProxySession()
                 }else{
-                    vpnSession = session
+                    vpnSession = actualSession
                 }
             }
 
@@ -288,7 +303,21 @@ final class SecureNetworkManager {
         request.setValue(token, forHTTPHeaderField: "token")
         request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.httpBody = cipherB64.data(using: .utf8)
-        let (data, response) = try await vpnSession!.data(for: request)
+        
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await vpnSession!.data(for: request)
+        } catch {
+            let errStr = (error as NSError).localizedDescription
+            if errStr.contains("TLS") || errStr.contains("secure connection") || errStr.contains("network") {
+                let customErr = NSError(domain: "SecureNetworkManager", code: -1009, userInfo: [NSLocalizedDescriptionKey: "网络不佳"])
+                throw customErr
+            } else {
+                throw error
+            }
+        }
+        
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
         let bodyData = data
         let rawBody = String(data: bodyData, encoding: .utf8) ?? ""
@@ -324,9 +353,9 @@ final class SecureNetworkManager {
         image: UIImage,
         path: String = "api/upload/file",
         mimeType: String = "image/png",
-        session: URLSession = .shared
+        session: URLSession? = nil
     ) async -> String? {
-       
+        let actualSession = session ?? self.trustAllSession
         let base = baseURL.absoluteString.hasSuffix("/") ? baseURL.absoluteString : (baseURL.absoluteString + "/")
         guard let url = URL(string: base + path) else {
             return nil
@@ -359,7 +388,7 @@ final class SecureNetworkManager {
                 }
                 vpnSession =  URLSessionNetworkProxy.newProxySession()
             }else{
-                vpnSession = session
+                vpnSession = actualSession
             }
         }
 
@@ -691,3 +720,14 @@ private enum ResponseDecryptor {
     }
 }
 
+// MARK: - TrustAll TLS Session Delegate
+private class TrustAllSessionDelegate: NSObject, URLSessionDelegate {
+    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        if let trust = challenge.protectionSpace.serverTrust {
+            let credential = URLCredential(trust: trust)
+            completionHandler(.useCredential, credential)
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+}

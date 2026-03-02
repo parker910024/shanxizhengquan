@@ -27,7 +27,7 @@ final class EastMoneyAPI {
         "RPT_BLOCKOPERATION"
     ]
 
-    /// 请求龙虎榜日榜列表（引入内部重试及去重机制）
+    /// 请求龙虎榜日榜列表（对齐安卓：直接使用固定的报表和过滤条件）
     /// - Parameters:
     ///   - date: 交易日期，格式 "yyyy-MM-dd"
     ///   - completion: 返回结果（主线程回调）
@@ -35,79 +35,16 @@ final class EastMoneyAPI {
         date: String,
         completion: @escaping (Result<LongHuBangResponse, Error>) -> Void
     ) {
-        // Android 中的 filter 写法组合：
-        let filters = [
-            "(TRADE_DATE<='\(date)')",
-            "(TRADE_DATE='\(date)')",
-            "(ONLIST_DATE>='\(date)')",
-            "(TRADE_DATE='\(date.replacingOccurrences(of: "-", with: ""))')"
-        ]
+        let reportName = "RPT_DAILYBILLBOARD_DETAILS"
+        let filter = "(TRADE_DATE='\(date)')"
         
-        let combinations: [(report: String, filter: String)] = reportNames.flatMap { r in
-            filters.map { f in (report: r, filter: f) }
-        }
-        
-        // 使用递归或异步闭包链逐个尝试，直到成功获取到非空数据或者全部失败
-        tryFetch(date: date, combinations: combinations, index: 0) { finalResult in
-            switch finalResult {
-            case .success(let response):
-                // 成功获取到数据后，对齐 Android 做去重
-                if let items = response.result?.data, !items.isEmpty {
-                    // 1. 过滤日期：只保留 TRADE_DATE 以参数 date 开头的项
-                    let sameDayItems = items.filter { $0.TRADE_DATE?.hasPrefix(date) == true }
-                    let dayItems = sameDayItems.isEmpty ? items : sameDayItems
-                    
-                    // 2. 按 code 去重，保留净买入 (BILLBOARD_NET_AMT) 绝对值最大的
-                    var grouped: [String: LongHuBangRawItem] = [:]
-                    for item in dayItems {
-                        guard let code = item.SECURITY_CODE else { continue }
-                        if let existing = grouped[code] {
-                            let currNet = abs(item.BILLBOARD_NET_AMT ?? 0)
-                            let existNet = abs(existing.BILLBOARD_NET_AMT ?? 0)
-                            if currNet > existNet {
-                                grouped[code] = item
-                            }
-                        } else {
-                            grouped[code] = item
-                        }
-                    }
-                    
-                    let deduped = Array(grouped.values)
-                    
-                    // 构造新的 response 回传
-                    let newResult = LongHuBangResult(pages: response.result?.pages, count: deduped.count, data: deduped)
-                    let newResponse = LongHuBangResponse(success: response.success, message: response.message, result: newResult)
-                    DispatchQueue.main.async { completion(.success(newResponse)) }
-                } else {
-                    DispatchQueue.main.async { completion(.success(response)) }
-                }
-            case .failure(let error):
-                DispatchQueue.main.async { completion(.failure(error)) }
-            }
-        }
-    }
-
-    private func tryFetch(date: String, combinations: [(report: String, filter: String)], index: Int, completion: @escaping (Result<LongHuBangResponse, Error>) -> Void) {
-        if index >= combinations.count {
-            let err = NSError(domain: "EastMoneyAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "所有接口和过滤条件尝试均失败或无数据"])
-            completion(.failure(err))
-            return
-        }
-        
-        let combo = combinations[index]
-        fetchSingle(reportName: combo.report, filter: combo.filter, page: 1, pageSize: 500) { result in
+        fetchSingle(reportName: reportName, filter: filter, page: 1, pageSize: 500) { result in
             switch result {
             case .success(let response):
-                if let data = response.result?.data, !data.isEmpty {
-                    // 成功拿到非空数据，直接返回
-                    completion(.success(response))
-                } else {
-                    // 数据为空，尝试下一种组合
-                    self.tryFetch(date: date, combinations: combinations, index: index + 1, completion: completion)
-                }
+                // 安卓端已移除去重逻辑，直接返回原始列表即可
+                DispatchQueue.main.async { completion(.success(response)) }
             case .failure(let error):
-                // 如果是网络或解析错误，也继续尝试
-                self.tryFetch(date: date, combinations: combinations, index: index + 1, completion: completion)
+                DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
     }

@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.DisplayMetrics
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -212,6 +213,7 @@ object FloatMenuManager {
             .showWithListener(object : FloatMenuView.OnMenuClickListener {
                 override fun onItemClick(position: Int, title: String?) {
                     StaticConfigManager.switchLine(position)
+                    Toast.makeText(activity, "切换成功", Toast.LENGTH_SHORT).show()
                     refreshFloatMenuItems(activity)
                 }
 

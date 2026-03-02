@@ -233,7 +233,7 @@ class ContractListViewController: ZQViewController {
                                                partyB: name,
                                                partyBAddress: address,
                                                partyBIdCard: idnumber,
-                                               signDate: signDate,title: Title, signImage: base + signimage)
+                                               signDate: signDate,title: Title, signImage: signimage)
                         vc.hidesBottomBarWhenPushed = true
                         self.navigationController?.pushViewController(vc, animated: true)
                     case .failure(let err):

@@ -53,7 +53,7 @@ class StockTradeViewController: ZQViewController {
     private var limitDownLabel: UILabel!       // 跌停值
     private var limitUpLabel: UILabel!         // 涨停值
     private var positionButtons: [UIButton] = []
-    private var lotsLabel: UILabel!            // 手数显示
+    private var lotsField: UITextField!              // 手数输入框
     private var feeLabelTitle: UILabel!        // 服务费标题（含百分比）
     private var feeValueLabel: UILabel!        // 服务费值
     private var availableBalanceLabel: UILabel! // 可用金额值
@@ -311,29 +311,31 @@ class StockTradeViewController: ZQViewController {
         let minus = makeStepperButton(title: "—")
         minus.addTarget(self, action: #selector(lotsDecrease), for: .touchUpInside)
 
-        let lbl = UILabel()
-        lbl.font = .systemFont(ofSize: 14)
-        lbl.textColor = textPri
-        lbl.textAlignment = .center
-        lbl.backgroundColor = dividerColor
-        lbl.text = "0"
-        lotsLabel = lbl
+        let field = UITextField()
+        field.keyboardType = .numberPad
+        field.font = .systemFont(ofSize: 14)
+        field.textColor = textPri
+        field.textAlignment = .center
+        field.backgroundColor = dividerColor
+        field.text = "0"
+        field.addTarget(self, action: #selector(lotsChanged), for: .editingChanged)
+        lotsField = field
 
         let plus = makeStepperButton(title: "+")
         plus.addTarget(self, action: #selector(lotsIncrease), for: .touchUpInside)
 
         wrap.addArrangedSubview(minus)
-        wrap.addArrangedSubview(lbl)
+        wrap.addArrangedSubview(field)
         wrap.addArrangedSubview(plus)
 
         minus.translatesAutoresizingMaskIntoConstraints = false
-        lbl.translatesAutoresizingMaskIntoConstraints = false
+        field.translatesAutoresizingMaskIntoConstraints = false
         plus.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             minus.widthAnchor.constraint(equalToConstant: 32),
             minus.heightAnchor.constraint(equalToConstant: 32),
-            lbl.widthAnchor.constraint(equalToConstant: 60),
-            lbl.heightAnchor.constraint(equalToConstant: 32),
+            field.widthAnchor.constraint(equalToConstant: 60),
+            field.heightAnchor.constraint(equalToConstant: 32),
             plus.widthAnchor.constraint(equalToConstant: 32),
             plus.heightAnchor.constraint(equalToConstant: 32),
         ])
@@ -390,10 +392,21 @@ class StockTradeViewController: ZQViewController {
         autoFillLotsIfNeeded()
     }
 
+    @objc private func lotsChanged() {
+        let raw = lotsField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let parsed = Int(raw) ?? 0
+        let capped = parsed < 0 ? 0 : parsed
+        if capped != lots {
+            lots = capped
+            recalculate()
+        }
+        autoLotsApplied = true
+    }
+
     @objc private func lotsDecrease() {
         if lots > 0 {
             lots -= 1
-            lotsLabel.text = "\(lots)"
+            lotsField.text = "\(lots)"
             recalculate()
             autoLotsApplied = true
         }
@@ -403,7 +416,7 @@ class StockTradeViewController: ZQViewController {
         let maxLots = calcMaxBuyLots()
         if maxLots <= 0 || lots < maxLots {
             lots += 1
-            lotsLabel.text = "\(lots)"
+            lotsField.text = "\(lots)"
             recalculate()
             autoLotsApplied = true
         }
@@ -430,7 +443,7 @@ class StockTradeViewController: ZQViewController {
         }
         guard userBalance > 0 else {
             lots = 0
-            lotsLabel?.text = "0"
+            lotsField?.text = "0"
             Toast.show("可用余额不足，请手动输入买入手数")
             loadBalance()
             return
@@ -440,7 +453,7 @@ class StockTradeViewController: ZQViewController {
         let availableForRatio = userBalance * ratio
         let calculatedLots = availableForRatio / costPerShare / 100
         lots = max(Int(floor(calculatedLots)), 1)
-        lotsLabel?.text = "\(lots)"
+        lotsField?.text = "\(lots)"
         recalculate()
     }
 
@@ -472,7 +485,7 @@ class StockTradeViewController: ZQViewController {
         guard effectivePrice > 0 else { return }
         lots = 1
         autoLotsApplied = true
-        lotsLabel?.text = "\(lots)"
+        lotsField?.text = "\(lots)"
         recalculate()
     }
 

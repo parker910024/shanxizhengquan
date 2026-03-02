@@ -22,8 +22,7 @@ struct BankCard: Codable {
     
     /// 脱敏卡号：前4后4，中间*
     var displayCardNumber: String {
-        if account.count <= 8 { return account }
-        return account.prefix(4) + " **** **** " + account.suffix(4)
+        return account
     }
     
     /// 银行名称
@@ -300,7 +299,7 @@ class BankCardViewController: ZQViewController {
                             print("【银行卡】freeze_profit=\(freezeProfit), balance=\(balance)")
                             DispatchQueue.main.async {
                                 self.t1AmountLabel.text = self.formatAmount(freezeProfit)
-                                self.transferAmountLabel.text = self.formatAmount(balance)
+                                self.transferAmountLabel.text = self.formatAmount(max(0.0, balance - freezeProfit))
                             }
                         }
                     } else {

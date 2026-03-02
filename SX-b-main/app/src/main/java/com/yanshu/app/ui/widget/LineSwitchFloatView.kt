@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.yanshu.app.R
@@ -113,6 +114,7 @@ class LineSwitchFloatView(private val activity: AppCompatActivity) {
 
     private fun switchTo(index: Int, lines: List<ApiLine>) {
         StaticConfigManager.switchLine(index)
+        Toast.makeText(activity, "切换成功", Toast.LENGTH_SHORT).show()
         button.background = ringDrawable(Color.parseColor(COLOR_BORDER_CONNECTED))
         activity.window.decorView.postDelayed({ updateBorderColor() }, 1500)
     }

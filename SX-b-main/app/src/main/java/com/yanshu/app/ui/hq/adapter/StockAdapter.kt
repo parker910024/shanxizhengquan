@@ -16,8 +16,8 @@ class StockAdapter(
     private var syncScrollX = 0
     private val scrollViews = mutableListOf<HorizontalScrollView>()
     
-    // 列宽度 (dp): 现价80, 涨跌70, 涨跌幅70, 成交额100, 换手率70, 昨收80, 今开80, 最高80
-    private val columnWidths = listOf(80, 70, 70, 100, 70, 80, 80, 80)
+    // 列宽度 (dp): 现价80, 涨跌幅70, 成交额100, 换手率70, 昨收80, 今开80, 最高80
+    private val columnWidths = listOf(80, 70, 100, 70, 80, 80, 80)
 
     fun scrollToColumn(columnIndex: Int) {
         val density = scrollViews.firstOrNull()?.context?.resources?.displayMetrics?.density ?: 1f
@@ -71,9 +71,6 @@ class StockAdapter(
         binding.tvPrice.setTextColor(priceColor)
 
         val changeSign = if (data.change >= 0) "+" else ""
-        binding.tvChange.text = String.format("%s%.2f", changeSign, data.change)
-        binding.tvChange.setTextColor(priceColor)
-
         binding.tvChangePct.text = String.format("%s%.2f%%", changeSign, data.changePercent)
         binding.tvChangePct.setTextColor(priceColor)
 

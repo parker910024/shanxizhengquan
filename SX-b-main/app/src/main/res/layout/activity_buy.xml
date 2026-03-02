@@ -89,8 +89,11 @@
         app:layout_constraintTop_toBottomOf="@id/layout_tabs">
 
         <LinearLayout
+            android:id="@+id/scroll_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusableInTouchMode="true"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -382,12 +385,14 @@
                         android:text="—"
                         android:textColor="#666666"
                         android:textSize="14sp" />
-                    <TextView
-                        android:id="@+id/tv_lots"
-                        android:layout_width="60dp"
+                    <EditText
+                        android:id="@+id/et_lots"
+                        android:layout_width="80dp"
                         android:layout_height="32dp"
                         android:background="@drawable/bg_quantity_input"
                         android:gravity="center"
+                        android:hint="0"
+                        android:inputType="number"
                         android:textColor="#333333"
                         android:textSize="14sp"
                         tools:text="0" />

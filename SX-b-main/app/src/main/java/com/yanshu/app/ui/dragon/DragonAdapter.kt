@@ -33,8 +33,15 @@ class DragonAdapter(
         binding.tvMarket.text = marketLabel
         binding.tvMarket.visibility = if (marketLabel.isNotEmpty()) View.VISIBLE else View.GONE
 
-        // 净买入 (亿)
-        val netBuyText = String.format("%.2f亿", item.netBuy)
+        // 净买入：与 iOS 一致的格式（亿 / 万 / 元）
+        val amt = item.netBuy
+        val absAmt = kotlin.math.abs(amt)
+        val sign = if (amt < 0) "-" else ""
+        val netBuyText = when {
+            absAmt >= 100_000_000 -> String.format("%s%.2f亿", sign, absAmt / 100_000_000)
+            absAmt >= 10_000 -> String.format("%s%.2f万", sign, absAmt / 10_000)
+            else -> String.format("%s%.0f", sign, absAmt)
+        }
         binding.tvNetBuy.text = netBuyText
 
         // 涨跌幅
@@ -45,13 +52,24 @@ class DragonAdapter(
         }
         binding.tvChangePct.text = changePctText
 
-        // 设置颜色
-        val color = if (item.isUp) {
-            ContextCompat.getColor(context, R.color.hq_rise_color)
-        } else {
-            ContextCompat.getColor(context, R.color.hq_fall_color)
-        }
-        binding.tvNetBuy.setTextColor(color)
-        binding.tvChangePct.setTextColor(color)
+        // 净买入与涨跌幅独立着色：净买入看资金方向，涨跌幅看价格方向
+        val riseColor = ContextCompat.getColor(context, R.color.hq_rise_color)
+        val fallColor = ContextCompat.getColor(context, R.color.hq_fall_color)
+        val neutralColor = ContextCompat.getColor(context, R.color.hq_stock_name_color)
+
+        binding.tvNetBuy.setTextColor(
+            when {
+                item.netBuy > 0 -> riseColor
+                item.netBuy < 0 -> fallColor
+                else -> neutralColor
+            }
+        )
+        binding.tvChangePct.setTextColor(
+            when {
+                item.changePct > 0 -> riseColor
+                item.changePct < 0 -> fallColor
+                else -> neutralColor
+            }
+        )
     }
 }

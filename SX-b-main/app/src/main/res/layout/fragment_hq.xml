@@ -310,128 +310,135 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <!-- 股票排行榜Tab栏 - 使用固定宽度与数据列对齐 -->
-                <HorizontalScrollView
-                    android:id="@+id/hsv_ranking_tabs"
+                <!-- 股票排行榜Tab栏 - 左侧固定名称 + 右侧可滑动 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:scrollbars="none">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <FrameLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="16dp"
+                        android:text="名称"
+                        android:textColor="@color/hq_title_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
-                        <LinearLayout
-                            android:id="@+id/layout_ranking_tabs"
+                    <HorizontalScrollView
+                        android:id="@+id/hsv_ranking_tabs"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:scrollbars="none">
+
+                        <FrameLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:paddingBottom="8dp">
+                            android:layout_height="wrap_content">
 
-                            <!-- 现价 - 80dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_price"
-                                android:layout_width="80dp"
+                            <LinearLayout
+                                android:id="@+id/layout_ranking_tabs"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_price"
-                                android:textColor="@color/hq_title_color"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
+                                android:orientation="horizontal"
+                                android:paddingBottom="8dp">
 
-                            <!-- 涨跌 - 70dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_change"
-                                android:layout_width="70dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_change"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 现价 - 80dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_price"
+                                    android:layout_width="80dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_price"
+                                    android:textColor="@color/hq_title_color"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
 
-                            <!-- 涨跌幅 - 70dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_change_pct"
-                                android:layout_width="70dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_change_pct"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 涨跌幅 - 70dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_change_pct"
+                                    android:layout_width="70dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_change_pct"
+                                    android:textColor="@color/hq_text_gray"
+                                    android:textSize="13sp" />
 
-                            <!-- 成交额 - 100dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_volume"
-                                android:layout_width="100dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_volume"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 成交额 - 100dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_volume"
+                                    android:layout_width="100dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_volume"
+                                    android:textColor="@color/hq_text_gray"
+                                    android:textSize="13sp" />
 
-                            <!-- 换手率 - 70dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_turnover"
-                                android:layout_width="70dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_turnover"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 换手率 - 70dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_turnover"
+                                    android:layout_width="70dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_turnover"
+                                    android:textColor="@color/hq_text_gray"
+                                    android:textSize="13sp" />
 
-                            <!-- 昨收价 - 80dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_prev_close"
-                                android:layout_width="80dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_prev_close"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 昨收价 - 80dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_prev_close"
+                                    android:layout_width="80dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_prev_close"
+                                    android:textColor="@color/hq_text_gray"
+                                    android:textSize="13sp" />
 
-                            <!-- 今开价 - 80dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_open"
-                                android:layout_width="80dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_open"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 今开价 - 80dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_open"
+                                    android:layout_width="80dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_open"
+                                    android:textColor="@color/hq_text_gray"
+                                    android:textSize="13sp" />
 
-                            <!-- 最高价 - 80dp -->
-                            <TextView
-                                android:id="@+id/tv_rank_high"
-                                android:layout_width="80dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingVertical="8dp"
-                                android:text="@string/hq_col_high"
-                                android:textColor="@color/hq_text_gray"
-                                android:textSize="13sp" />
+                                <!-- 最高价 - 80dp -->
+                                <TextView
+                                    android:id="@+id/tv_rank_high"
+                                    android:layout_width="80dp"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:paddingVertical="8dp"
+                                    android:text="@string/hq_col_high"
+                                    android:textColor="@color/hq_text_gray"
+                                    android:textSize="13sp" />
 
-                        </LinearLayout>
+                            </LinearLayout>
 
-                        <!-- Tab指示器 - 在底部，通过 translationX 定位 -->
-                        <View
-                            android:id="@+id/view_ranking_indicator"
-                            android:layout_width="24dp"
-                            android:layout_height="3dp"
-                            android:layout_gravity="bottom|start"
-                            android:layout_marginBottom="2dp"
-                            android:background="@drawable/bg_hq_tab_indicator" />
+                            <!-- Tab指示器 - 在底部，通过 translationX 定位 -->
+                            <View
+                                android:id="@+id/view_ranking_indicator"
+                                android:layout_width="24dp"
+                                android:layout_height="3dp"
+                                android:layout_gravity="bottom|start"
+                                android:layout_marginBottom="2dp"
+                                android:background="@drawable/bg_hq_tab_indicator" />
 
-                    </FrameLayout>
+                        </FrameLayout>
 
-                </HorizontalScrollView>
+                    </HorizontalScrollView>
+
+                </LinearLayout>
 
                 <!-- 分割线 -->
                 <View
@@ -442,7 +449,8 @@
                 <!-- 股票列表表头 -->
                 <include
                     android:id="@+id/layout_stock_header"
-                    layout="@layout/item_hq_stock_header" />
+                    layout="@layout/item_hq_stock_header"
+                    android:visibility="gone" />
 
                 <!-- 分割线 -->
                 <View
@@ -559,6 +567,41 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
+                <!-- 标题行：战略配售 + 日期 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="16dp">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="16dp"
+                        android:background="@color/hq_rise_color" />
+
+                    <TextView
+                        android:id="@+id/tv_strategy_section_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="战略配售"
+                        android:textColor="@color/hq_title_color"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_strategy_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="2026-02-02 周一"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
                 <!-- 列表表头 -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -635,7 +678,42 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- 列表表头 -->
+                <!-- 标题行：天启护盘 + 日期 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="16dp">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="16dp"
+                        android:background="@color/hq_rise_color" />
+
+                    <TextView
+                        android:id="@+id/tv_protection_section_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="天启护盘"
+                        android:textColor="@color/hq_title_color"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_protection_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="2026-02-02 周一"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- 列表表头：股票名称 | 现价 | 交易价 | 折扣率(%) | 操作 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -649,7 +727,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.2"
-                        android:text="名称"
+                        android:text="股票名称"
                         android:textColor="@color/hq_text_gray"
                         android:textSize="13sp" />
 
@@ -658,7 +736,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="折扣价"
+                        android:text="现价"
                         android:textColor="@color/hq_text_gray"
                         android:textSize="13sp" />
 
@@ -667,7 +745,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="总股额（股）"
+                        android:text="交易价"
                         android:textColor="@color/hq_text_gray"
                         android:textSize="13sp" />
 
@@ -675,7 +753,16 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="end"
+                        android:gravity="center"
+                        android:text="折扣率(%)"
+                        android:textColor="@color/hq_text_gray"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.8"
+                        android:gravity="center"
                         android:text="操作"
                         android:textColor="@color/hq_text_gray"
                         android:textSize="13sp" />

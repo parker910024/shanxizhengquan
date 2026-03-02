@@ -41,11 +41,13 @@ class BankTransferIntroViewController: ZQViewController {
     private let outValueLabel    = UILabel()
     private let bankCardLabel    = UILabel()
     private let amountField      = UITextField()
+    private let hintLabel        = UILabel()
     private var availableBalance: Double = 0
     private var freezeProfit: Double = 0
+    private var minTransferAmount: Double = 100  // 动态从后端获取
     private let historyStack     = UIStackView()
-    private var bankCards: [[String: Any]] = []  // 银行卡列表
-    private var selectedCardIndex: Int = 0        // 当前选中的银行卡索引
+    private var bankCards: [[String: Any]] = []
+    private var selectedCardIndex: Int = 0
 
     // MARK: - 传参
     var initialTabIndex: Int = 0
@@ -61,12 +63,51 @@ class BankTransferIntroViewController: ZQViewController {
         switchToTab(initialTabIndex)
         loadTransferInData()
         loadTransferOutData()
+        loadChargeConfig()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 每次页面显示时刷新转出数据（余额 + 历史记录）
         loadTransferOutData()
+    }
+    
+    /// 对齐安卓：全部提现
+    @objc private func withdrawAllTapped() {
+        if availableBalance > 0 {
+            if availableBalance == Double(Int(availableBalance)) {
+                amountField.text = "\(Int(availableBalance))"
+            } else {
+                amountField.text = String(format: "%.2f", availableBalance)
+            }
+        } else {
+            Toast.show("当前可转出余额为0")
+        }
+    }
+    
+    /// 对齐安卓：动态获取最小转出金额（GET api/index/getchargeconfignew）
+    private func loadChargeConfig() {
+        SecureNetworkManager.shared.request(
+            api: "/api/index/getchargeconfignew",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let res):
+                guard let dict = res.decrypted,
+                      let data = dict["data"] as? [String: Any] else { return }
+                if let minStr = data["min_tx_money"] as? String,
+                   let minVal = Double(minStr), minVal > 0 {
+                    self.minTransferAmount = minVal
+                } else if let minVal = data["min_tx_money"] as? Double, minVal > 0 {
+                    self.minTransferAmount = minVal
+                }
+                DispatchQueue.main.async {
+                    self.hintLabel.text = "最小转出金额\(Int(self.minTransferAmount))"
+                }
+            case .failure(_): break
+            }
+        }
     }
 
     // MARK: - 导航栏
@@ -231,6 +272,7 @@ class BankTransferIntroViewController: ZQViewController {
         introTitle.text = "简介说明"
         introTitle.font = UIFont.boldSystemFont(ofSize: 18)
         introTitle.textColor = orangeRed
+        introTitle.tag = 998
         transferInContent.addSubview(introTitle)
         introTitle.translatesAutoresizingMaskIntoConstraints = false
 
@@ -278,12 +320,20 @@ class BankTransferIntroViewController: ZQViewController {
         // 转出金额输入
         let inputRow = makeAmountInputRow()
         // 最小转出金额提示
-        let hintLabel = UILabel()
-        hintLabel.text = "最小转出金额100"
+        hintLabel.text = "最小转出金额\(Int(minTransferAmount))"
         hintLabel.font = UIFont.systemFont(ofSize: 12)
         hintLabel.textColor = textTer
         transferOutContent.addSubview(hintLabel)
         hintLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 全部提现按钮（对齐安卓 tvWithdrawAll）
+        let withdrawAllBtn = UIButton(type: .system)
+        withdrawAllBtn.setTitle("全部提现", for: .normal)
+        withdrawAllBtn.setTitleColor(redColor, for: .normal)
+        withdrawAllBtn.titleLabel?.font = UIFont.systemFont(ofSize: 13)
+        withdrawAllBtn.addTarget(self, action: #selector(withdrawAllTapped), for: .touchUpInside)
+        transferOutContent.addSubview(withdrawAllBtn)
+        withdrawAllBtn.translatesAutoresizingMaskIntoConstraints = false
 
         // 转出按钮
         let submitBtn = UIButton(type: .custom)
@@ -326,6 +376,9 @@ class BankTransferIntroViewController: ZQViewController {
 
             hintLabel.topAnchor.constraint(equalTo: inputRow.bottomAnchor, constant: 4),
             hintLabel.leadingAnchor.constraint(equalTo: transferOutContent.leadingAnchor, constant: pad),
+            
+            withdrawAllBtn.centerYAnchor.constraint(equalTo: hintLabel.centerYAnchor),
+            withdrawAllBtn.trailingAnchor.constraint(equalTo: transferOutContent.trailingAnchor, constant: -pad),
 
             submitBtn.topAnchor.constraint(equalTo: hintLabel.bottomAnchor, constant: 20),
             submitBtn.leadingAnchor.constraint(equalTo: transferOutContent.leadingAnchor, constant: pad),
@@ -613,19 +666,24 @@ class BankTransferIntroViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any] else { return }
 
                 let bankList = data["bank_list"] as? [[String: Any]] ?? []
-                let yhxy = data["yhxy"] as? String ?? ""
-
+                let introText = data["contentmsg_gb"] as? String ?? ""
+                let introColorHex = data["contentcolor_gb"] as? String ?? "#E60012"
+                
                 self.channelList = bankList
-                self.introText = yhxy
 
                 DispatchQueue.main.async {
                     self.refreshChannelList()
+                    // 更新标题颜色
+                    if let introTitle = self.transferInContent.viewWithTag(998) as? UILabel {
+                        introTitle.textColor = UIColor(hexString: introColorHex) ?? self.orangeRed
+                    }
                     // 如果 API 返回了简介说明，更新
-                    if !yhxy.isEmpty, let introLbl = self.transferInContent.viewWithTag(999) as? UILabel {
+                    if !introText.isEmpty, let introLbl = self.transferInContent.viewWithTag(999) as? UILabel {
                         // 去除 HTML 标签，纯文本显示
-                        let plainText = yhxy.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                        let plainText = introText.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
                         if !plainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             introLbl.text = plainText
+                            introLbl.textColor = UIColor(hexString: introColorHex) ?? self.orangeRed
                         }
                     }
                 }
@@ -715,14 +773,26 @@ class BankTransferIntroViewController: ZQViewController {
                       let data = dict["data"] as? [String: Any] else { return }
 
                 if let userInfo = data["userInfo"] as? [String: Any] {
-                    let balance = userInfo["balance"] as? Double ?? 0
-                    let freeze = userInfo["freeze_profit"] as? Double ?? 0
-                    self.availableBalance = balance
-                    self.freezeProfit = freeze
+                    // 对齐安卓：balance/freeze_profit 兼容 Double/String
+                    let balanceVal: Double
+                    if let d = userInfo["balance"] as? Double { balanceVal = d }
+                    else if let n = userInfo["balance"] as? NSNumber { balanceVal = n.doubleValue }
+                    else if let s = userInfo["balance"] as? String, let d = Double(s) { balanceVal = d }
+                    else { balanceVal = 0 }
+                    
+                    let freezeVal: Double
+                    if let d = userInfo["freeze_profit"] as? Double { freezeVal = d }
+                    else if let n = userInfo["freeze_profit"] as? NSNumber { freezeVal = n.doubleValue }
+                    else if let s = userInfo["freeze_profit"] as? String, let d = Double(s) { freezeVal = d }
+                    else { freezeVal = 0 }
+                    
+                    self.availableBalance = max(0.0, balanceVal - freezeVal)
+                    self.freezeProfit = freezeVal
 
                     DispatchQueue.main.async {
-                        self.t1ValueLabel.text = String(format: "%.2f", balance + freeze)
-                        self.outValueLabel.text = String(format: "%.2f", balance)
+                        // 对齐安卓：T+1 资金只显示 freeze_profit
+                        self.t1ValueLabel.text = String(format: "%.2f", freezeVal)
+                        self.outValueLabel.text = String(format: "%.2f", self.availableBalance)
                     }
                 }
 
@@ -803,10 +873,14 @@ class BankTransferIntroViewController: ZQViewController {
             fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
             let timeStr = fmt.string(from: date)
 
-            // 状态颜色
-            var sColor: UIColor = redColor
-            if txtColor == "red" { sColor = redColor }
-            else if txtColor == "green" { sColor = UIColor(red: 0.2, green: 0.7, blue: 0.3, alpha: 1) }
+            // 状态颜色（对齐安卓：支持 blue/green/red/默认灰色）
+            var sColor: UIColor
+            switch txtColor {
+            case "red": sColor = redColor
+            case "green": sColor = UIColor(red: 0.3, green: 0.69, blue: 0.31, alpha: 1)
+            case "blue": sColor = UIColor(red: 0.13, green: 0.59, blue: 0.95, alpha: 1)
+            default: sColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1)
+            }
 
             // 状态文字（含驳回原因）
             var statusText = statusName
@@ -830,8 +904,8 @@ class BankTransferIntroViewController: ZQViewController {
             Toast.show("转出金额不能超过可转出余额")
             return
         }
-        if amount < 100 {
-            Toast.show("最小转出金额为100")
+        if amount < minTransferAmount {
+            Toast.show("最小转出金额为\(Int(minTransferAmount))")
             return
         }
         // 对齐安卓：检查银行卡绑定

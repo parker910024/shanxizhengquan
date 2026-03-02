@@ -14,7 +14,7 @@ import com.yanshu.app.model.IPOViewModel
 import ex.ss.lib.base.extension.viewBinding
 
 /**
- * 配售记录页面
+ * 配售记录页面：红色标题栏 + 三 tab（申购中/中签/未中签，与打新记录样式一致）+ 列表按截图展示
  */
 class MyPlacementActivity : BasicActivity<ActivityMyPlacementBinding>() {
 
@@ -56,7 +56,7 @@ class MyPlacementActivity : BasicActivity<ActivityMyPlacementBinding>() {
     }
 
     private fun updateTabUI(tabs: List<TextView>) {
-        val selectedColor = Color.parseColor("#FB443C")
+        val selectedColor = Color.parseColor("#E23C39")
         val normalColor = Color.parseColor("#6D6D6D")
         tabs.forEachIndexed { i, tab ->
             val selected = i == currentTab
@@ -75,7 +75,7 @@ class MyPlacementActivity : BasicActivity<ActivityMyPlacementBinding>() {
 
     private fun observeViewModel() {
         IPOViewModel.myPlacementListLiveData.observe(this) { list ->
-            adapter.submitList(list)
+            adapter.submitList(list ?: emptyList())
             binding.rvList.visibility = if (list.isNullOrEmpty()) View.GONE else View.VISIBLE
             binding.tvEmpty.visibility = if (list.isNullOrEmpty()) View.VISIBLE else View.GONE
         }

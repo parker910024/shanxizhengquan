@@ -29,6 +29,7 @@ import com.yanshu.app.ui.placement.MyPlacementActivity
 import com.yanshu.app.ui.hq.BulkTradeHoldingActivity
 import com.yanshu.app.repo.contract.ContractRemote
 import com.yanshu.app.util.CustomerServiceNavigator
+import com.yanshu.app.util.ImageUrlUtils
 import ex.ss.lib.base.extension.viewBinding
 import ex.ss.lib.base.fragment.BaseFragment
 import kotlinx.coroutines.launch
@@ -40,6 +41,7 @@ class UserFragment : BaseFragment<FragmentUserBinding>() {
 
     private var isAssetsVisible = false
     private var lastUser: UserProfile? = null
+    private var lastAvatarUrl: String? = null
     /** 资产数据来自 文档2.6 GET /api/user/getUserPrice_all */
     private var lastUserPrice: UserPriceAllItem? = null
 
@@ -61,7 +63,10 @@ class UserFragment : BaseFragment<FragmentUserBinding>() {
 
     override fun onResume() {
         super.onResume()
-        if (UserConfig.isLogin()) loadUserPriceAll()
+        if (UserConfig.isLogin()) {
+            UserViewModel.userInfo()
+            loadUserPriceAll()
+        }
     }
 
     private fun loadConfigNames() {
@@ -174,11 +179,30 @@ class UserFragment : BaseFragment<FragmentUserBinding>() {
             binding.tvPhone.text = if (isPhoneMode) maskPhone(phoneOrAccount) else phoneOrAccount
             binding.tvAccount.text =
                 user.nickname.ifEmpty { user.username.ifEmpty { user.id.toString() } }
+            // 头像地址未变化时不重复触发加载，避免每次进入都请求网络
+            val avatar = user.avatar.trim()
+            if (avatar.isNotBlank()) {
+                if (avatar != lastAvatarUrl) {
+                    lastAvatarUrl = avatar
+                    ImageUrlUtils.loadWithFallback(
+                        imageView = binding.ivLogo,
+                        path = avatar,
+                        placeholderResId = R.drawable.ic_user_logo,
+                        errorResId = R.drawable.ic_user_logo,
+                        adaptiveScaleType = true,
+                    )
+                }
+            } else {
+                lastAvatarUrl = null
+                binding.ivLogo.setImageResource(R.drawable.ic_user_logo)
+            }
         } else {
+            lastAvatarUrl = null
             binding.tvPhone.text =
                 if (isPhoneMode) getString(R.string.user_phone_placeholder)
                 else getString(R.string.user_account_placeholder)
             binding.tvAccount.text = getString(R.string.user_account_placeholder)
+            binding.ivLogo.setImageResource(R.drawable.ic_user_logo)
         }
         bindAssetViews()
     }
@@ -208,7 +232,6 @@ class UserFragment : BaseFragment<FragmentUserBinding>() {
             content = getString(R.string.logout_confirm_message)
             cancel = getString(R.string.common_cancel)
             done = getString(R.string.common_confirm)
-            alwaysShow = true
             onDone = {
                 activity?.let { UserConfig.performLogout(it) }
             }

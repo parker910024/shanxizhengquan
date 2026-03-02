@@ -1,5 +1,6 @@
 package com.yanshu.app.data
 
+import com.google.gson.annotations.SerializedName
 import com.yanshu.app.BuildConfig
 import java.io.Serializable
 
@@ -106,9 +107,18 @@ data class IPOItem(
     val content: String = "",       // 申购秘钥
     val sg_type: String = "1",      // 1沪 2深 3创 5科 4京
     val industry: String = "",      // 所属行业
+    val sg_type_text: String = "",   // 板块文案 如北交所
 ) : Serializable {
-    fun getMarketTag(): String = when (sg_type) {
+    fun getMarketTag(): String = when (sg_type ?: "") {
         "1" -> "沪"; "2" -> "深"; "3" -> "创"; "4" -> "京"; "5" -> "科"; else -> ""
+    }
+
+    /** 所属板块展示：优先 sg_type_text，否则按 sg_type 映射；空安全避免 Gson 反序列化 null */
+    fun getMarketText(): String = (sg_type_text ?: "").ifEmpty {
+        when (sg_type ?: "") {
+            "1" -> "沪市"; "2" -> "深市"; "3" -> "创业板"; "4" -> "北交所"; "5" -> "科创板"
+            else -> ""
+        }
     }
 }
 
@@ -117,6 +127,7 @@ data class PlacementDetailData(
     val info: PlacementDetailInfo = PlacementDetailInfo(),
     val kqssss: Int = 0,
     val maxxg: Int = 0,
+    val psjy0_ss: Int = 0,
     val psmax: String = "10000000",
 )
 
@@ -144,11 +155,12 @@ data class PlacementDetailInfo(
     }
 }
 
-/** 配售记录 - /api/subscribe/getsgnewgu */
+/** 配售记录 - /api/subscribe/getsgnewgu，data.dxlog_list */
 data class MyPlacementListData(
     val dxlog_list: List<MyPlacementItem> = emptyList(),
 )
 
+/** 配售记录单项：申购中/中签/未中签列表 */
 data class MyPlacementItem(
     val id: Int = 0,
     val code: String = "",
@@ -156,17 +168,14 @@ data class MyPlacementItem(
     val sg_fx_price: Double = 0.0,   // 发行价
     val sg_num: Int = 0,             // 申购手数
     val sg_nums: Int = 0,            // 申购数量(股)
-    val status: String = "0",        // 0申购中 1中签 2未中签 3弃购
-    val money: String = "0",         // 配售保证金
-    val zq_num: Int = 0,             // 中签数量(股)
-    val zq_nums: Int = 0,            // 中签数量(手)
-    val is_cc: String = "0",         // 是否转持仓
-    val zq_money: Double = 0.0,      // 中签金额
-    val status_txt: String = "",     // 状态文本
+    val status: String = "0",        // 0申购中 1中签 2未中签
+    val money: String = "0",         // 占用金额
+    val zq_num: Int = 0,             // 中签数量(股)，数量(股)展示用
+    val zq_nums: Int = 0,
+    val status_txt: String = "",     // 如 申购中5(手)、中签5(手)
     val sg_ss_date: String = "",     // 上市时间
-    val sg_ss_tag: Int = 0,          // 是否有上市时间
-    val createtime_txt: String = "", // 日期文本
-    val dj_money: Double = 0.0,      // 冻结金额
+    val createtime_txt: String = "", // 日期 如 2026-02-28
+    val dj_money: Double = 0.0,      // 冻结/占用金额
 ) : Serializable
 
 // ==================== 新股申购记录 ====================
@@ -243,11 +252,18 @@ data class StockListItem(
     val sell: String = "",              // 外盘
 )
 
-/** 大宗交易列表 - /api/dzjy/lst */
+/** 大宗交易列表 - /api/dzjy/lst（balance/max_num 兼容后端返回数字或字符串，与 iOS 一致） */
 data class BlockTradeListData(
     val list: List<BlockTradeItem> = emptyList(),
-    val balance: Double = 0.0,
-)
+    @SerializedName("balance") val balanceRaw: Any? = null,
+) {
+    /** 可用余额，兼容 API 返回 number 或 string */
+    fun getBalanceDouble(): Double = when (balanceRaw) {
+        is Number -> balanceRaw.toDouble()
+        is String -> balanceRaw.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+}
 
 data class BlockTradeItem(
     val id: Int,
@@ -258,7 +274,7 @@ data class BlockTradeItem(
     val cai_price: String = "0",    // 当前价格
     val status: String = "0",       // 0开启 1关闭
     val type: Int = 1,              // 1沪 2深 3创业 4北交 5科创 6基金
-    val max_num: Int = 0,           // 最大可购买手数
+    @SerializedName("max_num") val max_num_raw: Any? = null,  // 最大可购买手数，兼容 number/string
     val rate: Double = 0.0,         // 价格比例(%)
     val zfanum: Int = 0,            // 增发数量万起
     val totalbuy: Int = 0,          // 已增发数量
@@ -266,8 +282,15 @@ data class BlockTradeItem(
     val is_dz: Int = 0,             // 开启大宗交易
     val is_zfa: Int = 0,            // 开启增发交易
 ) : Serializable {
+    /** 最大可买(手)，兼容 API 返回 number 或 string，与 iOS 一致 */
+    fun maxNumInt(): Int = when (max_num_raw) {
+        is Number -> max_num_raw.toInt()
+        is String -> max_num_raw.toIntOrNull() ?: 0
+        else -> 0
+    }
+    /** 与 API 文档及其他端一致：北交所(type=4) 显示「京」 */
     fun getMarketTag(): String = when (type) {
-        1 -> "沪"; 2 -> "深"; 3 -> "创"; 4 -> "北"; 5 -> "科"; 6 -> "基"; else -> ""
+        1 -> "沪"; 2 -> "深"; 3 -> "创"; 4 -> "京"; 5 -> "科"; 6 -> "基"; else -> ""
     }
 }
 
@@ -284,13 +307,15 @@ data class HoldingItem(
     val allcode: String = "",
     val title: String = "",           // 股票名称
     val type: Int = 1,                // 1沪 2深 3创业 4北交 5科创 6基金
-    val buyprice: Double = 0.0,       // 买入价格
-    val cai_buy: Double = 0.0,        // 当前价格
+    val buyprice: Double = 0.0,       // 买入价格（API 可能为 number）
+    val cai_buy: Any? = null,         // 当前/卖出价，API 可能为 string 或 number
     val canBuy: String = "",          // 手数
     val number: String = "",          // 股数
-    val money: String = "",           // 本金
-    val citycc: Double = 0.0,         // 市值
-    val profitLose: Double = 0.0,     // 盈亏
+    val money: String = "",           // 占用金额
+    val citycc: Double = 0.0,         // 本金/市值（部分接口返回）
+    @SerializedName("cityValue")
+    val cityValueRaw: Any? = null,    // 本金/市值（部分接口返回，可能为 ""）
+    val profitLose: Any? = null,      // 盈亏，API 可能为 string 或 number
     val profitLose_rate: String = "", // 盈亏比例
     val allMoney: String = "",        // 手续费
     val createtime_name: String = "", // 买入时间
@@ -302,7 +327,30 @@ data class HoldingItem(
     val creditMoney: Double = 0.0,
     val status: Int = 0,             // 1当前持仓 2当前委托 3历史交易 4已撤单
     val multiplying: String = "",     // 委托倍数（Web entrustDetail 字段，服务端若返回则使用）
-) : Serializable
+) : Serializable {
+    /** 本金/市值：兼容 citycc 与 cityValue(number/string/"") */
+    fun cityValueDouble(): Double {
+        if (citycc > 0) return citycc
+        return when (cityValueRaw) {
+            is Number -> cityValueRaw.toDouble()
+            is String -> cityValueRaw.toDoubleOrNull() ?: 0.0
+            else -> 0.0
+        }
+    }
+
+    /** 当前价/卖出价，兼容 API 返回 string 或 number */
+    fun caiBuyDouble(): Double = when (cai_buy) {
+        is Number -> (cai_buy as Number).toDouble()
+        is String -> (cai_buy as String).toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+    /** 盈亏，兼容 API 返回 string 或 number */
+    fun profitLoseDouble(): Double = when (profitLose) {
+        is Number -> (profitLose as Number).toDouble()
+        is String -> (profitLose as String).toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+}
 
 /** 卖出用持仓项 - /api/deal/mrSellLst（文档 3.32） */
 data class MrSellItem(

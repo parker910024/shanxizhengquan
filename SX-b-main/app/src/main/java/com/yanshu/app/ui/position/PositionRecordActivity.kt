@@ -50,9 +50,9 @@ class PositionRecordActivity : BasicActivity<ActivityPositionRecordBinding>() {
     private var blockTradeName = "大宗交易"
 
     private val headerTitles = arrayOf(
-        arrayOf("名称/代码", "市值/数量", "现价/买入", "盈亏/盈亏比"),
-        arrayOf("名称/代码", "买入/数量", "卖出/金额", "盈亏/盈亏比"),
-        arrayOf("名称/代码", "市值/数量", "现价/买入", "盈亏/盈亏比"),
+        arrayOf("名称/代码", "市值/数量", "现价/买入", "盈亏 / 涨幅"), // 当前持仓
+        arrayOf("名称/代码", "买入/数量", "卖出/金额", "盈亏"),       // 历史持仓
+        arrayOf("名称/代码", "市值/数量", "现价/买入", "盈亏"),       // 新股持仓
         arrayOf("名称/代码", "价格/数量", "状态", "中签/金额"),
     )
 
@@ -122,7 +122,12 @@ class PositionRecordActivity : BasicActivity<ActivityPositionRecordBinding>() {
         binding.rvRecords.adapter = adapter
     }
 
+    /** 大宗持仓(buytype=7)与普通持仓不在同一表，mrSellLst 不返回大宗，故大宗直接跳转卖出页，以接口返回为准 */
     private fun verifySellAndNavigate(holdingItem: HoldingItem) {
+        if (holdingItem.buytype == "7") {
+            BuyActivity.startForSell(this@PositionRecordActivity, holdingItem)
+            return
+        }
         lifecycleScope.launch {
             val resp = ContractRemote.callApiSilent { getMrSellList(holdingItem.code) }
             val sellList = resp.data ?: emptyList()
@@ -209,7 +214,7 @@ class PositionRecordActivity : BasicActivity<ActivityPositionRecordBinding>() {
         }
     }
 
-    /** Tab 1 - 历史持仓：文档 3.31 /api/deal/getNowWarehouse_lishi */
+    /** Tab 1 - 历史持仓：先查默认 status=2；为空时兼容回退 status=3（与其他端一致） */
     private fun loadHistoryHolding() {
         showLoading()
         lifecycleScope.launch {
@@ -253,13 +258,17 @@ class PositionRecordActivity : BasicActivity<ActivityPositionRecordBinding>() {
             market = market,
             code = code,
             date = createtime_name,
-            value1 = "$title/$code",
-            value2 = "${citycc.toLong()}/$number",
-            value3 = "$cai_buy/$buyprice",
-            value4 = "$profitLose/$profitLose_rate",
-            profit = profitLose.toString(),
-            profitRatio = profitLose_rate,
-            isUp = profitLose >= 0,
+            // 表格列对应关系（避免重复展示股票名/代码）：
+            // 列2=市值/数量 -> value1(市值) value2(数量)
+            // 列3=现价/买入 -> value3(现价) value4(买入价)
+            value1 = fmt(cityValueDouble()),
+            value2 = number,
+            value3 = fmt(caiBuyDouble()),
+            value4 = fmt(buyprice),
+            profit = fmt(profitLoseDouble()),
+            // 当前持仓展示涨幅，取后端 profitLose_rate 字段
+            profitRatio = profitLose_rate.ifBlank { "--" },
+            isUp = profitLoseDouble() >= 0,
             showSell = true,
             holdingItem = this,
         )
@@ -273,20 +282,32 @@ class PositionRecordActivity : BasicActivity<ActivityPositionRecordBinding>() {
             market = market,
             code = code,
             date = createtime_name,
-            value1 = "$title/$code",
-            value2 = "$buyprice/$number",
-            value3 = "$cai_buy/$money",
-            value4 = "$profitLose/$profitLose_rate",
-            profit = profitLose.toString(),
-            profitRatio = profitLose_rate,
-            isUp = profitLose >= 0,
+            // 列2=买入/数量 -> value1(买入价) value2(数量)
+            // 列3=卖出/金额 -> value3(卖出价) value4(金额/本金)
+            value1 = fmt(buyprice),
+            value2 = number,
+            value3 = fmt(caiBuyDouble()),
+            value4 = fmtStr(money),
+            profit = fmt(profitLoseDouble()),
+            profitRatio = "",
+            isUp = profitLoseDouble() >= 0,
             isHistory = true,
             holdingItem = this,
         )
     }
 
+    /** 与 API 文档及其他端一致：北交所(type=4) 显示「京」 */
     private fun HoldingItem.marketLabel(): String = when (type) {
-        1 -> "沪"; 2 -> "深"; 3 -> "创"; 4 -> "北"; 5 -> "科"; 6 -> "基"; else -> ""
+        1 -> "沪"; 2 -> "深"; 3 -> "创"; 4 -> "京"; 5 -> "科"; 6 -> "基"; else -> ""
+    }
+
+    /** Double 金额格式化，保留两位小数 */
+    private fun fmt(value: Double): String = String.format("%.2f", value)
+
+    /** String 金额格式化，转 Double 失败时原样返回 */
+    private fun fmtStr(value: String): String {
+        val d = value.toDoubleOrNull() ?: return value
+        return String.format("%.2f", d)
     }
 
     private fun MyIpoItem.toSubscriptionRecord(): PositionRecord {
@@ -301,12 +322,16 @@ class PositionRecordActivity : BasicActivity<ActivityPositionRecordBinding>() {
             market = "",
             code = code,
             date = createtime_txt,
-            value1 = "$name/$code",
-            value2 = "$sg_fx_price/$zq_nums",
+            // 表头：价格/数量 | 状态 | 中签/金额
+            // 第2列：价格/数量 -> value1(价格) value2(数量)
+            // 第3列：状态 -> value3(状态) value4(留空)
+            // 第4列：中签/金额 -> profit(中签手数) profitRatio(金额)
+            value1 = String.format("%.2f", sg_fx_price),
+            value2 = zq_nums.toString(),
             value3 = statusText,
-            value4 = "$zq_nums/${String.format("%.2f", zq_money)}",
-            profit = zq_money.toString(),
-            profitRatio = statusText,
+            value4 = "",
+            profit = zq_nums.toString(),
+            profitRatio = String.format("%.2f", zq_money),
             isUp = isUp,
         )
     }
@@ -382,6 +407,8 @@ class PositionRecordAdapter(
 
             tvProfit.text = record.profit
             tvProfitRatio.text = record.profitRatio
+            // 不能用 GONE，否则第二行列数变化导致表头/数据不对齐
+            tvProfitRatio.visibility = if (record.profitRatio.isBlank()) View.INVISIBLE else View.VISIBLE
 
             // 左侧标签点击 → 股票K线详情
             tvTradeType.setOnClickListener { onStockClick?.invoke(record) }

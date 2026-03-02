@@ -389,7 +389,7 @@ class BankTransferInViewController: ZQViewController {
                 switch result {
                 case .success(let res):
                     guard let dict = res.decrypted else {
-                        Toast.show("转入失败")
+                        Toast.show("转入失败，请重试")
                         return
                     }
                     let retCode = dict["retCode"] as? Int ?? -1
@@ -412,14 +412,23 @@ class BankTransferInViewController: ZQViewController {
                             }
                             self.navigationController?.popViewController(animated: true)
                         } else {
-                            Toast.show(dict["retMsg"] as? String ?? "转入申请已提交")
+                            let msg = dict["retMsg"] as? String ?? ""
+                            Toast.show(msg.isEmpty ? "转入申请已提交" : msg)
                             self.navigationController?.popViewController(animated: true)
                         }
+                    } else if retCode == 401 {
+                        // 同安卓，Token 过期的处理
+                        UserAuthManager.shared.logout()
+                        let loginVC = LoginViewController()
+                        loginVC.modalPresentationStyle = .fullScreen
+                        self.present(loginVC, animated: true)
+                        Toast.show("登录失效，请重新登录")
                     } else {
-                        Toast.show(dict["retMsg"] as? String ?? "转入失败")
+                        let msg = dict["retMsg"] as? String ?? ""
+                        Toast.show(msg.isEmpty ? "转入失败，请重试" : msg)
                     }
                 case .failure(let err):
-                    Toast.show(err.localizedDescription)
+                    Toast.show(err.localizedDescription.isEmpty ? "网络异常，请重试" : err.localizedDescription)
                 }
             }
         }

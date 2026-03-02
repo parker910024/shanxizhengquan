@@ -29,6 +29,7 @@
 
             <!-- 股票名称 -->
             <LinearLayout
+                android:id="@+id/layout_industry"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/white"
@@ -76,6 +77,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/view_divider_industry"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/hq_divider_color" />
@@ -168,6 +170,38 @@
                     android:textColor="#3B82F6"
                     android:textSize="15sp"
                     tools:text="北交" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/hq_divider_color" />
+
+            <!-- 所属行业 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="所属行业"
+                    android:textColor="@color/hq_text_gray"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tv_industry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/hq_title_color"
+                    android:textSize="15sp"
+                    tools:text="电子设备" />
 
             </LinearLayout>
 

@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Citic Securities</string>
 	<key>CFBundleExecutable</key>
 	<string>zhengqaun</string>
 	<key>CFBundleIcons</key>
@@ -32,9 +34,15 @@
 		</dict>
 	</dict>
 	<key>CFBundleIdentifier</key>
-	<string>com.sxzq.tradeapp888</string>
+	<string>com.ppp.app</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>zh_CN</string>
+		<string>zh_TW</string>
+		<string>en</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>zhengqaun</string>
 	<key>CFBundlePackageType</key>
@@ -50,7 +58,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>MinimumOSVersion</key>
-	<string>18.2</string>
+	<string>15.6</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

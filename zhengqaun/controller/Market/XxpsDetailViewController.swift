@@ -31,6 +31,7 @@ class XxpsDetailViewController: ZQViewController {
     private let scrollView = UIScrollView()
     private let contentViewWrapper = UIView()
     private var detailLabels: [String: UILabel] = [:]
+    private var rowViews: [String: UIView] = [:]
     private let numsLabel = UILabel()
     private let submitButton = UIButton(type: .system)
 
@@ -43,7 +44,7 @@ class XxpsDetailViewController: ZQViewController {
     }
 
     private func setupNavigationBar() {
-        gk_navTitle = "线下配售"
+        gk_navTitle = "配售详情"
         gk_navTitleFont = UIFont.boldSystemFont(ofSize: 17)
         gk_navTitleColor = .black
         gk_navBackgroundColor = .white
@@ -92,14 +93,17 @@ class XxpsDetailViewController: ZQViewController {
 
         let infoRows = [
             "股票代码",
+            "申购代码",
             "所属行业",
             "发行市盈",
             "板块",
             "发行价",
-            "发行总量(万股)"
+            "发行总量(万股)",
+            "网上发行数量(万股)"
         ]
         for (i, title) in infoRows.enumerated() {
             let row = makeRow(title: title, showLine: i < infoRows.count - 1)
+            rowViews[title] = row
             infoStack.addArrangedSubview(row)
         }
 
@@ -305,6 +309,12 @@ class XxpsDetailViewController: ZQViewController {
         stockCode = info["code"] as? String ?? ""
         contentKey = info["content"] as? String ?? ""
 
+        // 申购代码
+        var sgCode = stockCode // 对齐安卓 ifEmpty { code }
+        for key in ["sgcode", "sg_code", "symbol", "stock_code", "allcode"] {
+            if let valAny = info[key], !("\(valAny)".isEmpty) { sgCode = "\(valAny)"; break }
+        }
+
         if let p = info["fx_price"] as? String, let pv = Double(p) {
             fxPrice = pv
         } else if let p = info["fx_price"] as? Double {
@@ -330,32 +340,38 @@ class XxpsDetailViewController: ZQViewController {
             case "3": return "创业板"
             case "4": return "北交所"
             case "5": return "科创板"
-            default: return ""
+            default: return "--"
             }
         }()
 
         // 发行总量(万股)
         let fxNumStr = formatToWan(info["fx_num"])
+        let wsFxNumStr = formatToWan(info["wsfx_num"])
 
         // 填充 UI
         detailLabels["股票代码"]?.text = stockCode
+        detailLabels["申购代码"]?.text = sgCode
+        
         detailLabels["所属行业"]?.text = industry.isEmpty ? "--" : industry
+        rowViews["所属行业"]?.isHidden = false
+        
         detailLabels["发行市盈"]?.text = fxRateStr
         detailLabels["板块"]?.text = marketName
         detailLabels["发行价"]?.text = String(format: "%.2f", fxPrice)
         detailLabels["发行价"]?.textColor = themeRed
         detailLabels["发行总量(万股)"]?.text = fxNumStr
+        detailLabels["网上发行数量(万股)"]?.text = wsFxNumStr
 
-        gk_navTitle = stockName.isEmpty ? "线下配售" : stockName
+        gk_navTitle = stockName.isEmpty ? "配售详情" : stockName
         updateSubmitButtonTitle()
     }
 
     private func formatToWan(_ raw: Any?) -> String {
         guard let raw = raw else { return "0" }
         if let intVal = raw as? Int {
-            return String(format: "%.1f", Double(intVal) / 10000.0)
+            return String(format: "%.2f", Double(intVal) / 10000.0)
         } else if let strVal = raw as? String, let dVal = Double(strVal) {
-            return String(format: "%.1f", dVal / 10000.0)
+            return String(format: "%.2f", dVal / 10000.0)
         }
         return "\(raw)"
     }

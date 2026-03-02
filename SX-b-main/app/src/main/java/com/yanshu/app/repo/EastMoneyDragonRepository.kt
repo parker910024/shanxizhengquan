@@ -11,99 +11,162 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 /**
- * 东方财富 龙虎榜 数据（独立 OkHttp，不走后端加密）
- * 接口：datacenter-web.eastmoney.com 每日龙虎榜个股列表
+ * 东方财富 龙虎榜 数据（直连 datacenter-web.eastmoney.com）
+ * 接口：RPT_DAILYBILLBOARD_DETAILS 每日龙虎榜个股列表
  */
 object EastMoneyDragonRepository {
 
     private const val TAG = "EastMoneyDragon"
     private const val BASE_URL = "https://datacenter-web.eastmoney.com/api/data/v1/get"
 
+    private const val MAIN_REPORT = "RPT_DAILYBILLBOARD_DETAILS"
+
     private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
         .build()
 
-    // 抓包结果：tradedetail.html 使用 sortColumns=SECURITY_CODE,TRADE_DATE sortTypes=1,-1 pageSize=50
-    private val REPORT_NAMES = listOf(
-        "RPT_DAILYBILLBOARD_DETAILS",  // 每日龙虎榜详情（抓包确认）
-        "RPT_DAILYBILLBOARD",
-        "RPT_BILLBOARD_DAILY",
-        "RPT_BLOCKOPERATION"
+    // ────────────── 内存缓存 ──────────────
+    private val cache = LinkedHashMap<String, CacheEntry>(8, 0.75f, true)
+    private const val CACHE_MAX_SIZE = 10
+    private const val CACHE_EXPIRE_MS = 5 * 60 * 1000L  // 5分钟过期
+
+    private data class CacheEntry(
+        val data: List<DragonItem>,
+        val timestamp: Long = System.currentTimeMillis()
+    ) {
+        fun isExpired(): Boolean = System.currentTimeMillis() - timestamp > CACHE_EXPIRE_MS
+    }
+
+    private data class ParsedPage(
+        val items: List<DragonItem>,
+        val pages: Int = 1
     )
 
     /**
      * 按日期获取龙虎榜列表（东方财富数据中心）
-     * 抓包验证：RPT_DAILYBILLBOARD_DETAILS 需用 TRADE_DATE<='日期' 才有数据
+     * 优化：直接使用已验证有效的 RPT_DAILYBILLBOARD_DETAILS + TRADE_DATE<='日期'
      * @param date 格式 yyyy-MM-dd
      */
     suspend fun getListByDate(date: String): Result<List<DragonItem>> = withContext(Dispatchers.IO) {
-        var lastError: Throwable? = null
-        val filters = listOf(
-            "(TRADE_DATE<='$date')",           // 每日龙虎榜详情接口实际支持的写法
-            "(TRADE_DATE='$date')",
-            "(ONLIST_DATE>='$date')",
-            "(TRADE_DATE='${date.replace("-", "")}')"
-        )
-        for (reportName in REPORT_NAMES) {
-            for (filter in filters) {
-                val res = fetchWithFilter(date, reportName, filter)
-                if (res.isSuccess) {
-                    val list = res.getOrNull() ?: emptyList()
-                    if (list.isNotEmpty()) {
-                        // 只保留请求日当天的
-                        val sameDay = list.filter { item -> item.tradeDate?.startsWith(date) == true }
-                        val dayList = if (sameDay.isNotEmpty()) sameDay else list
-                        // 同一只股票可能因多种上榜原因出现多条，按代码去重，保留净买入绝对值最大的一条
-                        val deduped = dayList.groupBy { it.code }
-                            .mapNotNull { (_, items) -> items.maxByOrNull { kotlin.math.abs(it.netBuy) } }
-                        return@withContext Result.success(deduped)
-                    }
-                } else {
-                    lastError = res.exceptionOrNull()
-                }
+        // 1. 检查缓存
+        cache[date]?.let { entry ->
+            if (!entry.isExpired()) {
+                Log.d(TAG, "cache hit for $date, items=${entry.data.size}")
+                return@withContext Result.success(entry.data)
+            } else {
+                cache.remove(date)
             }
         }
-        lastError?.let { Result.failure(it) } ?: Result.success(emptyList())
+
+        // 2. 请求东方财富接口
+        val result = fetchDragonList(date)
+
+        result.fold(
+            onSuccess = { list ->
+                // 写入缓存
+                if (cache.size >= CACHE_MAX_SIZE) {
+                    cache.keys.firstOrNull()?.let { cache.remove(it) }
+                }
+                cache[date] = CacheEntry(list)
+
+                Result.success(list)
+            },
+            onFailure = { Result.failure(it) }
+        )
     }
 
-    private fun fetchWithReport(date: String, reportName: String): Result<List<DragonItem>> =
-        fetchWithFilter(date, reportName, "(TRADE_DATE='$date')")
+    /** 与 iOS 完全一致的 columns，保证拿到的字段一致 */
+    private val columns = listOf(
+        "SECURITY_CODE", "SECUCODE", "SECURITY_NAME_ABBR", "TRADE_DATE", "EXPLAIN",
+        "CLOSE_PRICE", "CHANGE_RATE", "BILLBOARD_NET_AMT", "BILLBOARD_BUY_AMT",
+        "BILLBOARD_SELL_AMT", "BILLBOARD_DEAL_AMT", "ACCUM_AMOUNT", "DEAL_NET_RATIO",
+        "DEAL_AMOUNT_RATIO", "TURNOVERRATE", "FREE_MARKET_CAP", "EXPLANATION",
+        "D1_CLOSE_ADJCHRATE", "D2_CLOSE_ADJCHRATE", "D5_CLOSE_ADJCHRATE",
+        "D10_CLOSE_ADJCHRATE", "SECURITY_TYPE_CODE"
+    ).joinToString(",")
 
-    private fun fetchWithFilter(date: String, reportName: String, filter: String): Result<List<DragonItem>> = runCatching {
-        // 东方财富 filter 支持 TRADE_DATE / ONLIST_DATE，格式 yyyy-MM-dd 或 yyyyMMdd
+    /** 请求龙虎榜数据：仅查询所选日期，当天无数据则返回空列表 */
+    private fun fetchDragonList(date: String): Result<List<DragonItem>> {
+        val exactFilter = "(TRADE_DATE='$date')"
+        val exactResult = fetchWithFilter(reportName = MAIN_REPORT, filter = exactFilter)
+        if (exactResult.isSuccess) {
+            val exactList = exactResult.getOrNull() ?: emptyList()
+            if (exactList.isNotEmpty()) {
+                Log.d(TAG, "dragon exact hit: date=$date count=${exactList.size}")
+                return Result.success(exactList)
+            }
+        }
+        Log.d(TAG, "dragon no data for date=$date")
+        return Result.success(emptyList())
+    }
+
+    private fun fetchWithFilter(reportName: String, filter: String): Result<List<DragonItem>> = runCatching {
+        val pageSize = 500
+        val allItems = mutableListOf<DragonItem>()
+
+        val firstPage = requestPage(reportName, filter, pageNumber = 1, pageSize = pageSize)
+        allItems.addAll(firstPage.items)
+
+        if (firstPage.pages > 1) {
+            for (page in 2..firstPage.pages) {
+                val nextPage = requestPage(reportName, filter, pageNumber = page, pageSize = pageSize)
+                allItems.addAll(nextPage.items)
+            }
+        }
+        allItems
+    }.onFailure { e -> Log.w(TAG, "fetch reportName=$reportName filter=$filter", e) }
+
+    private fun requestPage(
+        reportName: String,
+        filter: String,
+        pageNumber: Int,
+        pageSize: Int
+    ): ParsedPage {
+        return requestPage(
+            reportName = reportName,
+            filter = filter,
+            pageNumber = pageNumber,
+            pageSize = pageSize,
+            pageColumns = columns,
+            sortColumns = "SECURITY_CODE,TRADE_DATE",
+            sortTypes = "1,-1"
+        )
+    }
+
+    private fun requestPage(
+        reportName: String,
+        filter: String,
+        pageNumber: Int,
+        pageSize: Int,
+        pageColumns: String,
+        sortColumns: String,
+        sortTypes: String
+    ): ParsedPage {
         val url = "$BASE_URL?" +
-            "sortColumns=SECURITY_CODE,TRADE_DATE" +
-            "&sortTypes=1,-1" +
-            "&pageSize=500" +
-            "&pageNumber=1" +
+            "sortColumns=$sortColumns" +
+            "&sortTypes=$sortTypes" +
+            "&pageSize=$pageSize" +
+            "&pageNumber=$pageNumber" +
             "&reportName=$reportName" +
-            "&columns=ALL" +
+            "&columns=${URLEncoder.encode(pageColumns, "UTF-8")}" +
             "&source=WEB" +
             "&client=WEB" +
             "&filter=${URLEncoder.encode(filter, "UTF-8")}"
-        parseAndRequest(url)
-    }.onFailure { e -> Log.w(TAG, "fetch reportName=$reportName filter=$filter", e) }
 
-    private fun parseAndRequest(url: String): List<DragonItem> {
-        val proxyUrl = com.yanshu.app.repo.eastmoney.EastMoneyMarketRepository.PROXY_BASE_URL
-        val actualUrl = if (proxyUrl.isNotEmpty()) {
-            "$proxyUrl/proxy?url=${java.net.URLEncoder.encode(url, "UTF-8")}"
-        } else {
-            url
-        }
         val request = Request.Builder()
-            .url(actualUrl)
-            .header("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36")
+            .url(url)
+            .header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15")
             .header("Referer", "https://data.eastmoney.com/")
+            .header("Accept", "application/json, text/plain, */*")
             .get()
             .build()
 
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) throw Exception("HTTP ${response.code}")
         val body = response.body?.string() ?: throw Exception("empty body")
-        return parseResponse(body, "")
+        return parseResponse(body)
     }
 
     /**
@@ -111,23 +174,24 @@ object EastMoneyDragonRepository {
      * 常见结构: { "success": true, "result": { "data": [...], "total": n } } 或 { "data": [...] }
      * 无数据或 reportName 错误时可能返回 result: null，需安全解析
      */
-    private fun parseResponse(json: String, date: String): List<DragonItem> {
-        val root = runCatching { JSONObject(json) }.getOrNull() ?: return emptyList()
+    private fun parseResponse(json: String): ParsedPage {
+        val root = runCatching { JSONObject(json) }.getOrNull() ?: return ParsedPage(emptyList(), 1)
+        val pages = root.optJSONObject("result")?.optInt("pages", 1)?.takeIf { it > 0 } ?: 1
         val dataArray = when {
             root.has("result") -> {
-                val result = root.optJSONObject("result") ?: return emptyList()
+                val result = root.optJSONObject("result") ?: return ParsedPage(emptyList(), pages)
                 result.optJSONArray("data")
             }
             root.has("data") -> root.optJSONArray("data")
             else -> null
-        } ?: return emptyList()
+        } ?: return ParsedPage(emptyList(), pages)
 
         val list = mutableListOf<DragonItem>()
         for (i in 0 until dataArray.length()) {
             val obj = dataArray.getJSONObject(i)
             parseRow(obj)?.let { list.add(it) }
         }
-        return list
+        return ParsedPage(list, pages)
     }
 
     /**
@@ -143,27 +207,16 @@ object EastMoneyDragonRepository {
         }
         if (code.isBlank()) return null
 
-        val closePrice = obj.optDouble("CLOSE_PRICE", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("NEW_PRICE", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("close", 0.0)
-        val changeRate = obj.optDouble("CHANGE_RATE", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("CHANGE_PERCENT", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("change_rate", 0.0)
-        val netAmt = obj.optDouble("BILLBOARD_NET_AMT", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("NET_BUY_AMT", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("NET_AMT", 0.0).takeIf { it != 0.0 }
-            ?: obj.optDouble("net_buy", 0.0)
-
-        // 净买入：接口可能为元/万元/亿，按万转亿
-        val netBuyYi = when {
-            netAmt >= 1_0000_0000 -> netAmt / 1_0000_0000  // 已是亿
-            netAmt >= 1_0000 -> netAmt / 10000.0           // 万元
-            else -> netAmt
-        }
+        val closePrice = firstNumber(obj, "CLOSE_PRICE", "NEW_PRICE", "close") ?: 0.0
+        val changeRate = firstNumber(obj, "CHANGE_RATE", "CHANGE_PERCENT", "change_rate") ?: 0.0
+        val netAmt = firstNumber(obj, "BILLBOARD_NET_AMT", "NET_BUY_AMT", "NET_AMT", "net_buy")
+            ?: 0.0
         val secuCode = obj.optString("SECUCODE", "")
         val market = when {
             secuCode.uppercase().contains("SH") -> "sh"
             secuCode.uppercase().contains("SZ") -> "sz"
+            secuCode.uppercase().contains("BJ") -> "bj"
+            code.startsWith("8") || code.startsWith("4") -> "bj"
             code.startsWith("6") || code.startsWith("5") -> "sh"
             else -> "sz"
         }
@@ -173,11 +226,26 @@ object EastMoneyDragonRepository {
             name = name,
             code = code,
             closePrice = if (closePrice > 0) closePrice else 0.0,
-            netBuy = netBuyYi,
+            netBuy = netAmt,
             changePct = changeRate,
             isUp = changeRate >= 0,
             market = market,
             tradeDate = tradeDate
         )
+    }
+
+    private fun firstNumber(obj: JSONObject, vararg keys: String): Double? {
+        for (key in keys) {
+            val value = obj.opt(key)
+            when (value) {
+                is Number -> return value.toDouble()
+                is String -> {
+                    val text = value.trim().replace(",", "")
+                    if (text.isEmpty() || text == "--") continue
+                    text.toDoubleOrNull()?.let { return it }
+                }
+            }
+        }
+        return null
     }
 }

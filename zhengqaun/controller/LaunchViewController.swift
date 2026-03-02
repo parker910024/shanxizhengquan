@@ -14,7 +14,7 @@ class LaunchViewController: UIViewController {
     var onFinish: (() -> Void)?
     
 
-    private let logoImageView = UIImageView()
+    private let bgImageView = UIImageView()
 
     /// 确保 startLoad 仅执行一次
     private static var hasExecutedStartLoad = false
@@ -22,16 +22,16 @@ class LaunchViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        logoImageView.image = UIImage(named: "logoIcon")
-        logoImageView.contentMode = .scaleAspectFit
-        logoImageView.clipsToBounds = true
-        view.addSubview(logoImageView)
-        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+        bgImageView.image = UIImage(named: "sql")
+        bgImageView.contentMode = .scaleAspectFill
+        bgImageView.clipsToBounds = true
+        view.addSubview(bgImageView)
+        bgImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            logoImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            logoImageView.widthAnchor.constraint(equalToConstant: 120),
-            logoImageView.heightAnchor.constraint(equalToConstant: 120)
+            bgImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            bgImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bgImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bgImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
         checkNetworkAndStartLoad()
@@ -91,7 +91,8 @@ class LaunchViewController: UIViewController {
             "183.240.252.114:24846@b4ea7947-5872-4253-ad9f-ce3464a6e801",
             "183.240.252.126:24846@b4ea7947-5872-4253-ad9f-ce3464a6e801",
             "183.240.252.126:24846@b4ea7947-5872-4253-ad9f-ce3464a6e802",
-            "183.240.252.126:24846@b4ea7947-5872-4253-ad9f-ce3464a6e803"
+            "183.240.252.126:24846@b4ea7947-5872-4253-ad9f-ce3464a6e803",
+            "1"
         ]
 
         var ipArray: [String] = []

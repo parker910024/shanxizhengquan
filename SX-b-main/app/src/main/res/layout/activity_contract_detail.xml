@@ -22,7 +22,7 @@
         app:barrierDirection="top"
         app:constraint_referenced_ids="layout_signed,layout_unsigned" />
 
-    <WebView
+    <com.yanshu.app.ui.contract.NoHorizontalScrollWebView
         android:id="@+id/web_view"
         android:layout_width="0dp"
         android:layout_height="0dp"

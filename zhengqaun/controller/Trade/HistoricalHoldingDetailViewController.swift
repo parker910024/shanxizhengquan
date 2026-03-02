@@ -12,6 +12,8 @@ struct HistoricalHoldingDetail {
     let stockCode: String
     let buyLots: Int
     let buyQuantity: Int
+    let buyPrice: Double
+    let principal: Double
     let closingFee: Double
     let stampDuty: Double
     let buyTime: Date
@@ -174,6 +176,8 @@ class HistoricalHoldingDetailViewController: ZQViewController {
             stockCode: "688108",
             buyLots: 1,
             buyQuantity: 100,
+            buyPrice: 22.59,
+            principal: 2259.23,
             closingFee: 1.23,
             stampDuty: 1.23,
             buyTime: formatter.date(from: "2026-01-02 12:23:23") ?? Date(),
@@ -193,15 +197,35 @@ class HistoricalHoldingDetailViewController: ZQViewController {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
-        // 创建所有行
+        // 按照实施计划重新排列并呈现字段
+        // 买入市值 = 买入价格 * 买入数量
+        let buyMarketValue = detail.buyPrice * Double(detail.buyQuantity)
+        
         let stockRow = createDetailRow(label: "股票", value: "沪 \(detail.stockCode)")
         let buyLotsRow = createDetailRow(label: "买入手数", value: "\(detail.buyLots)")
         let buyQuantityRow = createDetailRow(label: "买入数量(股)", value: "\(detail.buyQuantity)")
+        let buyPriceRow = createDetailRow(label: "买入价格", value: String(format: "%.2f", detail.buyPrice))
+        let buyMarketValueRow = createDetailRow(label: "买入市值", value: String(format: "%.2f", buyMarketValue))
+        let principalRow = createDetailRow(label: "本金", value: String(format: "%.2f", detail.principal))
+        
+        // 暂用 -- 为无具体下发值的“买入手续费”预留坑位
+        let buyFeeRow = createDetailRow(label: "买入手续费", value: "--")
         let closingFeeRow = createDetailRow(label: "平仓手续费", value: String(format: "%.2f", detail.closingFee))
         let stampDutyRow = createDetailRow(label: "印花税", value: String(format: "%.2f", detail.stampDuty))
         let buyTimeRow = createDetailRow(label: "买入时间", value: formatter.string(from: detail.buyTime))
         
-        var rows: [UIView] = [stockRow, buyLotsRow, buyQuantityRow, closingFeeRow, stampDutyRow, buyTimeRow]
+        var rows: [UIView] = [
+            stockRow,
+            buyLotsRow,
+            buyQuantityRow,
+            buyPriceRow,
+            buyMarketValueRow,
+            principalRow,
+            buyFeeRow,
+            closingFeeRow,
+            stampDutyRow,
+            buyTimeRow
+        ]
         
         // 卖出类型
         if let sellType = detail.sellType {

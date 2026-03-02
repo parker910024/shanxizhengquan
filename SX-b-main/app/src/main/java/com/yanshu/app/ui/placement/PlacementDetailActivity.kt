@@ -65,14 +65,22 @@ class PlacementDetailActivity : BasicActivity<ActivityPlacementDetailBinding>() 
         expectedMiyaoFromApi = item.content
         issuePrice = item.fx_price.toDoubleOrNull() ?: 0.0
 
-        binding.tvTitle.text = item.name
+        binding.tvTitle.text = "配售详情"
         binding.tvStockCode.text = item.code
-        binding.tvIndustry.text = item.industry.ifEmpty { "未知" }
-        binding.tvPeRatio.text = "${item.fx_rate}%"
-        binding.tvMarket.text = item.getMarketTag()
-        binding.tvIssuePrice.text = String.format("%.2f", issuePrice)
-        binding.tvIssueTotal.text = String.format("%.2f", (item.fx_num.toDoubleOrNull() ?: 0.0) / 10000)
+        binding.tvSgCode.text = item.sgcode.ifEmpty { item.code }
+        binding.tvFxRate.text = "${item.fx_rate}%"
+        binding.tvMarket.text = item.getMarketText().ifEmpty { "-" }
+        binding.tvIndustry.text = item.industry.ifBlank { "-" }
+        binding.tvIssuePrice.text = item.fx_price
+        binding.tvIssueTotal.text = formatWanGu(item.fx_num)
+        binding.tvWsfxNum.text = formatWanGu(item.wsfx_num)
         updateBuyButton()
+    }
+
+    private fun formatWanGu(numStr: String): String {
+        val num = numStr.toLongOrNull() ?: 0L
+        val formatted = String.format("%.4f", num / 10000.0)
+        return formatted.trimEnd('0').trimEnd('.')
     }
 
     private fun setupQuantityControls() {
@@ -115,11 +123,13 @@ class PlacementDetailActivity : BasicActivity<ActivityPlacementDetailBinding>() 
             issuePrice = info.fx_price.toDoubleOrNull() ?: 0.0
 
             binding.tvStockCode.text = info.code
-            binding.tvIndustry.text = info.industry.ifEmpty { "未知" }
-            binding.tvPeRatio.text = "${info.fx_rate}%"
-            binding.tvMarket.text = info.getMarketText()
-            binding.tvIssuePrice.text = String.format("%.2f", issuePrice)
-            binding.tvIssueTotal.text = String.format("%.2f", (info.fx_num.toDoubleOrNull() ?: 0.0) / 10000)
+            binding.tvSgCode.text = info.sgcode.ifEmpty { info.code }
+            binding.tvFxRate.text = "${info.fx_rate}%"
+            binding.tvMarket.text = info.sg_type_text.ifEmpty { info.getMarketText() }.ifBlank { "-" }
+            binding.tvIndustry.text = info.industry.ifBlank { "-" }
+            binding.tvIssuePrice.text = info.fx_price
+            binding.tvIssueTotal.text = formatWanGu(info.fx_num)
+            binding.tvWsfxNum.text = formatWanGu(info.wsfx_num)
             updateBuyButton()
         }
 

@@ -180,7 +180,7 @@ class TradeViewController: ZQViewController {
         tableView.tableHeaderView = header
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Navigation.totalNavigationHeight),
+            tableView.topAnchor.constraint(equalTo: gk_navigationBar.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -206,7 +206,7 @@ class TradeViewController: ZQViewController {
         products.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            redCard.topAnchor.constraint(equalTo: wrap.topAnchor, constant: 0),
+            redCard.topAnchor.constraint(equalTo: wrap.topAnchor, constant: 12),
             redCard.leadingAnchor.constraint(equalTo: wrap.leadingAnchor, constant: 16),
             redCard.trailingAnchor.constraint(equalTo: wrap.trailingAnchor, constant: -16),
             redCard.heightAnchor.constraint(equalToConstant: 118),
@@ -229,7 +229,7 @@ class TradeViewController: ZQViewController {
         ])
 
         let w = UIScreen.main.bounds.width
-        wrap.frame = CGRect(x: 0, y: 0, width: w, height: 118 + sectionSpacing + 88 + sectionSpacing + 188 + sectionSpacing + 110 + sectionSpacing)
+        wrap.frame = CGRect(x: 0, y: 0, width: w, height: 12 + 118 + sectionSpacing + 88 + sectionSpacing + 188 + sectionSpacing + 110 + sectionSpacing)
         return wrap
     }
 
@@ -621,6 +621,11 @@ class TradeViewController: ZQViewController {
         titleL.text = title
         titleL.font = UIFont.systemFont(ofSize: 16)
         titleL.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1.0)
+        var dzjyName = "场外撮合交易"
+        if !FeatureSwitchManager.shared.nameDzjy.isEmpty {
+            dzjyName = FeatureSwitchManager.shared.nameDzjy
+        }
+        
         let subL = UILabel()
         subL.text = subtitle
         subL.font = UIFont.systemFont(ofSize: 14)
@@ -631,6 +636,12 @@ class TradeViewController: ZQViewController {
         textStack.alignment = .leading
         card.addSubview(iv)
         card.addSubview(textStack)
+        
+        // 当渲染“场外撮合交易”卡片时，特殊指定其根据配置更新标题
+        if title == "场外撮合交易" {
+            titleL.text = dzjyName
+            card.tag = 1001 // 特殊标记，如果后续需要动态刷新
+        }
         iv.translatesAutoresizingMaskIntoConstraints = false
         textStack.translatesAutoresizingMaskIntoConstraints = false
         var constraints: [NSLayoutConstraint] = [
@@ -702,7 +713,9 @@ extension TradeViewController: UITableViewDelegate {
         case "银行卡管理":
             vc = BankCardViewController()
         case "银证转出":
-            vc = BankSecuritiesTransferViewController()
+            let transferVC = BankTransferIntroViewController()
+            transferVC.initialTabIndex = 1
+            vc = transferVC
         case "更多功能":
             self.tabBarController?.selectedIndex = 4
         default:

@@ -85,6 +85,13 @@ class IndexDetailViewController: ZQViewController {
     /// 图表数据缓存（key 与 Android 一致："time" / "k_5" / "k_101" / "k_102"）
     private var chartDataCache: [String: Any] = [:]
 
+    // 五档行情
+    private var orderBookContainer: UIView!
+    private var askPriceLabels: [UILabel] = [] // 卖5 ~ 卖1
+    private var askVolLabels: [UILabel]   = []
+    private var bidPriceLabels: [UILabel] = [] // 买1 ~ 买5
+    private var bidVolLabels: [UILabel]   = []
+
     // 新闻 tableView
     private let newsTableView = UITableView(frame: .zero, style: .plain)
     private var newsTableHeightCons: NSLayoutConstraint?
@@ -237,6 +244,7 @@ class IndexDetailViewController: ZQViewController {
         buildPriceSection()
         buildMetricsGrid()
         buildChartSection()
+        buildOrderBookSection()
         buildNewsSection()
     }
 
@@ -566,89 +574,186 @@ class IndexDetailViewController: ZQViewController {
     }
 
     // ===================================================================
-    // MARK: - EastMoney 数据拉取（与 Android EastMoneyDetailRepository 一致）
+    // MARK: - 新浪财经 数据拉取（对齐 Android SinaStockRepository）
     // ===================================================================
 
-    /// 分时图数据 —— Android fetchTimeShare
-    /// URL: push2his.eastmoney.com/api/qt/stock/trends2/get
-    private func fetchTimeShare(completion: @escaping ([TimeSharePoint]) -> Void) {
-        let secId = resolveSecId()
-        let urlStr = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
-            + "?secid=\(secId)"
-            + "&fields1=f1,f2,f3,f4,f5,f6,f7,f8"
-            + "&fields2=f51,f52,f53,f54,f55,f56,f57,f58"
-            + "&ndays=1&iscr=0"
-        guard let url = URL(string: urlStr) else { completion([]); return }
+    /// 构造新浪股票代码（如 sh600519 / sz002470 / bj835305）
+    private func buildSinaCode() -> String {
+        let code = indexCode
+        let prefix = indexAllcode.prefix(2).lowercased()
+        let market = (prefix == "sh") ? "sh" : (prefix == "bj" ? "bj" : "sz")
+        return "\(market)\(code)"
+    }
 
-        var req = URLRequest(url: url)
-        req.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
+    /// 新浪K线接口 URL 列表（主 + 备用，对齐 Android）
+    private func buildSinaKLineURLs(symbol: String, scale: Int, datalen: Int) -> [String] {
+        return [
+            "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=\(symbol)&scale=\(scale)&ma=no&datalen=\(datalen)",
+            "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=\(symbol)&scale=\(scale)&ma=no&datalen=\(datalen)"
+        ]
+    }
+
+    /// 解析新浪K线JSON（兼容标准JSON和非标JS对象格式）
+    private func parseSinaKLineJSON(_ rawInput: String) -> [[String: Any]]? {
+        var rawStr = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !rawStr.isEmpty, rawStr != "null" else { return nil }
+
+        // 去除 JSONP 包裹
+        if let eqIdx = rawStr.firstIndex(of: "="), !rawStr.hasPrefix("["), !rawStr.hasPrefix("{") {
+            let start = rawStr.index(after: eqIdx)
+            rawStr = String(rawStr[start...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if rawStr.hasSuffix(";") { rawStr.removeLast() }
+        }
+
+        // JS 对象 key 补引号（{day:"..." → {"day":"..."）
+        let pattern = "([\\{\\,])\\s*([a-zA-Z_]\\w*)\\s*:"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+            rawStr = regex.stringByReplacingMatches(
+                in: rawStr, options: [],
+                range: NSRange(location: 0, length: rawStr.utf16.count),
+                withTemplate: "$1\"$2\":")
+        }
+
+        guard let jsonData = rawStr.data(using: .utf8),
+              let arr = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+              !arr.isEmpty else { return nil }
+        return arr
+    }
+
+    /// 从新浪JSON数组构造TimeSharePoint列表
+    private func convertSinaJSONToTimeShare(_ jsonArray: [[String: Any]]) -> [TimeSharePoint] {
+        let preCloseRef = Double(self.yesterdayClose) ?? 0
+        var cumulativeAmount = 0.0
+        var cumulativeVolume = 0.0
+
+        return jsonArray.compactMap { dict in
+            let close = Double("\(dict["close"] ?? "")") ?? 0
+            let vol = Double("\(dict["volume"] ?? "")") ?? 0
+            guard close > 0 else { return nil }
+
+            let amount = close * vol
+            cumulativeAmount += amount
+            cumulativeVolume += vol
+            let avgPrice = cumulativeVolume > 0 ? (cumulativeAmount / cumulativeVolume) : close
+
+            return TimeSharePoint(
+                price: close,
+                avgPrice: avgPrice,
+                volume: vol,
+                isUp: close >= preCloseRef
+            )
+        }
+    }
+
+    /// 从新浪JSON数组构造KLinePoint列表
+    private func convertSinaJSONToKLine(_ jsonArray: [[String: Any]]) -> [KLinePoint] {
+        return jsonArray.compactMap { dict in
+            let open = Double("\(dict["open"] ?? "")") ?? 0
+            let close = Double("\(dict["close"] ?? "")") ?? 0
+            let high = Double("\(dict["high"] ?? "")") ?? 0
+            let low = Double("\(dict["low"] ?? "")") ?? 0
+            let vol = Double("\(dict["volume"] ?? "")") ?? 0
+            guard close > 0 else { return nil }
+            return KLinePoint(open: open, close: close, high: high, low: low, volume: vol)
+        }
+    }
+
+    /// 发起新浪K线请求（带 Referer/UA）
+    private func fetchSinaURL(_ urlStr: String, completion: @escaping (String?) -> Void) {
+        guard let url = URL(string: urlStr) else { completion(nil); return }
+        var req = URLRequest(url: url, timeoutInterval: 10)
+        req.setValue("https://finance.sina.com.cn", forHTTPHeaderField: "Referer")
         req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
                      forHTTPHeaderField: "User-Agent")
-
-        URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
-            guard let self,
-                  let data,
-                  let json  = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let root  = json["data"] as? [String: Any],
-                  let trends = root["trends"] as? [String] else { completion([]); return }
-
-            // 昨收取自 preClose 字段，或退而使用已知 yesterdayClose
-            let preCloseRef = Double(self.yesterdayClose) ?? 0
-
-            let points: [TimeSharePoint] = trends.compactMap { entry in
-                let v = entry.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
-                guard v.count >= 6,
-                      let price = Double(v[1]),
-                      let avg   = Double(v[2]) else { return nil }
-                let vol  = Double(v[5]) ?? 0
-                return TimeSharePoint(
-                    price: price,
-                    avgPrice: avg,
-                    volume: vol,
-                    isUp: price >= preCloseRef
-                )
+        URLSession.shared.dataTask(with: req) { data, _, _ in
+            guard let data = data, let str = String(data: data, encoding: .utf8) else {
+                completion(nil); return
             }
-            completion(points)
+            completion(str)
         }.resume()
     }
 
-    /// K 线数据 —— Android fetchKLine
-    /// URL: push2his.eastmoney.com/api/qt/stock/kline/get
-    private func fetchKLine(klt: Int, completion: @escaping ([KLinePoint]) -> Void) {
-        let secId = resolveSecId()
-        let ut = "fa5fd1943c7b386f172d6893dbfba10b"
-        let ts = Int(Date().timeIntervalSince1970 * 1000)
-        let urlStr = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
-            + "?secid=\(secId)&ut=\(ut)"
-            + "&fields1=f1,f2,f3,f4,f5,f6"
-            + "&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
-            + "&klt=\(klt)&fqt=1&beg=0&end=20500101&lmt=120&_=\(ts)"
-        guard let url = URL(string: urlStr) else { completion([]); return }
+    /// 分时图数据 —— 对齐 Android SinaStockRepository.fetchTimeShare()
+    /// 优先 scale=1（1分钟线），收盘后返回 null 则回退 scale=5（5分钟线）
+    private func fetchTimeShare(completion: @escaping ([TimeSharePoint]) -> Void) {
+        let sinaCode = buildSinaCode()
 
-        var req = URLRequest(url: url)
-        req.setValue("https://quote.eastmoney.com/", forHTTPHeaderField: "Referer")
-        req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
-                     forHTTPHeaderField: "User-Agent")
+        // 尝试的 URL 列表：主域名 scale=1 → 备用域名 scale=1 → 主域名 scale=5 → 备用域名 scale=5
+        let urls = buildSinaKLineURLs(symbol: sinaCode, scale: 1, datalen: 242)
+                 + buildSinaKLineURLs(symbol: sinaCode, scale: 5, datalen: 48)
 
-        URLSession.shared.dataTask(with: req) { data, _, _ in
-            guard let data,
-                  let json   = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let root   = json["data"] as? [String: Any],
-                  let klines = root["klines"] as? [String] else { completion([]); return }
-
-            let points: [KLinePoint] = klines.compactMap { entry in
-                let v = entry.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
-                // values: date,open,close,high,low,volume,amount,...
-                guard v.count >= 6,
-                      let open  = Double(v[1]),
-                      let close = Double(v[2]),
-                      let high  = Double(v[3]),
-                      let low   = Double(v[4]) else { return nil }
-                let vol = Double(v[5]) ?? 0
-                return KLinePoint(open: open, close: close, high: high, low: low, volume: vol)
+        // 串行尝试每个 URL
+        func tryNext(index: Int) {
+            guard index < urls.count else { completion([]); return }
+            fetchSinaURL(urls[index]) { [weak self] rawStr in
+                guard let self = self else { completion([]); return }
+                if let rawStr = rawStr,
+                   let jsonArray = self.parseSinaKLineJSON(rawStr) {
+                    let points = self.convertSinaJSONToTimeShare(jsonArray)
+                    if !points.isEmpty {
+                        completion(points)
+                        return
+                    }
+                }
+                // 当前URL失败/空数据，尝试下一个
+                tryNext(index: index + 1)
             }
-            completion(points)
-        }.resume()
+        }
+        tryNext(index: 0)
+    }
+
+    /// K 线数据 —— 对齐 Android SinaStockRepository.fetchKLine()
+    /// 支持 klt: 5=五分钟, 101=日K, 102=周K（日K聚合成周K）
+    private func fetchKLine(klt: Int, completion: @escaping ([KLinePoint]) -> Void) {
+        let sinaCode = buildSinaCode()
+        let isWeekly = (klt == 102)
+        let scale = (klt == 5) ? 5 : 240
+        let limit = isWeekly ? 500 : 120
+
+        let urls = buildSinaKLineURLs(symbol: sinaCode, scale: scale, datalen: limit)
+
+        func tryNext(index: Int) {
+            guard index < urls.count else { completion([]); return }
+            fetchSinaURL(urls[index]) { [weak self] rawStr in
+                guard let self = self else { completion([]); return }
+                if let rawStr = rawStr,
+                   let jsonArray = self.parseSinaKLineJSON(rawStr) {
+                    let kPoints = self.convertSinaJSONToKLine(jsonArray)
+                    if !kPoints.isEmpty {
+                        if isWeekly {
+                            completion(self.aggregateToWeekly(kPoints))
+                        } else {
+                            completion(kPoints)
+                        }
+                        return
+                    }
+                }
+                tryNext(index: index + 1)
+            }
+        }
+        tryNext(index: 0)
+    }
+
+    /// 将日K线聚合为周K线（对齐 Android SinaStockRepository.aggregateToWeekly）
+    private func aggregateToWeekly(_ dailyPoints: [KLinePoint]) -> [KLinePoint] {
+        // 用日K数据重新构造含日期的元组以确定周
+        // 此处无日期信息（KLinePoint不含），所以直接按5个一组粗略聚合
+        // 若需精确聚合，可扩展 KLinePoint 加 day 字段
+        let chunkSize = 5
+        var result: [KLinePoint] = []
+        var i = 0
+        while i < dailyPoints.count {
+            let end = min(i + chunkSize, dailyPoints.count)
+            let chunk = Array(dailyPoints[i..<end])
+            let open = chunk.first!.open
+            let close = chunk.last!.close
+            let high = chunk.map { $0.high }.max() ?? open
+            let low = chunk.map { $0.low }.min() ?? open
+            let vol = chunk.map { $0.volume }.reduce(0, +)
+            result.append(KLinePoint(open: open, close: close, high: high, low: low, volume: vol))
+            i = end
+        }
+        return result
     }
 
     // ===================================================================
@@ -812,6 +917,134 @@ class IndexDetailViewController: ZQViewController {
     }
 
     // ===================================================================
+    // MARK: - 3.5 五档行情区
+    // ===================================================================
+    private func buildOrderBookSection() {
+        orderBookContainer = UIView()
+        orderBookContainer.backgroundColor = .white
+        contentView.addSubview(orderBookContainer)
+        orderBookContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        // 若是指数，隐藏容器
+        orderBookContainer.isHidden = isIndex
+
+        // 构建内部UI
+        var lastView: UIView? = nil
+        let rowH: CGFloat = 26
+
+        // 辅助方法：创建一行（卖5, 价格, 数量）
+        func createRow(title: String, isAsk: Bool) -> (UIView, UILabel, UILabel) {
+            let row = UIView()
+            orderBookContainer.addSubview(row)
+            row.translatesAutoresizingMaskIntoConstraints = false
+            
+            let tl = UILabel()
+            tl.text = title
+            tl.font = .systemFont(ofSize: 12)
+            tl.textColor = textSec
+            row.addSubview(tl)
+            tl.translatesAutoresizingMaskIntoConstraints = false
+            
+            let pl = UILabel()
+            pl.text = "--"
+            pl.font = .systemFont(ofSize: 12)
+            pl.textColor = isAsk ? stockGreen : themeRed // 卖绿 买红 (Android: hq_fall_color / hq_rise_color)
+            pl.textAlignment = .right
+            row.addSubview(pl)
+            pl.translatesAutoresizingMaskIntoConstraints = false
+            
+            let vl = UILabel()
+            vl.text = "--"
+            vl.font = .systemFont(ofSize: 12)
+            vl.textColor = textPrimary
+            vl.textAlignment = .right
+            row.addSubview(vl)
+            vl.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                tl.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                tl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                tl.widthAnchor.constraint(equalToConstant: 40),
+                
+                pl.leadingAnchor.constraint(equalTo: tl.trailingAnchor),
+                pl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                
+                vl.leadingAnchor.constraint(equalTo: pl.trailingAnchor),
+                vl.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                vl.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                vl.widthAnchor.constraint(equalTo: pl.widthAnchor)
+            ])
+            return (row, pl, vl)
+        }
+
+        askPriceLabels.removeAll()
+        askVolLabels.removeAll()
+        bidPriceLabels.removeAll()
+        bidVolLabels.removeAll()
+
+        // 卖5 -> 卖1
+        for i in (1...5).reversed() {
+            let (row, pl, vl) = createRow(title: "卖\(i)", isAsk: true)
+            NSLayoutConstraint.activate([
+                row.leadingAnchor.constraint(equalTo: orderBookContainer.leadingAnchor, constant: 16),
+                row.trailingAnchor.constraint(equalTo: orderBookContainer.trailingAnchor, constant: -16),
+                row.heightAnchor.constraint(equalToConstant: rowH)
+            ])
+            if let last = lastView {
+                row.topAnchor.constraint(equalTo: last.bottomAnchor).isActive = true
+            } else {
+                row.topAnchor.constraint(equalTo: orderBookContainer.topAnchor, constant: 8).isActive = true
+            }
+            lastView = row
+            // 加入数组时，第0个是卖5，第4个是卖1
+            askPriceLabels.append(pl)
+            askVolLabels.append(vl)
+        }
+
+        // 分割线
+        let line = UIView()
+        line.backgroundColor = UIColor(white: 0.95, alpha: 1)
+        orderBookContainer.addSubview(line)
+        line.translatesAutoresizingMaskIntoConstraints = false
+        if let last = lastView {
+            NSLayoutConstraint.activate([
+                line.topAnchor.constraint(equalTo: last.bottomAnchor, constant: 4),
+                line.leadingAnchor.constraint(equalTo: orderBookContainer.leadingAnchor, constant: 16),
+                line.trailingAnchor.constraint(equalTo: orderBookContainer.trailingAnchor, constant: -16),
+                line.heightAnchor.constraint(equalToConstant: 1)
+            ])
+            lastView = line
+        }
+
+        // 买1 -> 买5
+        for i in 1...5 {
+            let (row, pl, vl) = createRow(title: "买\(i)", isAsk: false)
+            NSLayoutConstraint.activate([
+                row.leadingAnchor.constraint(equalTo: orderBookContainer.leadingAnchor, constant: 16),
+                row.trailingAnchor.constraint(equalTo: orderBookContainer.trailingAnchor, constant: -16),
+                row.heightAnchor.constraint(equalToConstant: rowH)
+            ])
+            if let last = lastView {
+                row.topAnchor.constraint(equalTo: last.bottomAnchor, constant: (i == 1 ? 4 : 0)).isActive = true
+            }
+            lastView = row
+            // 加入数组时，第0个是买1，第4个是买5
+            bidPriceLabels.append(pl)
+            bidVolLabels.append(vl)
+        }
+
+        if let last = lastView {
+            last.bottomAnchor.constraint(equalTo: orderBookContainer.bottomAnchor, constant: -8).isActive = true
+        }
+
+        NSLayoutConstraint.activate([
+            orderBookContainer.topAnchor.constraint(equalTo: chartContainer.bottomAnchor),
+            orderBookContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            orderBookContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+        ])
+    }
+
+    // ===================================================================
     // MARK: - 4. 新闻区
     // ===================================================================
     private var newsContainer: UIView!
@@ -868,7 +1101,7 @@ class IndexDetailViewController: ZQViewController {
         newsTableView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            sep.topAnchor.constraint(equalTo: chartContainer.bottomAnchor),
+            sep.topAnchor.constraint(equalTo: orderBookContainer.bottomAnchor),
             sep.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             sep.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             sep.heightAnchor.constraint(equalToConstant: 8),
@@ -1040,6 +1273,12 @@ class IndexDetailViewController: ZQViewController {
             let change   = (price > 0 && preClose > 0) ? (price - preClose) : 0.0
             let changePct = (price > 0 && preClose > 0) ? (change / preClose * 100.0) : 0.0
             
+            // 五档数据（如果在数组内的话）
+            var orderBookData: [String] = []
+            if !self.isIndex && fields.count >= 30 {
+                orderBookData = Array(fields[10...29])
+            }
+            
             // 本地计算涨跌停 (对齐安卓 SinaStockRepository.calculateLimitUp/Down)
             let limitUp   = self.calculateLimitPrice(code: code, preClose: preClose, isUp: true)
             let limitDown = self.calculateLimitPrice(code: code, preClose: preClose, isUp: false)
@@ -1091,6 +1330,38 @@ class IndexDetailViewController: ZQViewController {
                 
                 self.refreshMetrics()
                 self.populateChart()
+                
+                // 刷新五档
+                if !self.isIndex && orderBookData.count == 20 {
+                    // index:0 买1量, 1 买1价, 2 买2量, 3 买2价 ... 8 买5量, 9 买5价
+                    // index:10 卖1量, 11 卖1价 ... 18 卖5量, 19 卖5价
+                    
+                    // 绑定买一到买五
+                    for i in 0..<5 {
+                        let buyVolStr = orderBookData[i * 2]
+                        let buyPriceStr = orderBookData[i * 2 + 1]
+                        
+                        let buyVol = Double(buyVolStr) ?? 0
+                        let buyPrice = Double(buyPriceStr) ?? 0
+                        
+                        self.bidVolLabels[i].text = buyVol > 0 ? String(format: "%.0f", buyVol) : "--"
+                        self.bidPriceLabels[i].text = buyVol > 0 ? String(format: "%.2f", buyPrice) : "--"
+                    }
+                    
+                    // 绑定卖五到卖一 (UI顺序为 卖5, 卖4, 卖3, 卖2, 卖1)
+                    // orderBookData 里的顺序是：10->卖1量, 11->卖1价; ... ; 18->卖5量, 19->卖5价
+                    for i in 0..<5 {
+                        let currentAskLevel = 4 - i // i=0 -> level=4(卖5), i=4 -> level=0(卖1)
+                        let sellVolStr = orderBookData[10 + currentAskLevel * 2]
+                        let sellPriceStr = orderBookData[10 + currentAskLevel * 2 + 1]
+                        
+                        let sellVol = Double(sellVolStr) ?? 0
+                        let sellPrice = Double(sellPriceStr) ?? 0
+                        
+                        self.askVolLabels[i].text = sellVol > 0 ? String(format: "%.0f", sellVol) : "--"
+                        self.askPriceLabels[i].text = sellVol > 0 ? String(format: "%.2f", sellPrice) : "--"
+                    }
+                }
             }
         }.resume()
     }

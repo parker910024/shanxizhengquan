@@ -7,6 +7,7 @@ import com.yanshu.app.repo.API
 import com.yanshu.app.repo.Remote
 import com.yanshu.app.ui.dialog.AppToast
 import ex.ss.lib.net.bean.ResponseData
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 
 object ContractRemote {
@@ -56,7 +57,9 @@ object ContractRemote {
             onFailure = { error ->
                 Log.d("sp_ts", "ContractRemote failure: ${error.message}")
                 val httpCode = (error as? HttpException)?.code()
-                if (httpCode == BaseResponse.EXPIRE && UserConfig.isLogin()) {
+                if (error is CancellationException) {
+                    // Ignore cancellation to avoid noisy toasts like "StandaloneCoroutine was cancelled".
+                } else if (httpCode == BaseResponse.EXPIRE && UserConfig.isLogin()) {
                     Remote.notifyLoginExpireOnce()
                 } else if (showToast) {
                     val displayMsg = when (error) {

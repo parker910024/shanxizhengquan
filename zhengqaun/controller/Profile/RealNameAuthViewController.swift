@@ -100,7 +100,8 @@ class RealNameAuthViewController: ZQViewController {
         let hintColor = UIColor(hexString: "999999") ?? .gray
         
         // 国籍
-        nationalityTextField.setZqPlaceholder("请输入")
+        nationalityTextField.text = "中国"
+        nationalityTextField.isUserInteractionEnabled = false
         nationalityTextField.font = UIFont.systemFont(ofSize: 15)
         nationalityTextField.textColor = labelColor
         nationalityTextField.textAlignment = .right
@@ -425,10 +426,7 @@ class RealNameAuthViewController: ZQViewController {
             return
         }
 
-        guard let nationality = nationalityTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !nationality.isEmpty else {
-            Toast.showInfo("请输入国籍")
-            return
-        }
+
 
         guard let idCard = idCardTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !idCard.isEmpty else {
             Toast.showInfo("请输入身份证号码")

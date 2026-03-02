@@ -14,9 +14,9 @@ import com.yanshu.app.ui.entrust.EntrustListActivity
 import com.yanshu.app.ui.fund.FundRecordActivity
 import com.yanshu.app.ui.password.ChangeTradePwdActivity
 import com.yanshu.app.ui.position.PositionRecordActivity
-import com.yanshu.app.ui.record.TradeRecordActivity
 import com.yanshu.app.ui.transfer.TransferInActivity
 import com.yanshu.app.ui.transfer.TransferOutActivity
+import com.yanshu.app.ui.dialog.AppToast
 import com.yanshu.app.ui.main.MainActivity
 import com.yanshu.app.ui.message.MessageListActivity
 import ex.ss.lib.base.extension.viewBinding
@@ -64,9 +64,9 @@ class TradeFragment : BaseFragment<FragmentTradeBinding>() {
         binding.llOrder.setOnClickListener {
             EntrustListActivity.start(requireContext())
         }
-        // 成交 -> 交易记录
+        // 成交 -> 持仓记录-历史持仓（与「我的」-交易记录一致）
         binding.llDeal.setOnClickListener {
-            TradeRecordActivity.start(requireContext())
+            PositionRecordActivity.start(requireContext(), initialTab = 1)
         }
         // 对账单 -> 资金记录
         binding.llStatement.setOnClickListener {
@@ -108,23 +108,64 @@ class TradeFragment : BaseFragment<FragmentTradeBinding>() {
     override fun initData() {
         android.util.Log.d("sp_ts", "TradeFragment initData")
         updateAccountNumber()
-        if (UserConfig.isLogin()) loadAsset()
-        binding.ivRefresh.setOnClickListener { if (UserConfig.isLogin()) loadAsset() }
+        loadTradeConfigNames() // 场外撮合文案与首页新股申购右侧一致，动态显示 dz_syname
+        if (UserConfig.isLogin()) {
+            refreshUserAndAsset(showToast = false)
+        }
+        binding.ivRefresh.setOnClickListener {
+            if (UserConfig.isLogin()) {
+                refreshUserAndAsset(showToast = true)
+            }
+        }
+    }
+
+    /** 与首页一致：场外撮合交易文案使用接口下发的 dz_syname，为空则用默认「场外撮合交易」 */
+    private fun loadTradeConfigNames() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val response = ContractRemote.callApiSilent { getConfig() }
+            if (!response.isSuccess()) return@launch
+            val name = response.data?.dz_syname?.trim()
+            if (!name.isNullOrEmpty()) {
+                binding.tvOtcTitle.text = name
+            }
+        }
     }
 
     private fun updateAccountNumber() {
-        binding.tvAccountNumber.text = UserConfig.getUser()?.nickname.orEmpty()
+        val user = UserConfig.getUser()
+        binding.tvAccountNumber.text = user?.mobile.orEmpty().ifBlank { user?.username.orEmpty() }
     }
 
-    private fun loadAsset() {
-        if (!UserConfig.isLogin()) return
-        android.util.Log.d("sp_ts", "TradeFragment loadAsset -> getUserPrice_all1()")
+    private fun refreshUserAndAsset(showToast: Boolean) {
         lifecycleScope.launch {
-            val resp = ContractRemote.callApiSilent { getUserPrice_all1() }
-            val item = resp.data?.list ?: return@launch
-            lastUserPrice = item
-            bindAssetViews()
+            val userOk = loadUserInfo()
+            val assetOk = loadAsset()
+            if (showToast) {
+                if (userOk && assetOk) {
+                    AppToast.show("刷新成功")
+                } else {
+                    AppToast.show("刷新失败，请重试")
+                }
+            }
         }
+    }
+
+    private suspend fun loadUserInfo(): Boolean {
+        val resp = ContractRemote.callApiSilent { getUserInfo() }
+        val user = resp.data?.list ?: return false
+        UserConfig.saveUser(user)
+        updateAccountNumber()
+        return true
+    }
+
+    private suspend fun loadAsset(): Boolean {
+        if (!UserConfig.isLogin()) return false
+        android.util.Log.d("sp_ts", "TradeFragment loadAsset -> getUserPrice_all1()")
+        val resp = ContractRemote.callApiSilent { getUserPrice_all1() }
+        val item = resp.data?.list ?: return false
+        lastUserPrice = item
+        bindAssetViews()
+        return true
     }
 
     private fun toggleAssetsVisibility() {

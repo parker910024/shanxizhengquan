@@ -10,12 +10,18 @@ import UIKit
 /// 新股申购数据模型
 struct NewStockSubscription {
     let id: String
-    let stockName: String      // 股票名称，如"舒泰神"
-    let stockCode: String      // 股票代码，如"300204"
-    let exchange: String        // 交易所标识，如"深"、"沪"
-    let issuePrice: String      // 发行价格，如"¥21.93"
-    let winningRate: String     // 中签率，如"0.00%"
-    let totalIssued: String    // 发行总数，如"3671.6万股"
+    let stockName: String      // 股票名称
+    let stockCode: String      // 股票代码
+    let sgCode: String         // 申购代码
+    let exchange: String        // 交易所标识
+    let issuePrice: String      // 发行价格
+    let winningRate: String     // 中签率
+    let totalIssued: String    // 发行总数
+    let peRatio: String        // 行业市盈率 (新增给详情页用)
+    let wsfxNum: String        // 网上发行数量 (新增给详情页用)
+    let type: String          // 类型标记
+    let industry: String      // 所属行业
+    let board: String         // 所属板块全称
 }
 
 class NewStockSubscriptionViewController: ZQViewController {
@@ -124,19 +130,27 @@ class NewStockSubscriptionViewController: ZQViewController {
                     // 跳过无效数据
                     guard !name.isEmpty || !code.isEmpty else { continue }
                     
-                    let fx_price = realItem["fx_price"]
-                    let cai_buy  = realItem["cai_buy"]
-                    let priceVal = fx_price != nil ? "\(fx_price!)" : (cai_buy != nil ? "\(cai_buy!)" : "0")
+                    var priceDouble: Double = 0.0
+                    if let fxPriceStr = realItem["fx_price"] as? String, let p = Double(fxPriceStr) { priceDouble = p }
+                    else if let fxPriceNum = realItem["fx_price"] as? Double { priceDouble = fxPriceNum }
+                    else if let issuePriceStr = realItem["issue_price"] as? String, let p = Double(issuePriceStr) { priceDouble = p }
+                    else if let issuePriceNum = realItem["issue_price"] as? Double { priceDouble = issuePriceNum }
+                    let priceVal = String(format: "%.2f", priceDouble)
                     
-                    let winningRate = "\(realItem["zq_rate"] ?? "0.00")%"
+                    // 对齐安卓 PlacementAdapter.formatZqRate：两位小数百分比
+                    let zqRateVal: Double
+                    if let d = realItem["zq_rate"] as? Double { zqRateVal = d }
+                    else if let s = realItem["zq_rate"] as? String, let d = Double(s) { zqRateVal = d }
+                    else { zqRateVal = 0 }
+                    let winningRate = String(format: "%.2f%%", zqRateVal)
                     
                     // 发行总数
                     let fxNum = realItem["fx_num"]
-                    var fxNumStr = "0万股"
+                    var fxNumStr = "0.00万股"
                     if let fxNumInt = fxNum as? Int {
-                        fxNumStr = String(format: "%.1f万股", Double(fxNumInt) / 10000.0)
+                        fxNumStr = String(format: "%.2f万股", Double(fxNumInt) / 10000.0)
                     } else if let fxNumStrVal = fxNum as? String, let doubleVal = Double(fxNumStrVal) {
-                        fxNumStr = String(format: "%.1f万股", doubleVal / 10000.0)
+                        fxNumStr = String(format: "%.2f万股", doubleVal / 10000.0)
                     } else if fxNum != nil {
                         fxNumStr = "\(fxNum!)"
                     }
@@ -154,14 +168,44 @@ class NewStockSubscriptionViewController: ZQViewController {
                         switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
                     }()
                     
+                    let board: String = {
+                        switch sgTypeStr { case "1": return "沪市"; case "2": return "深市"; case "3": return "创业板"; case "4": return "北交所"; case "5": return "科创板"; default: return "--" }
+                    }()
+                    
+                    let industry = realItem["industry"] as? String ?? ""
+                    
+                    
+                    // 网上发行数量
+                    let wsFxNum = realItem["wsfx_num"]
+                    var wsFxNumStr = "0.00万股"
+                    if let wsFxNumInt = wsFxNum as? Int {
+                        wsFxNumStr = String(format: "%.2f万股", Double(wsFxNumInt) / 10000.0)
+                    } else if let wsFxNumStrVal = wsFxNum as? String, let doubleVal = Double(wsFxNumStrVal) {
+                        wsFxNumStr = String(format: "%.2f万股", doubleVal / 10000.0)
+                    } else if wsFxNum != nil {
+                        wsFxNumStr = "\(wsFxNum!)"
+                    }
+                    
+                    let peRatioVal: Double
+                    if let d = realItem["fx_rate"] as? Double { peRatioVal = d }
+                    else if let s = realItem["fx_rate"] as? String, let d = Double(s) { peRatioVal = d }
+                    else { peRatioVal = 0 }
+                    let peRatioStr = peRatioVal > 0 ? String(format: "%.2f%%", peRatioVal) : "--"
+                    
                     let model = NewStockSubscription(
                         id: idStr,
                         stockName: name,
-                        stockCode: code,
+                        stockCode: realItem["code"] as? String ?? "",
+                        sgCode: code,
                         exchange: market,
-                        issuePrice: "¥\(priceVal)",
+                        issuePrice: priceVal, // 给详情页不用带 ¥
                         winningRate: winningRate,
-                        totalIssued: fxNumStr
+                        totalIssued: fxNumStr,
+                        peRatio: peRatioStr,
+                        wsfxNum: wsFxNumStr,
+                        type: sgTypeStr,
+                        industry: industry,
+                        board: board
                     )
                     newStocks.append(model)
                 }
@@ -192,7 +236,7 @@ extension NewStockSubscriptionViewController: UITableViewDataSource {
         cell.configure(with: stocks[indexPath.row])
         cell.onDetailTapped = { [weak self] stock in
             let detailVC = NewStockDetailViewController()
-            detailVC.stockId = stock.id
+            detailVC.stockData = stock
             self?.navigationController?.pushViewController(detailVC, animated: true)
         }
         return cell
@@ -203,6 +247,10 @@ extension NewStockSubscriptionViewController: UITableViewDataSource {
 extension NewStockSubscriptionViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        let stock = stocks[indexPath.row]
+        let detailVC = NewStockDetailViewController()
+        detailVC.stockData = stock
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
 
@@ -378,8 +426,8 @@ class NewStockSubscriptionCell: UITableViewCell {
         
         exchangeLabel.text = stock.exchange
         stockNameLabel.text = stock.stockName
-        stockCodeLabel.text = stock.stockCode
-        priceLabel.text = stock.issuePrice
+        stockCodeLabel.text = stock.stockCode.isEmpty ? stock.sgCode : stock.stockCode
+        priceLabel.text = "¥\(stock.issuePrice)"
         rateLabel.text = stock.winningRate
         totalLabel.text = stock.totalIssued
     }

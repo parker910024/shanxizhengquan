@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/base_bg">
 
     <!-- 状态栏占位，白色背景 -->
@@ -52,12 +52,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            tools:text="@string/user_account_placeholder"
             android:textColor="@color/user_text_dark"
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="@id/iv_logo"
             app:layout_constraintStart_toEndOf="@id/iv_logo"
-            app:layout_constraintTop_toBottomOf="@id/tv_phone" />
+            app:layout_constraintTop_toBottomOf="@id/tv_phone"
+            tools:text="@string/user_account_placeholder" />
 
         <ImageView
             android:id="@+id/iv_message"
@@ -241,7 +241,6 @@
                             android:src="@drawable/ic_user_eye_close" />
                     </LinearLayout>
 
-                    <!-- Total Assets Value -->
                     <TextView
                         android:id="@+id/tv_total_assets"
                         android:layout_width="wrap_content"
@@ -249,20 +248,21 @@
                         android:layout_marginTop="8dp"
                         android:text="@string/user_assets_value"
                         android:textColor="@color/user_text_primary"
-                        android:textSize="36sp" />
+                        android:textSize="36sp"
+                        android:textStyle="bold" />
 
-                    <!-- Stats Grid Row 1 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
                         android:orientation="horizontal">
 
-                        <!-- Available -->
                         <LinearLayout
                             android:layout_width="0dp"
+
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
                             android:orientation="vertical">
 
                             <TextView
@@ -279,14 +279,17 @@
                                 android:layout_marginTop="4dp"
                                 android:text="@string/user_assets_value"
                                 android:textColor="@color/user_text_primary"
-                                android:textSize="15sp" />
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <!-- Withdrawable -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+
                             android:layout_weight="1"
+                            android:gravity="center"
                             android:orientation="vertical">
 
                             <TextView
@@ -303,7 +306,9 @@
                                 android:layout_marginTop="4dp"
                                 android:text="@string/user_assets_value"
                                 android:textColor="@color/user_text_primary"
-                                android:textSize="15sp" />
+
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <!-- Stock Pledge -->
@@ -311,6 +316,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
                             android:orientation="vertical">
 
                             <TextView
@@ -327,7 +333,9 @@
                                 android:layout_marginTop="4dp"
                                 android:text="@string/user_assets_value"
                                 android:textColor="@color/user_text_primary"
-                                android:textSize="15sp" />
+
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -343,6 +351,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
+
                             android:orientation="vertical">
 
                             <TextView
@@ -358,8 +368,10 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:text="@string/user_assets_value"
+
                                 android:textColor="@color/user_text_primary"
-                                android:textSize="15sp" />
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <!-- Total PnL -->
@@ -367,6 +379,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
+
                             android:orientation="vertical">
 
                             <TextView
@@ -382,8 +396,10 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
                                 android:text="@string/user_assets_value"
+
                                 android:textColor="@color/user_text_primary"
-                                android:textSize="15sp" />
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <!-- Floating PnL -->
@@ -391,6 +407,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
+
                             android:orientation="vertical">
 
                             <TextView
@@ -407,11 +425,12 @@
                                 android:layout_marginTop="4dp"
                                 android:text="@string/user_assets_value"
                                 android:textColor="@color/user_text_primary"
-                                android:textSize="15sp" />
+
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Action Buttons -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -556,7 +575,6 @@
                                 android:textSize="14sp" />
                         </LinearLayout>
 
-                        <!-- Block Trade Button -->
                         <LinearLayout
                             android:id="@+id/ll_block_trade"
                             android:layout_width="0dp"

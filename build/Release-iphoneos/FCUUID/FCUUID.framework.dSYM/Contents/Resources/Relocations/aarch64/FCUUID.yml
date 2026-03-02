@@ -11,8 +11,8 @@ relocations:
   - { offset: 0x82D40, size: 0x8, addend: 0x0, symName: __uuidsOfUserDevicesKey, symObjAddr: 0x1F60, symBinAddr: 0x101F0, symSize: 0x0 }
   - { offset: 0x82D56, size: 0x8, addend: 0x0, symName: __uuidsOfUserDevicesToggleKey, symObjAddr: 0x1F68, symBinAddr: 0x101F8, symSize: 0x0 }
   - { offset: 0x82D60, size: 0x8, addend: 0x0, symName: '+[FCUUID sharedInstance]', symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x84 }
-  - { offset: 0x82D8A, size: 0x8, addend: 0x0, symName: _sharedInstance.instance, symObjAddr: 0xB230, symBinAddr: 0x20000, symSize: 0x0 }
-  - { offset: 0x82DA0, size: 0x8, addend: 0x0, symName: _sharedInstance.token, symObjAddr: 0xB238, symBinAddr: 0x20008, symSize: 0x0 }
+  - { offset: 0x82D8A, size: 0x8, addend: 0x0, symName: _sharedInstance.instance, symObjAddr: 0xB228, symBinAddr: 0x20000, symSize: 0x0 }
+  - { offset: 0x82DA0, size: 0x8, addend: 0x0, symName: _sharedInstance.token, symObjAddr: 0xB230, symBinAddr: 0x20008, symSize: 0x0 }
   - { offset: 0x82ECA, size: 0x8, addend: 0x0, symName: '___24+[FCUUID sharedInstance]_block_invoke', symObjAddr: 0x84, symBinAddr: 0x4084, symSize: 0x38 }
   - { offset: 0x82F09, size: 0x8, addend: 0x0, symName: '-[FCUUID init]', symObjAddr: 0xBC, symBinAddr: 0x40BC, symSize: 0x70 }
   - { offset: 0x82F40, size: 0x8, addend: 0x0, symName: '-[FCUUID _getOrCreateValueForKey:defaultValue:userDefaults:keychain:service:accessGroup:synchronizable:]', symObjAddr: 0x12C, symBinAddr: 0x412C, symSize: 0x14C }

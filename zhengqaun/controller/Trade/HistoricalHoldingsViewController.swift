@@ -301,6 +301,8 @@ extension HistoricalHoldingsViewController: UITableViewDataSource, UITableViewDe
             stockCode: holding.stockCode,
             buyLots: holding.quantity / 100, // 假设1手=100股
             buyQuantity: holding.quantity,
+            buyPrice: holding.buyPrice,
+            principal: holding.principal,
             closingFee: 1.23, // 模拟数据
             stampDuty: 1.23, // 模拟数据
             buyTime: holding.transactionTime,

@@ -11,6 +11,7 @@ import com.google.gson.stream.MalformedJsonException
 import ex.ss.lib.net.BaseRemoteRepository
 import ex.ss.lib.net.bean.ResponseData
 import ex.ss.lib.net.bean.ResponseFailed
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
 import java.io.IOException
@@ -61,7 +62,9 @@ object Remote : BaseRemoteRepository<API>() {
             }
         } else {
             val failed = failedWrapper(response.failed)
-            if (failed.code == BaseResponse.EXPIRE && UserConfig.isLogin()) {
+            if (failed.e is CancellationException) {
+                // Coroutine cancellation is expected during tab switching/page refresh; do not show toast.
+            } else if (failed.code == BaseResponse.EXPIRE && UserConfig.isLogin()) {
                 notifyLoginExpireOnce()
             } else {
                 val toastMsg = failed.msg ?: failed.e?.message

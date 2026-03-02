@@ -23,72 +23,133 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingTop="8dp">
 
-            <!-- 可转出金额 -->
+            <!-- 行：左标签 右数值，与参考图一致 -->
+            <!-- T+1资金（红色数值） -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="12dp">
+                android:paddingHorizontal="16dp">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="end"
+                    android:text="T+1资金"
+                    android:textColor="@color/text_selected_color"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/tv_t1_funds"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/user_red_primary"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- 可转出金额 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="可转出金额"
                     android:textColor="@color/text_selected_color"
-                    android:textSize="14sp" />
+                    android:textSize="15sp" />
                 <TextView
                     android:id="@+id/tv_transferable_amount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
                     android:text="0.00"
-                    android:textColor="@color/user_red_primary"
-                    android:textSize="14sp" />
+                    android:textColor="@color/text_selected_color"
+                    android:textSize="15sp" />
             </LinearLayout>
 
-            <!-- 转出金额输入区 -->
+            <!-- 银行卡（卡号 + >） -->
             <LinearLayout
+                android:id="@+id/row_bank_card"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingTop="24dp"
-                android:paddingBottom="8dp">
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="银行卡"
+                    android:textColor="@color/text_selected_color"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/tv_bank_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="end"
+                    android:maxLines="1"
+                    android:text="请先绑定银行卡"
+                    android:textColor="@color/text_second_color"
+                    android:textSize="15sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text=">"
+                    android:textColor="@color/text_second_color"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- 转出金额（左标签，右输入框，占位符 转出金额 ¥） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="¥"
+                    android:text="转出金额"
                     android:textColor="@color/text_selected_color"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:textSize="15sp" />
                 <EditText
                     android:id="@+id/et_amount"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="16dp"
                     android:background="@null"
-                    android:hint="请输入转出金额"
+                    android:hint="转出金额 ¥"
                     android:inputType="numberDecimal"
-                    android:paddingVertical="14dp"
+                    android:paddingVertical="8dp"
                     android:textColor="@color/text_selected_color"
                     android:textColorHint="@color/text_second_color"
-                    android:textSize="18sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginHorizontal="16dp"
-                android:background="#EEEEEE" />
+            <!-- 最小转出金额提示（浅灰） -->
+            <TextView
+                android:id="@+id/tv_min_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="4dp"
+                android:text="最小转出金额100"
+                android:textColor="@color/text_second_color"
+                android:textSize="12sp" />
 
             <!-- 全部提现 -->
             <TextView
@@ -106,8 +167,8 @@
                 android:id="@+id/btn_transfer_out"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/bg_btn_red"
                 android:text="转出"

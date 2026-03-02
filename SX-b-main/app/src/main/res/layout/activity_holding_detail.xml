@@ -73,6 +73,7 @@
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_stock_code"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -112,12 +113,14 @@
 
             <!-- 股票名称 -->
             <LinearLayout
+                android:id="@+id/row_stock_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_stock_name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -143,6 +146,7 @@
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_quantity"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -168,6 +172,7 @@
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_buy_price"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -185,6 +190,34 @@
 
             </LinearLayout>
 
+            <!-- 买入市值（历史持仓显示） -->
+            <LinearLayout
+                android:id="@+id/row_buy_market_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="12dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="买入市值"
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_buy_market_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#333333"
+                    android:textSize="14sp"
+                    tools:text="8085" />
+
+            </LinearLayout>
+
             <!-- 买入市值 -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -193,6 +226,7 @@
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_market_value"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -218,6 +252,7 @@
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_fee"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -262,12 +297,14 @@
 
             <!-- 盈亏比例 -->
             <LinearLayout
+                android:id="@+id/row_profit_rate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_profit_rate"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -281,18 +318,20 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/hq_rise_color"
                     android:textSize="14sp"
-                    tools:text="168.54%" />
+                    tools:text="134.65%" />
 
             </LinearLayout>
 
             <!-- 买入时间 -->
             <LinearLayout
+                android:id="@+id/row_buy_time"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingVertical="12dp">
 
                 <TextView
+                    android:id="@+id/tv_label_buy_time"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -307,6 +346,34 @@
                     android:textColor="#333333"
                     android:textSize="14sp"
                     tools:text="2026-01-28 09:20:00" />
+
+            </LinearLayout>
+
+            <!-- 卖出类型 -->
+            <LinearLayout
+                android:id="@+id/row_sell_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="12dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="卖出类型"
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_sell_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#333333"
+                    android:textSize="14sp"
+                    tools:text="平台" />
 
             </LinearLayout>
 

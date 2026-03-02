@@ -9,7 +9,7 @@ import UIKit
 
 class FullScreenChartViewController: UIViewController {
     
-    var chartType: StockDetailViewController.ChartType = .minute
+    var chartType: Int = 0
     var stockName: String = ""
     var stockCode: String = ""
     

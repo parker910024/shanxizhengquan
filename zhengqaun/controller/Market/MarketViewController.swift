@@ -39,6 +39,9 @@ class MarketViewController: ZQViewController {
     private var subscriptionList: [[String: Any]] = []  // API 数据
     private var dzjyBalance: Double = 0  // 场外撮合可用余额
     private let subsEmptyLabel = UILabel()  // 暂无数据提示
+    
+    // 撮合交易专用表头
+    private var dzjyHeaderWrap: UIView!
 
     // MARK: - 指数数据 (API)
     private var indexItems: [IndexCardModel] = []
@@ -63,6 +66,10 @@ class MarketViewController: ZQViewController {
     private var rankingScrollOffset: CGFloat = 0
     private var rankingColumnHeaderScroll: UIScrollView?
     private var rankingColumnIndicator: UIView?
+
+    // 动态标题与日期
+    private var rankingTitleLabel: UILabel?
+    private var rankingDateLabel: UILabel?
 
     // MARK: - Layout Tracking
     private var barChartRendered = false
@@ -240,11 +247,22 @@ class MarketViewController: ZQViewController {
             hangqingScrollView.isHidden = false
             subsTableView.isHidden = true
             todayHeaderWrap.isHidden = true
+            dzjyHeaderWrap.isHidden = true
         } else {
             hangqingScrollView.isHidden = true
             subsTableView.isHidden = false
-            todayHeaderWrap.isHidden = false
-            todayTitleLabel.text = segTitleFor(selectedSegmentIndex)
+            
+            if selectedSegmentIndex == 3 {
+                // 撮合交易：显示专门的表头，隐藏日期表头
+                todayHeaderWrap.isHidden = true
+                dzjyHeaderWrap.isHidden = false
+            } else {
+                // 新股/配售：显示日期表头，隐藏专门的表头
+                todayHeaderWrap.isHidden = false
+                dzjyHeaderWrap.isHidden = true
+                todayTitleLabel.text = segTitleFor(selectedSegmentIndex)
+            }
+            
             loadSubscriptionData()
         }
     }
@@ -840,8 +858,18 @@ class MarketViewController: ZQViewController {
     private func buildRankingSection() {
         // 1. 标题
         let title = makeTitle("股票排行榜")
+        rankingTitleLabel = title
         rankingContainer.addSubview(title)
         title.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 随 Tab 变化的日期
+        let dateLbl = UILabel()
+        dateLbl.font = .systemFont(ofSize: 12)
+        dateLbl.textColor = textSec
+        dateLbl.isHidden = true
+        rankingDateLabel = dateLbl
+        rankingContainer.addSubview(dateLbl)
+        dateLbl.translatesAutoresizingMaskIntoConstraints = false
 
         // 2. 市场 Tab（沪深/创业/北证/科创）— 对齐安卓：隐藏
         let tabWrap = UIView()
@@ -868,16 +896,17 @@ class MarketViewController: ZQViewController {
         marketTabIndicator.layer.cornerRadius = 1.5
         tabWrap.addSubview(marketTabIndicator)
 
-        // 3. 列标题行：固定「名称」列 + 可横滑的数据列 tab
+        // 3. 列标题行：固定「名称」列 + 可横滑的数据列 tab（对齐 Android layout_ranking_tabs）
         let colHeaderWrap = UIView()
-        colHeaderWrap.backgroundColor = bgColor
+        colHeaderWrap.backgroundColor = .white
+        
         rankingContainer.addSubview(colHeaderWrap)
         colHeaderWrap.translatesAutoresizingMaskIntoConstraints = false
         // 左侧固定「名称」
         let nameLbl = UILabel()
         nameLbl.text = "名称"
-        nameLbl.font = .systemFont(ofSize: 13)
-        nameLbl.textColor = textSec
+        nameLbl.font = .boldSystemFont(ofSize: 13)
+        nameLbl.textColor = textPrimary
         colHeaderWrap.addSubview(nameLbl)
         nameLbl.translatesAutoresizingMaskIntoConstraints = false
         // 右侧横向滚动区
@@ -900,30 +929,36 @@ class MarketViewController: ZQViewController {
             colContent.heightAnchor.constraint(equalTo: colScroll.heightAnchor),
             colContent.widthAnchor.constraint(equalToConstant: totalColW),
         ])
-        // 列 tab 按钮 + 下划线指示器（frame-based，宽度固定）
-        var btnX: CGFloat = 0
-        let colBtnH: CGFloat = 30
-        for i in 0..<RankingStockCell.columnTitles.count {
-            let colTitle = RankingStockCell.columnTitles[i]
-            let colW     = RankingStockCell.columnWidths[i]
+
+        // 添加列标题按钮（对齐 Android rankingTabs：现价/涨跌幅/成交额/换手率/昨收/今开/最高）
+        var colLeading: CGFloat = 0
+        for (i, colTitle) in RankingStockCell.columnTitles.enumerated() {
             let btn = UIButton(type: .system)
             btn.setTitle(colTitle, for: .normal)
-            btn.setTitleColor(i == 0 ? themeRed : textSec, for: .normal)
-            btn.titleLabel?.font = i == 0 ? .boldSystemFont(ofSize: 13) : .systemFont(ofSize: 13)
             btn.tag = i
+            btn.titleLabel?.font = i == 0 ? .boldSystemFont(ofSize: 13) : .systemFont(ofSize: 13)
+            btn.setTitleColor(i == 0 ? textPrimary : textSec, for: .normal)
             btn.addTarget(self, action: #selector(rankingColumnTapped(_:)), for: .touchUpInside)
-            btn.frame = CGRect(x: btnX, y: 0, width: colW, height: colBtnH)
             colContent.addSubview(btn)
-            btnX += colW
+            btn.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                btn.topAnchor.constraint(equalTo: colContent.topAnchor),
+                btn.bottomAnchor.constraint(equalTo: colContent.bottomAnchor),
+                btn.leadingAnchor.constraint(equalTo: colContent.leadingAnchor, constant: colLeading),
+                btn.widthAnchor.constraint(equalToConstant: RankingStockCell.columnWidths[i]),
+            ])
+            colLeading += RankingStockCell.columnWidths[i]
         }
-        let indicator = UIView()
-        indicator.backgroundColor = themeRed
-        indicator.layer.cornerRadius = 1.5
-        let iW: CGFloat = 20
+
+        // 列 Tab 指示器（对齐 Android view_ranking_indicator）
+        let colIndicator = UIView()
+        colIndicator.backgroundColor = themeRed
+        colIndicator.layer.cornerRadius = 1.5
         let firstColW = RankingStockCell.columnWidths[0]
-        indicator.frame = CGRect(x: (firstColW - iW) / 2, y: colBtnH - 2.5, width: iW, height: 2.5)
-        colContent.addSubview(indicator)
-        rankingColumnIndicator = indicator
+        colIndicator.frame = CGRect(x: (firstColW - 24) / 2, y: 0, width: 24, height: 3)
+        colContent.addSubview(colIndicator)
+        rankingColumnIndicator = colIndicator
+        
         // 约束 colHeaderWrap 内部布局
         NSLayoutConstraint.activate([
             nameLbl.leadingAnchor.constraint(equalTo: colHeaderWrap.leadingAnchor, constant: 12),
@@ -949,21 +984,20 @@ class MarketViewController: ZQViewController {
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: rankingContainer.topAnchor, constant: 16),
             title.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor, constant: 16),
+            
+            dateLbl.leadingAnchor.constraint(equalTo: title.trailingAnchor, constant: 8),
+            dateLbl.centerYAnchor.constraint(equalTo: title.centerYAnchor),
 
             // 对齐安卓：隐藏市场分类 tab（沪深/创业/北证/科创），列标题直接显示在标题下方
             tabWrap.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 0),
             tabWrap.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
             tabWrap.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
             tabWrap.heightAnchor.constraint(equalToConstant: 0),
-            tabStack.topAnchor.constraint(equalTo: tabWrap.topAnchor),
-            tabStack.leadingAnchor.constraint(equalTo: tabWrap.leadingAnchor),
-            tabStack.trailingAnchor.constraint(equalTo: tabWrap.trailingAnchor),
-            tabStack.heightAnchor.constraint(equalToConstant: 0),
 
             colHeaderWrap.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
             colHeaderWrap.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
             colHeaderWrap.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
-            colHeaderWrap.heightAnchor.constraint(equalToConstant: 34),
+            colHeaderWrap.heightAnchor.constraint(equalToConstant: 40),
 
             rankingTableView.topAnchor.constraint(equalTo: colHeaderWrap.bottomAnchor),
             rankingTableView.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
@@ -971,7 +1005,29 @@ class MarketViewController: ZQViewController {
             rankingTableView.bottomAnchor.constraint(equalTo: rankingContainer.bottomAnchor),
         ])
 
-        DispatchQueue.main.async { self.moveTabIndicator(animated: false) }
+        // 分割线（对齐 Android）
+        let divider = UIView()
+        divider.backgroundColor = UIColor(white: 0.93, alpha: 1)
+        rankingContainer.addSubview(divider)
+        divider.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            divider.topAnchor.constraint(equalTo: colHeaderWrap.bottomAnchor),
+            divider.leadingAnchor.constraint(equalTo: rankingContainer.leadingAnchor),
+            divider.trailingAnchor.constraint(equalTo: rankingContainer.trailingAnchor),
+            divider.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
+        ])
+
+        // 布局完成后更新指示器位置到底部
+        DispatchQueue.main.async {
+            self.moveTabIndicator(animated: false)
+            // 指示器放在底部
+            if let indicator = self.rankingColumnIndicator {
+                let y = (indicator.superview?.bounds.height ?? 40) - 5
+                indicator.frame = CGRect(x: indicator.frame.origin.x, y: y, width: 24, height: 3)
+            }
+            self.moveRankingColumnIndicator(to: 0, animated: false)
+        }
+        updateRankingTitle()
     }
 
     @objc private func marketTabTapped(_ sender: UIButton) {
@@ -983,11 +1039,26 @@ class MarketViewController: ZQViewController {
             btn.titleLabel?.font = i == idx ? .boldSystemFont(ofSize: 15) : .systemFont(ofSize: 15)
         }
         moveTabIndicator(animated: true)
+        updateRankingTitle()
         
         // 切换 Tab 时重置分页
         rankingCurrentPage = 1
         rankingHasMore = true
         loadRankingData()
+    }
+    
+    private func updateRankingTitle() {
+        guard selectedMarketTab < marketTabs.count else { return }
+        // 标题固定为"股票排行榜"，不跟随 Tab 变化
+        
+        if selectedMarketTab == 2 || selectedMarketTab == 3 {
+            rankingDateLabel?.isHidden = false
+            let fmt = DateFormatter()
+            fmt.dateFormat = "yyyy-MM-dd"
+            rankingDateLabel?.text = fmt.string(from: Date())
+        } else {
+            rankingDateLabel?.isHidden = true
+        }
     }
 
     private func moveTabIndicator(animated: Bool) {
@@ -1123,13 +1194,42 @@ class MarketViewController: ZQViewController {
         dateLbl.text = fmt.string(from: Date()); dateLbl.font = .systemFont(ofSize: 14); dateLbl.textColor = textPrimary
         todayHeaderWrap.addSubview(dateLbl); dateLbl.translatesAutoresizingMaskIntoConstraints = false
 
+        // --- 撮合交易表头 ---
+        dzjyHeaderWrap = UIView()
+        dzjyHeaderWrap.backgroundColor = .white
+        dzjyHeaderWrap.isHidden = true
+        view.addSubview(dzjyHeaderWrap)
+        dzjyHeaderWrap.translatesAutoresizingMaskIntoConstraints = false
+        
+        let dzjyHeaders = ["股票名称", "现价", "交易价", "折扣率(%)", "操作"]
+        let dzjyStack = UIStackView()
+        dzjyStack.axis = .horizontal
+        dzjyStack.distribution = .fillEqually
+        dzjyStack.alignment = .center
+        dzjyHeaderWrap.addSubview(dzjyStack)
+        dzjyStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        for (i, title) in dzjyHeaders.enumerated() {
+            let lbl = UILabel()
+            lbl.text = title
+            lbl.font = .systemFont(ofSize: 13)
+            lbl.textColor = textSec
+            lbl.textAlignment = i == 0 ? .left : (i == dzjyHeaders.count - 1 ? .right : .center)
+            dzjyStack.addArrangedSubview(lbl)
+        }
+        
+        let dzjyLine = UIView()
+        dzjyLine.backgroundColor = UIColor(white: 0.95, alpha: 1.0)
+        dzjyHeaderWrap.addSubview(dzjyLine)
+        dzjyLine.translatesAutoresizingMaskIntoConstraints = false
+
         view.addSubview(subsTableView)
         subsTableView.translatesAutoresizingMaskIntoConstraints = false
         subsTableView.backgroundColor = bgColor
         subsTableView.separatorStyle = .none
         subsTableView.delegate = self; subsTableView.dataSource = self
-        subsTableView.register(SubscriptionTableHeaderView.self, forHeaderFooterViewReuseIdentifier: "SubsHeader")
-        subsTableView.register(SubscriptionRowCell.self, forCellReuseIdentifier: "SubsRow")
+        subsTableView.register(IpoPlacementCell.self, forCellReuseIdentifier: "IpoPlacementCell")
+        subsTableView.register(BlockTradeCell.self, forCellReuseIdentifier: "BlockTradeCell")
         if #available(iOS 11.0, *) { subsTableView.contentInsetAdjustmentBehavior = .never }
         if #available(iOS 15.0, *) { subsTableView.sectionHeaderTopPadding = 0 }
 
@@ -1155,7 +1255,22 @@ class MarketViewController: ZQViewController {
             dateLbl.leadingAnchor.constraint(equalTo: todayTitleLabel.trailingAnchor, constant: 12),
             dateLbl.centerYAnchor.constraint(equalTo: todayHeaderWrap.centerYAnchor),
 
-            subsTableView.topAnchor.constraint(equalTo: todayHeaderWrap.bottomAnchor, constant: 10),
+            dzjyHeaderWrap.topAnchor.constraint(equalTo: segmentWrap.bottomAnchor),
+            dzjyHeaderWrap.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            dzjyHeaderWrap.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            dzjyHeaderWrap.heightAnchor.constraint(equalToConstant: 34),
+            
+            dzjyStack.leadingAnchor.constraint(equalTo: dzjyHeaderWrap.leadingAnchor, constant: 16),
+            dzjyStack.trailingAnchor.constraint(equalTo: dzjyHeaderWrap.trailingAnchor, constant: -16),
+            dzjyStack.topAnchor.constraint(equalTo: dzjyHeaderWrap.topAnchor),
+            dzjyStack.bottomAnchor.constraint(equalTo: dzjyHeaderWrap.bottomAnchor, constant: -1),
+            
+            dzjyLine.leadingAnchor.constraint(equalTo: dzjyHeaderWrap.leadingAnchor),
+            dzjyLine.trailingAnchor.constraint(equalTo: dzjyHeaderWrap.trailingAnchor),
+            dzjyLine.bottomAnchor.constraint(equalTo: dzjyHeaderWrap.bottomAnchor),
+            dzjyLine.heightAnchor.constraint(equalToConstant: 1),
+
+            subsTableView.topAnchor.constraint(equalTo: segmentWrap.bottomAnchor, constant: 38),
             subsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             subsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             subsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -1728,11 +1843,13 @@ class MarketViewController: ZQViewController {
                     }
                     return
                 }
-                // 返回格式与新股可申购列表一致，解析 sub_info
+                // 返回格式解析，兼容包含 sub_info 的字典数组和纯字典数组
                 var rows: [[String: Any]] = []
                 for item in list {
                     if let subInfo = item["sub_info"] as? [[String: Any]] {
                         rows.append(contentsOf: subInfo)
+                    } else if let id = item["id"], "\(id)" != "" {
+                        rows.append(item)
                     } else {
                         rows.append(item)
                     }
@@ -2071,10 +2188,37 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             return cell
         }
 
-        let cell = tableView.dequeueReusableCell(withIdentifier: "SubsRow", for: indexPath) as! SubscriptionRowCell
+        if selectedSegmentIndex == 3 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "BlockTradeCell", for: indexPath) as! BlockTradeCell
+            if indexPath.row < subscriptionList.count {
+                let item = subscriptionList[indexPath.row]
+                let name = item["title"] as? String ?? "--"
+                let code = item["code"] as? String ?? "--"
+                
+                let typeVal: String
+                if let t = item["type"] as? Int { typeVal = "\(t)" }
+                else { typeVal = "\(item["type"] ?? "")" }
+                let mkt: String = {
+                    switch typeVal { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; case "6": return "基"; default: return "沪" }
+                }()
+                
+                let currentPrice = "\(item["current_price"] ?? item["cai_price"] ?? "--")"
+                let price = "\(item["cai_buy"] ?? "--")"
+                let rate = "\(item["rate"] ?? "--")"
+                
+                cell.configure(name: name, code: code, market: mkt, currentPrice: currentPrice, price: price, rate: rate)
+                cell.onActionTap = { [weak self] in
+                    guard let self = self else { return }
+                    self.showDzjyBuySheet(item: item)
+                }
+            }
+            return cell
+        }
+
+        let cell = tableView.dequeueReusableCell(withIdentifier: "IpoPlacementCell", for: indexPath) as! IpoPlacementCell
         if indexPath.row < subscriptionList.count {
             let item = subscriptionList[indexPath.row]
-            // 名称：多种可能的 key
+            
             var name = "--"
             for key in ["name", "title", "stock_name"] {
                 if let val = item[key] as? String, !val.isEmpty {
@@ -2083,29 +2227,14 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
                 }
             }
             
-            // 代码：多种可能的 key，需要过滤空字符串
             var code = "--"
             for key in ["sgcode", "code", "symbol", "stock_code", "allcode"] {
-                if let valAny = item[key] {
-                    let valStr = "\(valAny)"
-                    if !valStr.isEmpty {
-                        code = valStr
-                        break
-                    }
+                if let valAny = item[key], !("\(valAny)".isEmpty) {
+                    code = "\(valAny)"
+                    break
                 }
             }
             
-            // 价格
-            let fx_price = item["fx_price"]
-            let cai_buy  = item["cai_buy"]
-            let priceAny = item["price"] ?? item["current_price"] ?? item["issue_price"] ?? item["p"]
-            var priceVal = ""
-            if let f = fx_price, String(describing: f) != "" { priceVal = "\(f)" }
-            else if let c = cai_buy, String(describing: c) != "" { priceVal = "\(c)" }
-            else if let p = priceAny, String(describing: p) != "" { priceVal = "\(p)" }
-            if priceVal.isEmpty || priceVal == "0.00" || priceVal == "0" { priceVal = "--" }
-            
-            // 市场类型
             let sgTypeStr: String
             if let typeInt = item["sg_type"] as? Int {
                 sgTypeStr = "\(typeInt)"
@@ -2116,37 +2245,61 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
             } else {
                 sgTypeStr = ""
             }
-            
             let market: String = {
                 switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
             }()
 
-            // 根据 tab 使用不同的 cell 布局
-            if selectedSegmentIndex == 3 {
-                // 场外撮合交易
-                let priceStr = "\(item["cai_buy"] ?? "0")"
-                let maxNum = "\(item["max_num"] ?? "0")"
-                let typeVal: String
-                if let t = item["type"] as? Int { typeVal = "\(t)" }
-                else { typeVal = "\(item["type"] ?? "")" }
-                let mkt: String = {
-                    switch typeVal { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; case "6": return "基"; default: return "沪" }
-                }()
-                cell.configureDzjy(name: name, code: code, market: mkt, price: priceStr, maxNum: maxNum)
+            if selectedSegmentIndex == 1 {
+                // 新股申购
+                var priceDouble: Double = 0.0
+                if let fxPriceStr = item["fx_price"] as? String, let p = Double(fxPriceStr) { priceDouble = p }
+                else if let fxPriceNum = item["fx_price"] as? Double { priceDouble = fxPriceNum }
+                else if let issuePriceStr = item["issue_price"] as? String, let p = Double(issuePriceStr) { priceDouble = p }
+                else if let issuePriceNum = item["issue_price"] as? Double { priceDouble = issuePriceNum }
+                
+                let price = String(format: "%.2f", priceDouble)
+                let zqRate = "\(item["zq_rate"] ?? "0.00")"
+                
+                let fxNumRaw = "\(item["fx_num"] ?? "--")"
+                let fxNum: String
+                if let v = Double(fxNumRaw) {
+                    if v >= 100000000 { fxNum = String(format: "%.1f亿股", v / 100000000.0) }
+                    else if v >= 10000 { fxNum = String(format: "%.1f万股", v / 10000.0) }
+                    else { fxNum = "\(v)股" }
+                } else {
+                    fxNum = fxNumRaw
+                }
+                
+                cell.configure(name: name, code: code, market: market, price: price, zqRate: zqRate, fxNum: fxNum)
                 cell.onDetailTap = { [weak self] in
                     guard let self = self else { return }
-                    self.showDzjyBuySheet(item: item)
+                    let vc = NewStockDetailViewController()
+                    vc.stockData = self.createNewStockSubscription(from: item)
+                    vc.hidesBottomBarWhenPushed = true
+                    self.navigationController?.pushViewController(vc, animated: true)
                 }
+                
             } else if selectedSegmentIndex == 2 {
-                // 配售数量：fx_num 格式化为万股
+                // 战略配售
+                var priceDouble: Double = 0.0
+                if let fxPriceStr = item["fx_price"] as? String, let p = Double(fxPriceStr) { priceDouble = p }
+                else if let fxPriceNum = item["fx_price"] as? Double { priceDouble = fxPriceNum }
+                else if let issuePriceStr = item["issue_price"] as? String, let p = Double(issuePriceStr) { priceDouble = p }
+                else if let issuePriceNum = item["issue_price"] as? Double { priceDouble = issuePriceNum }
+                
+                let price = String(format: "%.2f", priceDouble)
+                let zqRateRaw = "\(item["zq_rate"] ?? "0")"
+                let zqRate = String(format: "%.2f%%", Double(zqRateRaw) ?? 0)
+                
                 let fxNumStr = "\(item["fx_num"] ?? "0")"
                 let fxNumFormatted: String
                 if let fxNum = Double(fxNumStr), fxNum > 0 {
-                    fxNumFormatted = String(format: "%.1f万股", fxNum / 10000.0)
+                    fxNumFormatted = String(format: "%.2f万股", fxNum / 10000.0)
                 } else {
                     fxNumFormatted = "--"
                 }
-                cell.configureXxps(name: name, code: code, market: market, price: priceVal, fxNum: fxNumFormatted)
+                
+                cell.configure(name: name, code: code, market: market, price: price, zqRate: zqRate, fxNum: fxNumFormatted)
                 cell.onDetailTap = { [weak self] in
                     guard let self = self else { return }
                     let vc = XxpsDetailViewController()
@@ -2154,13 +2307,6 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
                     vc.hidesBottomBarWhenPushed = true
                     self.navigationController?.pushViewController(vc, animated: true)
                 }
-            } else {
-                // 新股申购 / 天启护盘 使用原布局
-                let rateValAny = item["fx_rate"] ?? item["rate"] ?? item["profit_rate"] ?? item["zfanum"] ?? ""
-                let rateVal = "\(rateValAny)"
-                let peStr = (rateVal == "0" || rateVal.isEmpty) ? "--" : (rateVal.hasSuffix("%") ? rateVal : "\(rateVal)%")
-                cell.configure(name: name, code: code, market: market, price: priceVal, sector: marketLabel(sgTypeStr), pe: peStr)
-                cell.onDetailTap = nil
             }
         }
         return cell
@@ -2171,28 +2317,20 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        if tableView == subsTableView { return UITableView.automaticDimension }
         if tableView == rankingTableView { return 60 }
         return 56
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if tableView == subsTableView {
-            let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: "SubsHeader") as? SubscriptionTableHeaderView
-            // 根据 tab 使用不同的列头
-            if selectedSegmentIndex == 3 {
-                header?.configure(columns: ["名称", "折扣价", "总股额（股）", "操作"])
-            } else if selectedSegmentIndex == 2 {
-                header?.configure(columns: ["名称", "发行价", "配售数量", "操作"])
-            } else {
-                header?.configure(columns: ["申购代码", "发行价", "所属板块", "市盈率"])
-            }
-            return header
+            return nil
         }
         return nil
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if tableView == subsTableView { return 40 }
+        if tableView == subsTableView { return 0.01 }
         return 0
     }
 
@@ -2226,12 +2364,95 @@ extension MarketViewController: UITableViewDataSource, UITableViewDelegate {
                 vc.hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(vc, animated: true)
             } else {
-//                let vc = NewStockDetailViewController()
-//                vc.stockId = "\(item["id"] ?? "")"
-//                vc.hidesBottomBarWhenPushed = true
-//                navigationController?.pushViewController(vc, animated: true)
+                let vc = NewStockDetailViewController()
+                vc.stockData = createNewStockSubscription(from: item)
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
             }
         }
+    }
+    
+    // MARK: - 辅助：将 dict 转换为 NewStockSubscription 进行详情传递
+    private func createNewStockSubscription(from item: [String: Any]) -> NewStockSubscription {
+        let idStr = "\(item["id"] ?? "")"
+        var name = "--"
+        for key in ["name", "title", "stock_name"] {
+            if let val = item[key] as? String, !val.isEmpty { name = val; break }
+        }
+        var sgCode = "--"
+        for key in ["sgcode", "code", "symbol", "stock_code", "allcode"] {
+            if let valAny = item[key], !("\(valAny)".isEmpty) { sgCode = "\(valAny)"; break }
+        }
+        
+        let stockCode = item["code"] as? String ?? ""
+        
+        var priceDouble: Double = 0.0
+        if let fxPriceStr = item["fx_price"] as? String, let p = Double(fxPriceStr) { priceDouble = p }
+        else if let fxPriceNum = item["fx_price"] as? Double { priceDouble = fxPriceNum }
+        else if let issuePriceStr = item["issue_price"] as? String, let p = Double(issuePriceStr) { priceDouble = p }
+        else if let issuePriceNum = item["issue_price"] as? Double { priceDouble = issuePriceNum }
+        let priceVal = String(format: "%.2f", priceDouble)
+        
+        let zqRateVal: Double
+        if let d = item["zq_rate"] as? Double { zqRateVal = d }
+        else if let s = item["zq_rate"] as? String, let d = Double(s) { zqRateVal = d }
+        else { zqRateVal = 0 }
+        let rateVal = String(format: "%.2f%%", zqRateVal)
+        
+        let fxNum = item["fx_num"]
+        var fxNumStr = "0.00万股"
+        if let fxNumInt = fxNum as? Int {
+            fxNumStr = String(format: "%.2f万股", Double(fxNumInt) / 10000.0)
+        } else if let fxNumStrVal = fxNum as? String, let doubleVal = Double(fxNumStrVal) {
+            fxNumStr = String(format: "%.2f万股", doubleVal / 10000.0)
+        } else if fxNum != nil {
+            fxNumStr = "\(fxNum!)万股"
+        }
+        
+        let wsFxNum = item["wsfx_num"]
+        var wsFxNumStr = "0.00万股"
+        if let wsFxNumInt = wsFxNum as? Int {
+            wsFxNumStr = String(format: "%.2f万股", Double(wsFxNumInt) / 10000.0)
+        } else if let wsFxNumStrVal = wsFxNum as? String, let doubleVal = Double(wsFxNumStrVal) {
+            wsFxNumStr = String(format: "%.2f万股", doubleVal / 10000.0)
+        } else if wsFxNum != nil {
+            wsFxNumStr = "\(wsFxNum!)万股"
+        }
+        
+        let peRatioVal: Double
+        if let d = item["fx_rate"] as? Double { peRatioVal = d }
+        else if let s = item["fx_rate"] as? String, let d = Double(s) { peRatioVal = d }
+        else { peRatioVal = 0 }
+        let peRatio = peRatioVal > 0 ? String(format: "%.2f%%", peRatioVal) : "--"
+        
+        let sgTypeStr: String
+        if let typeInt = item["sg_type"] as? Int { sgTypeStr = "\(typeInt)" }
+        else if let typeStr = item["sg_type"] as? String { sgTypeStr = typeStr }
+        else if let typeStr = item["type"] as? String { sgTypeStr = typeStr }
+        else { sgTypeStr = "" }
+        
+        let market: String = {
+            switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
+        }()
+        
+        let industryStr = item["industry"] as? String ?? ""
+        let boardStr = item["board"] as? String ?? ""
+        
+        return NewStockSubscription(
+            id: idStr,
+            stockName: name,
+            stockCode: stockCode,
+            sgCode: sgCode,
+            exchange: market,
+            issuePrice: priceVal,
+            winningRate: rateVal,
+            totalIssued: fxNumStr,
+            peRatio: peRatio,
+            wsfxNum: wsFxNumStr,
+            type: sgTypeStr,
+            industry: industryStr,
+            board: boardStr
+        )
     }
 }
 
@@ -2242,8 +2463,8 @@ class RankingStockCell: UITableViewCell {
 
     // MARK: - 列宽定义（对齐 Android columnWidths dp≈pt）
     static let leftWidth: CGFloat    = 120
-    static let columnWidths: [CGFloat] = [80, 70, 70, 100, 70, 80, 80, 80]
-    static let columnTitles            = ["现价", "涨跌", "涨跌幅", "成交额", "换手率", "昨收", "今开", "最高"]
+    static let columnWidths: [CGFloat] = [80, 70, 100, 70, 80, 80, 80]
+    static let columnTitles            = ["现价", "涨跌幅", "成交额", "换手率", "昨收", "今开", "最高"]
 
     // MARK: - 左侧固定视图
     private let nameLabel   = UILabel()
@@ -2411,11 +2632,13 @@ class RankingStockCell: UITableViewCell {
         let pv     = Double(stock.changePercent) ?? 0
         let psign  = (isRise && pv > 0) ? "+" : ""
 
-        // 现价, 涨跌, 涨跌幅, 成交额, 换手率, 昨收, 今开, 最高
+        // 现价, 涨跌幅, 成交额, 换手率, 昨收, 今开, 最高
+        let fPrice = String(format: "%.2f", Double(stock.price) ?? 0.0)
+        let fChangePercent = String(format: "%.2f", pv)
+
         let vals: [String] = [
-            stock.price,
-            "\(sign)\(stock.change)",
-            "\(psign)\(stock.changePercent)%",
+            fPrice,
+            "\(psign)\(fChangePercent)%",
             stock.volume,
             stock.turnover,
             stock.prevClose,
@@ -2424,7 +2647,7 @@ class RankingStockCell: UITableViewCell {
         ]
         for (i, lbl) in dataLabels.enumerated() {
             lbl.text = vals[i]
-            lbl.textColor = i < 3 ? color : textP
+            lbl.textColor = i < 2 ? color : textP
             lbl.font = i == 2
                 ? .boldSystemFont(ofSize: 13)
                 : .systemFont(ofSize: 14, weight: .medium)
@@ -2440,159 +2663,275 @@ extension RankingStockCell: UIScrollViewDelegate {
 }
 
 // =====================================================================
-// MARK: - SubscriptionTableHeaderView
+// MARK: - Market Cell Layouts (Ipo / Dzjy)
 // =====================================================================
-class SubscriptionTableHeaderView: UITableViewHeaderFooterView {
-    private var columnLabels: [UILabel] = []
 
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
-        contentView.backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
-        // 预创建 4 个列标题 label
-        let xs: [CGFloat] = [16, 110, 200, -1]
-        for i in 0..<4 {
-            let l = UILabel()
-            l.font = .systemFont(ofSize: 13)
-            l.textColor = UIColor(red: 0.45, green: 0.45, blue: 0.48, alpha: 1)
-            contentView.addSubview(l); l.translatesAutoresizingMaskIntoConstraints = false
-            l.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
-            if xs[i] < 0 {
-                l.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16).isActive = true
-            } else {
-                l.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: xs[i]).isActive = true
-            }
-            columnLabels.append(l)
-        }
-    }
-    required init?(coder: NSCoder) { fatalError() }
-
-    /// 动态设置列标题文字
-    func configure(columns: [String]) {
-        for (i, lbl) in columnLabels.enumerated() {
-            lbl.text = i < columns.count ? columns[i] : ""
-        }
-    }
-}
-
-// =====================================================================
-// MARK: - SubscriptionRowCell
-// =====================================================================
-class SubscriptionRowCell: UITableViewCell {
-    private let nameLabel    = UILabel()
-    private let codeLabel    = UILabel()
-    private let marketBadge  = UILabel()
-    private let priceLabel   = UILabel()
-    private let sectorLabel  = UILabel()
-    private let peLabel      = UILabel()
-    private let detailButton = UIButton(type: .system)  // 线下配售「详情」按钮
-    private let sep          = UIView()
-
-    /// 详情按钮点击回调
+class IpoPlacementCell: UITableViewCell {
+    let containerView = UIView()
+    let marketBadge = UILabel()
+    let nameLabel = UILabel()
+    let detailLabel = UILabel()
+    let codeLabel = UILabel()
+    let priceValLabel = UILabel()
+    let priceSubLabel = UILabel()
+    let zqValLabel = UILabel()
+    let zqSubLabel = UILabel()
+    let fxValLabel = UILabel()
+    let fxSubLabel = UILabel()
+    
     var onDetailTap: (() -> Void)?
-
-    private let themeRed = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1)
-
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
-        backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1)
-        for v: UIView in [nameLabel, codeLabel, marketBadge, priceLabel, sectorLabel, peLabel, detailButton, sep] {
-            contentView.addSubview(v); v.translatesAutoresizingMaskIntoConstraints = false
-        }
-        let tp = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
-        let ts = UIColor(red: 0.45, green: 0.45, blue: 0.48, alpha: 1)
-        nameLabel.font = .boldSystemFont(ofSize: 15); nameLabel.textColor = tp
-        codeLabel.font = .systemFont(ofSize: 12); codeLabel.textColor = ts
-        marketBadge.font = .boldSystemFont(ofSize: 11); marketBadge.textColor = .white
-        marketBadge.textAlignment = .center; marketBadge.layer.cornerRadius = 2; marketBadge.clipsToBounds = true
-        priceLabel.font = .boldSystemFont(ofSize: 15); priceLabel.textColor = tp
-        sectorLabel.font = .systemFont(ofSize: 13); sectorLabel.textColor = tp
-        peLabel.font = .boldSystemFont(ofSize: 15); peLabel.textColor = tp
-        sep.backgroundColor = UIColor(white: 0.9, alpha: 1)
-
-        // 详情按钮样式
-        detailButton.setTitle("详情", for: .normal)
-        detailButton.setTitleColor(.white, for: .normal)
-        detailButton.titleLabel?.font = .boldSystemFont(ofSize: 13)
-        detailButton.backgroundColor = themeRed
-        detailButton.layer.cornerRadius = 4
-        detailButton.clipsToBounds = true
-        detailButton.addTarget(self, action: #selector(detailTapped), for: .touchUpInside)
-        detailButton.isHidden = true  // 默认隐藏
-
+        contentView.backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0)
+        
+        containerView.backgroundColor = .white
+        contentView.addSubview(containerView)
+        containerView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            codeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            codeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
-            marketBadge.leadingAnchor.constraint(equalTo: codeLabel.trailingAnchor, constant: 6),
-            marketBadge.centerYAnchor.constraint(equalTo: codeLabel.centerYAnchor),
-            marketBadge.widthAnchor.constraint(equalToConstant: 18), marketBadge.heightAnchor.constraint(equalToConstant: 16),
-            priceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 110),
-            priceLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            sectorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 200),
-            sectorLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            peLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            peLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            // 详情按钮（右侧对齐）
-            detailButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            detailButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            detailButton.widthAnchor.constraint(equalToConstant: 60),
-            detailButton.heightAnchor.constraint(equalToConstant: 30),
-            // 分隔线
-            sep.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            sep.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            sep.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            sep.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+        ])
+        
+        let row1 = UIStackView()
+        row1.axis = .horizontal
+        row1.alignment = .center
+        row1.spacing = 8
+        row1.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(row1)
+        
+        marketBadge.font = .systemFont(ofSize: 11)
+        marketBadge.textColor = .white
+        marketBadge.textAlignment = .center
+        marketBadge.layer.cornerRadius = 2
+        marketBadge.clipsToBounds = true
+        marketBadge.widthAnchor.constraint(equalToConstant: 16).isActive = true
+        marketBadge.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        
+        nameLabel.font = .boldSystemFont(ofSize: 16)
+        nameLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
+        
+        detailLabel.font = .systemFont(ofSize: 13)
+        detailLabel.textColor = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
+        detailLabel.text = "详情+"
+        detailLabel.isUserInteractionEnabled = true
+        detailLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(detailTapped)))
+        
+        row1.addArrangedSubview(marketBadge)
+        row1.addArrangedSubview(nameLabel)
+        let spacerRow1 = UIView()
+        row1.addArrangedSubview(spacerRow1)
+        row1.addArrangedSubview(detailLabel)
+        
+        codeLabel.font = .systemFont(ofSize: 12)
+        codeLabel.textColor = .gray
+        codeLabel.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(codeLabel)
+        
+        let row3 = UIStackView()
+        row3.axis = .horizontal
+        row3.distribution = .fillEqually
+        row3.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(row3)
+        
+        func createBlock(_ valLbl: UILabel, _ subLbl: UILabel, text: String) -> UIStackView {
+            valLbl.font = .boldSystemFont(ofSize: 15)
+            valLbl.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
+            subLbl.font = .systemFont(ofSize: 11)
+            subLbl.textColor = .gray
+            subLbl.text = text
+            let sv = UIStackView(arrangedSubviews: [valLbl, subLbl])
+            sv.axis = .vertical
+            sv.alignment = .center
+            sv.spacing = 4
+            return sv
+        }
+        
+        let block1 = createBlock(priceValLabel, priceSubLabel, text: "发行价格")
+        let block2 = createBlock(zqValLabel, zqSubLabel, text: "中签率")
+        let block3 = createBlock(fxValLabel, fxSubLabel, text: "发行总数")
+        
+        row3.addArrangedSubview(block1)
+        row3.addArrangedSubview(block2)
+        row3.addArrangedSubview(block3)
+        
+        NSLayoutConstraint.activate([
+            row1.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 14),
+            row1.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            row1.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            codeLabel.topAnchor.constraint(equalTo: row1.bottomAnchor, constant: 4),
+            codeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 40),
+            
+            row3.topAnchor.constraint(equalTo: codeLabel.bottomAnchor, constant: 12),
+            row3.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 0),
+            row3.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: 0),
+            row3.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -14)
         ])
     }
     required init?(coder: NSCoder) { fatalError() }
-
-    @objc private func detailTapped() {
-        onDetailTap?()
+    
+    @objc func detailTapped() { onDetailTap?() }
+    
+    func configure(name: String, code: String, market: String, price: String, zqRate: String, fxNum: String) {
+        nameLabel.text = name
+        codeLabel.text = code
+        marketBadge.text = market.isEmpty ? "—" : String(market.prefix(1))
+        
+        let blue = UIColor(red: 0x3b/255.0, green: 0x82/255.0, blue: 0xf6/255.0, alpha: 1)
+        let redColor = UIColor(red: 0xef/255.0, green: 0x44/255.0, blue: 0x44/255.0, alpha: 1)
+        let greenColor = UIColor(red: 0x10/255.0, green: 0xb9/255.0, blue: 0x81/255.0, alpha: 1)
+        let orangeColor = UIColor(red: 0xf9/255.0, green: 0x73/255.0, blue: 0x16/255.0, alpha: 1)
+        let grayColor = UIColor(red: 0x6b/255.0, green: 0x72/255.0, blue: 0x80/255.0, alpha: 1)
+        
+        var badgeColor = grayColor
+        let m = market
+        if m == "京" || m == "北交" || m == "深" { badgeColor = blue }
+        else if m == "科" || m == "科创" { badgeColor = orangeColor }
+        else if m == "沪" { badgeColor = redColor }
+        else if m == "创" { badgeColor = greenColor }
+        
+        marketBadge.isHidden = market.isEmpty
+        marketBadge.backgroundColor = badgeColor
+        priceValLabel.text = price.contains("¥") ? price : "¥\(price)"
+        zqValLabel.text = zqRate.hasSuffix("%") ? zqRate : "\(zqRate)%"
+        fxValLabel.text = fxNum
     }
+}
 
-    /// 新股申购 / 天启护盘 原布局
-    func configure(name: String, code: String, market: String, price: String, sector: String, pe: String) {
-        nameLabel.text = name; codeLabel.text = code; marketBadge.text = market
-        let blue = UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
-        let r    = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
-        marketBadge.backgroundColor = (market == "北") ? blue : r
-        priceLabel.text = price; priceLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
-        sectorLabel.text = sector; sectorLabel.isHidden = false
-        peLabel.text = pe; peLabel.isHidden = false
-        detailButton.isHidden = true
+class BlockTradeCell: UITableViewCell {
+    let containerView = UIView()
+    let marketBadge = UILabel()
+    let nameLabel = UILabel()
+    let codeLabel = UILabel()
+    let currentPriceLabel = UILabel()
+    let priceLabel = UILabel()
+    let rateLabel = UILabel()
+    let actionBtn = UIButton()
+    
+    var onActionTap: (() -> Void)?
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        selectionStyle = .none
+        contentView.backgroundColor = UIColor(red: 248/255, green: 249/255, blue: 254/255, alpha: 1.0)
+        
+        containerView.backgroundColor = .white
+        contentView.addSubview(containerView)
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+        ])
+        
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(stack)
+        
+        let nameCol = UIStackView()
+        nameCol.axis = .vertical
+        nameCol.spacing = 2
+        
+        let nameRow = UIStackView()
+        nameRow.axis = .horizontal
+        nameRow.spacing = 4
+        nameRow.alignment = .center
+        
+        marketBadge.font = .systemFont(ofSize: 10)
+        marketBadge.textColor = .white
+        marketBadge.textAlignment = .center
+        marketBadge.layer.cornerRadius = 2
+        marketBadge.clipsToBounds = true
+        marketBadge.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        marketBadge.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        
+        nameLabel.font = .boldSystemFont(ofSize: 14)
+        nameLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
+        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        nameRow.addArrangedSubview(marketBadge)
+        nameRow.addArrangedSubview(nameLabel)
+        
+        codeLabel.font = .systemFont(ofSize: 12)
+        codeLabel.textColor = .gray
+        
+        nameCol.addArrangedSubview(nameRow)
+        nameCol.addArrangedSubview(codeLabel)
+        
+        currentPriceLabel.font = .systemFont(ofSize: 13)
+        currentPriceLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
+        currentPriceLabel.textAlignment = .center
+        
+        priceLabel.font = .boldSystemFont(ofSize: 14)
+        priceLabel.textColor = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
+        priceLabel.textAlignment = .center
+        
+        rateLabel.font = .systemFont(ofSize: 13)
+        rateLabel.textColor = UIColor(red: 43/255, green: 44/255, blue: 49/255, alpha: 1)
+        rateLabel.textAlignment = .center
+        
+        actionBtn.setTitle("买入", for: .normal)
+        actionBtn.titleLabel?.font = .systemFont(ofSize: 12)
+        actionBtn.backgroundColor = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
+        actionBtn.layer.cornerRadius = 4
+        actionBtn.clipsToBounds = true
+        actionBtn.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        actionBtn.addTarget(self, action: #selector(btnTapped), for: .touchUpInside)
+        
+        stack.addArrangedSubview(nameCol)
+        stack.addArrangedSubview(currentPriceLabel)
+        stack.addArrangedSubview(priceLabel)
+        stack.addArrangedSubview(rateLabel)
+        stack.addArrangedSubview(actionBtn)
+        
+        nameCol.widthAnchor.constraint(equalTo: stack.widthAnchor, multiplier: 1.2 / 5.0).isActive = true
+        currentPriceLabel.widthAnchor.constraint(equalTo: stack.widthAnchor, multiplier: 1.0 / 5.0).isActive = true
+        priceLabel.widthAnchor.constraint(equalTo: stack.widthAnchor, multiplier: 1.0 / 5.0).isActive = true
+        rateLabel.widthAnchor.constraint(equalTo: stack.widthAnchor, multiplier: 1.0 / 5.0).isActive = true
+        
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
+            stack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
+            stack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
+        ])
     }
-
-    /// 线下配售布局：¥发行价(红色) + 配售数量 + 详情按钮
-    func configureXxps(name: String, code: String, market: String, price: String, fxNum: String) {
-        nameLabel.text = name; codeLabel.text = code; marketBadge.text = market
-        let blue = UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
-        let r    = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
-        marketBadge.backgroundColor = (market == "北") ? blue : r
-        // 价格带 ¥ 前缀，红色
-        priceLabel.text = "¥\(price)"; priceLabel.textColor = themeRed
-        // 配售数量显示在 sectorLabel 位置
-        sectorLabel.text = fxNum; sectorLabel.isHidden = false
-        // 隐藏市盈率，显示详情按钮
-        peLabel.isHidden = true
-        detailButton.isHidden = false
-        detailButton.setTitle("详情", for: .normal)
-    }
-
-    /// 场外撮合交易布局：¥折扣价(红色) + 总股额 + 购买按钮
-    func configureDzjy(name: String, code: String, market: String, price: String, maxNum: String) {
-        nameLabel.text = name; codeLabel.text = code; marketBadge.text = market
-        let blue = UIColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
-        let r    = UIColor(red: 0.9, green: 0.3, blue: 0.35, alpha: 1)
-        marketBadge.backgroundColor = (market == "北") ? blue : r
-        // 折扣价带 ¥ 前缀，红色
-        priceLabel.text = "¥\(price)"; priceLabel.textColor = themeRed
-        // 总股额显示在 sectorLabel 位置
-        sectorLabel.text = maxNum; sectorLabel.isHidden = false
-        // 隐藏市盈率，显示购买按钮
-        peLabel.isHidden = true
-        detailButton.isHidden = false
-        detailButton.setTitle("购买", for: .normal)
+    required init?(coder: NSCoder) { fatalError() }
+    
+    @objc func btnTapped() { onActionTap?() }
+    
+    func configure(name: String, code: String, market: String, currentPrice: String, price: String, rate: String) {
+        nameLabel.text = name
+        codeLabel.text = code
+        marketBadge.text = market.isEmpty ? "—" : String(market.prefix(1))
+        
+        let blue = UIColor(red: 0x3b/255.0, green: 0x82/255.0, blue: 0xf6/255.0, alpha: 1)
+        let redColor = UIColor(red: 0xef/255.0, green: 0x44/255.0, blue: 0x44/255.0, alpha: 1)
+        let greenColor = UIColor(red: 0x10/255.0, green: 0xb9/255.0, blue: 0x81/255.0, alpha: 1)
+        let orangeColor = UIColor(red: 0xf9/255.0, green: 0x73/255.0, blue: 0x16/255.0, alpha: 1)
+        let grayColor = UIColor(red: 0x6b/255.0, green: 0x72/255.0, blue: 0x80/255.0, alpha: 1)
+        
+        var badgeColor = grayColor
+        let m = market
+        if m == "京" || m == "北交" || m == "深" { badgeColor = blue }
+        else if m == "科" || m == "科创" { badgeColor = orangeColor }
+        else if m == "沪" { badgeColor = redColor }
+        else if m == "创" { badgeColor = greenColor }
+        
+        marketBadge.isHidden = market.isEmpty
+        marketBadge.backgroundColor = badgeColor
+        
+        currentPriceLabel.text = currentPrice
+        priceLabel.text = price
+        let rateDouble = Double(rate) ?? 0.0
+        let isInt = floor(rateDouble) == rateDouble
+        rateLabel.text = isInt ? "\(Int(rateDouble))" : String(format: "%.2f", rateDouble)
     }
 }

@@ -81,7 +81,7 @@ class NewStockSubscriptionActivity : BasicActivity<ActivityNewStockSubscriptionB
                         market = item.getMarketTag(),
                         issuePrice = item.fx_price.toDoubleOrNull() ?: 0.0,
                         peRatio = item.fx_rate.toDoubleOrNull() ?: 0.0,
-                        board = item.getMarketTag(),
+                        board = item.getMarketText(),
                         fxNum = item.fx_num,
                         wsfxNum = item.wsfx_num,
                         sgLimit = item.sg_limit,

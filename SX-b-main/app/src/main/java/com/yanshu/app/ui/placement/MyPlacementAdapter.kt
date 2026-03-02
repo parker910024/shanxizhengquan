@@ -21,10 +21,12 @@ class MyPlacementAdapter : ListAdapter<MyPlacementItem, MyPlacementAdapter.VH>(D
         fun bind(item: MyPlacementItem) {
             binding.tvName.text = item.name
             binding.tvCode.text = item.code
-            binding.tvStatus.text = item.status_txt
-            binding.tvPrice.text = String.format("%.2f", item.sg_fx_price)
-            binding.tvQuantity.text = item.zq_num.toString()
-            binding.tvDate.text = item.createtime_txt
+            binding.tvStatus.text = item.status_txt.ifEmpty { "" }
+            binding.tvFxPrice.text = "%.2f".format(item.sg_fx_price)
+            binding.tvZqNum.text = item.zq_num.toString()
+            binding.tvSsDate.text = item.sg_ss_date.ifEmpty { "—" }
+            binding.tvMoney.text = item.money.ifEmpty { "0" }
+            binding.tvCreatetime.text = item.createtime_txt.ifEmpty { "" }
         }
     }
 

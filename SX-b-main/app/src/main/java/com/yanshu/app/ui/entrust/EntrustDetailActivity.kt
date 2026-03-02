@@ -74,7 +74,7 @@ class EntrustDetailActivity : BasicActivity<ActivityEntrustDetailBinding>() {
         binding.tvMultiplying.text = item.multiplying.ifEmpty { "--" }
 
         val cityVal = when {
-            item.citycc > 0 -> fmt2(item.citycc)
+            item.cityValueDouble() > 0 -> fmt2(item.cityValueDouble())
             item.creditMoney > 0 -> fmt2(item.creditMoney)
             else -> "--"
         }

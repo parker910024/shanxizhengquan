@@ -19,6 +19,7 @@ import com.yanshu.app.databinding.ActivityRegisterBinding
 import com.yanshu.app.model.UserViewModel
 import com.yanshu.app.ui.dialog.AppToast
 import com.yanshu.app.ui.main.MainActivity
+import com.yanshu.app.ui.web.SimpleWebActivity
 import ex.ss.lib.base.extension.viewBinding
 import java.util.regex.Pattern
 
@@ -103,47 +104,31 @@ class RegisterActivity : BasicActivity<ActivityRegisterBinding>() {
     }
 
     private fun setupAgreementText() {
-        val fullText = "我同意签署《用户协议》《隐私政策》"
+        val fullText = "我同意签署《账户免责条款、隐私协议》"
         val spannableString = SpannableString(fullText)
-
-        val userAgreementStart = fullText.indexOf("《用户协议》")
-        val userAgreementEnd = userAgreementStart + "《用户协议》".length
+        val linkText = "《账户免责条款、隐私协议》"
+        val linkStart = fullText.indexOf(linkText)
+        val linkEnd = linkStart + linkText.length
         spannableString.setSpan(
             object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    AppToast.show("用户协议")
+                    SimpleWebActivity.start(
+                        this@RegisterActivity,
+                        "证券账户服务协议",
+                        "file:///android_asset/user_agreement.html"
+                    )
                 }
             },
-            userAgreementStart,
-            userAgreementEnd,
+            linkStart,
+            linkEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         spannableString.setSpan(
             ForegroundColorSpan(ContextCompat.getColor(this, R.color.register_agreement_link)),
-            userAgreementStart,
-            userAgreementEnd,
+            linkStart,
+            linkEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
-
-        val privacyStart = fullText.indexOf("《隐私政策》")
-        val privacyEnd = privacyStart + "《隐私政策》".length
-        spannableString.setSpan(
-            object : ClickableSpan() {
-                override fun onClick(widget: View) {
-                    AppToast.show("隐私政策")
-                }
-            },
-            privacyStart,
-            privacyEnd,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        spannableString.setSpan(
-            ForegroundColorSpan(ContextCompat.getColor(this, R.color.register_agreement_link)),
-            privacyStart,
-            privacyEnd,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-
         binding.tvAgreement.text = spannableString
         binding.tvAgreement.movementMethod = LinkMovementMethod.getInstance()
     }
@@ -166,7 +151,7 @@ class RegisterActivity : BasicActivity<ActivityRegisterBinding>() {
         }
 
         if (!binding.cbAgreement.isChecked) {
-            AppToast.show("请先同意用户协议和隐私政策")
+            AppToast.show("请先同意账户免责条款、隐私协议")
             return
         }
 

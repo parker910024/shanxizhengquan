@@ -7,7 +7,7 @@
     android:paddingHorizontal="16dp"
     android:paddingVertical="12dp">
 
-    <!-- 名称+代码 -->
+    <!-- 股票名称：市场标签 + 名称 + 代码 -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -25,9 +25,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
-                android:paddingHorizontal="3dp"
-                android:paddingVertical="1dp"
-                android:textColor="@color/hq_rise_color"
+                android:background="@drawable/bg_placement_market_tag"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/white"
                 android:textSize="10sp" />
 
             <TextView
@@ -50,7 +51,17 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- 折扣价 -->
+    <!-- 现价 -->
+    <TextView
+        android:id="@+id/tv_current_price"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textColor="@color/hq_stock_name_color"
+        android:textSize="13sp" />
+
+    <!-- 交易价 -->
     <TextView
         android:id="@+id/tv_price"
         android:layout_width="0dp"
@@ -61,9 +72,9 @@
         android:textSize="14sp"
         android:textStyle="bold" />
 
-    <!-- 总股额 -->
+    <!-- 折扣率(%) -->
     <TextView
-        android:id="@+id/tv_total"
+        android:id="@+id/tv_rate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -71,17 +82,17 @@
         android:textColor="@color/hq_stock_name_color"
         android:textSize="13sp" />
 
-    <!-- 操作 -->
+    <!-- 操作：买入 -->
     <TextView
         android:id="@+id/tv_action"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="0.8"
         android:background="@color/hq_rise_color"
         android:gravity="center"
-        android:paddingHorizontal="8dp"
+        android:paddingHorizontal="12dp"
         android:paddingVertical="6dp"
-        android:text="购买"
+        android:text="买入"
         android:textColor="@color/white"
         android:textSize="12sp" />
 

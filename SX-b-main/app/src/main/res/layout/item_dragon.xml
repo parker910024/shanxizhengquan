@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 列表项：与 iOS 一致 行高 48dp，名称 14sp bold、代码 11sp、收盘/净买入/涨跌幅 13sp -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:minHeight="48dp"
     android:background="@color/white"
     android:orientation="vertical">
 
+    <!-- 与 iOS 一致：名称(左 pad 14) | 收盘(52dp 右) | 净买入(68dp 右) | 涨跌幅(52dp 右)，列间距 8dp -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingVertical="12dp"
+        android:gravity="center_vertical"
+        android:minHeight="48dp">
 
         <!-- 名称 + 代码 + 市场 -->
         <LinearLayout
@@ -26,7 +31,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#343434"
-                android:textSize="17sp"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 tools:text="贵州茅台" />
 
             <LinearLayout
@@ -41,7 +47,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#989898"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     tools:text="600519" />
 
                 <TextView
@@ -55,43 +61,48 @@
                     android:textColor="#989898"
                     android:textSize="10sp"
                     android:visibility="gone"
-                    tools:text="sh"
+                    tools:text="沪"
                     tools:visibility="visible" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 收盘 -->
+        <!-- 收盘 52dp 右对齐 -->
         <TextView
             android:id="@+id/tv_close_price"
-            android:layout_width="0dp"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
+            android:gravity="end"
             android:textColor="#343434"
-            android:textSize="18sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             tools:text="1425.00" />
 
-        <!-- 净买入 -->
+        <View
+            android:layout_width="8dp"
+            android:layout_height="0dp" />
+
+        <!-- 净买入 68dp 右对齐 -->
         <TextView
             android:id="@+id/tv_net_buy"
-            android:layout_width="0dp"
+            android:layout_width="68dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:gravity="end"
             android:textColor="#E05A55"
-            android:textSize="18sp"
+            android:textSize="13sp"
             tools:text="1.23亿" />
 
-        <!-- 涨跌幅 -->
+        <View
+            android:layout_width="8dp"
+            android:layout_height="0dp" />
+
+        <!-- 涨跌幅 52dp 右对齐 -->
         <TextView
             android:id="@+id/tv_change_pct"
-            android:layout_width="0dp"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:gravity="end"
             android:textColor="#E05A55"
-            android:textSize="18sp"
+            android:textSize="13sp"
             tools:text="+2.35%" />
     </LinearLayout>
 

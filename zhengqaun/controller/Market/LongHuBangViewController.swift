@@ -299,11 +299,17 @@ class LongHuBangViewController: ZQViewController {
                     self.listData = []
                 }
                 self.tableView.reloadData()
-                self.emptyLabel.isHidden = !self.listData.isEmpty
+                if self.listData.isEmpty {
+                    self.emptyLabel.text = "所选日期\(dateString) 暂无龙虎榜数据（可能为非交易日）"
+                    self.emptyLabel.isHidden = false
+                } else {
+                    self.emptyLabel.isHidden = true
+                }
 
             case .failure(_):
                 self.listData = []
                 self.tableView.reloadData()
+                self.emptyLabel.text = "所选日期\(dateString) 暂无龙虎榜数据（可能为非交易日）"
                 self.emptyLabel.isHidden = false
             }
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
+import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.yanshu.app.R
 import com.yanshu.app.base.BasicActivity
@@ -95,7 +96,7 @@ class IpoDetailActivity : BasicActivity<ActivityIpoDetailBinding>() {
         binding.titleBar.tvTitle.setTextColor(getColor(R.color.black))
         binding.titleBar.tvBack.compoundDrawableTintList = ColorStateList.valueOf(getColor(R.color.black))
         binding.titleBar.tvBack.setOnClickListener { finish() }
-        binding.titleBar.tvMenu.visibility = android.view.View.GONE
+        binding.titleBar.tvMenu.visibility = View.GONE
     }
 
     private fun setupContent() {
@@ -109,8 +110,18 @@ class IpoDetailActivity : BasicActivity<ActivityIpoDetailBinding>() {
         binding.tvApplyCode.text = stockCode
         binding.tvPeRatio.text = if (peRatio > 0) String.format("%.2f%%", peRatio) else "--"
 
-        binding.tvBoard.text = if (industry.isNotBlank()) industry else board
-        binding.tvBoard.setTextColor(getBoardColor(board))
+        val boardText = board.ifBlank { "-" }
+        binding.tvBoard.text = boardText
+        binding.tvBoard.setTextColor(getBoardColor(boardText))
+        val industryText = industry.trim()
+        if (industryText.isBlank()) {
+            binding.layoutIndustry.visibility = View.GONE
+            binding.viewDividerIndustry.visibility = View.GONE
+        } else {
+            binding.layoutIndustry.visibility = View.VISIBLE
+            binding.viewDividerIndustry.visibility = View.VISIBLE
+            binding.tvIndustry.text = industryText
+        }
 
         binding.tvIssuePrice.text = String.format("%.2f", issuePrice)
         binding.tvIssueAmount.text = formatStockCount(fxNum)
@@ -118,11 +129,8 @@ class IpoDetailActivity : BasicActivity<ActivityIpoDetailBinding>() {
     }
 
     private fun formatStockCount(raw: String): String {
-        val v = raw.toLongOrNull() ?: return raw
-        return when {
-            v >= 10_000L -> String.format("%.4f", v / 10_000.0)
-            else -> v.toString()
-        }
+        val value = raw.toDoubleOrNull() ?: return raw
+        return String.format("%.2f", value)
     }
 
     private fun setupButton() {
@@ -176,10 +184,16 @@ class IpoDetailActivity : BasicActivity<ActivityIpoDetailBinding>() {
 
     private fun getBoardColor(board: String): Int {
         return when (board) {
+            "北交所",
             "北交" -> 0xFF3B82F6.toInt()
+            "科创板",
             "科创" -> 0xFFF97316.toInt()
+            "沪市",
             "沪" -> 0xFFEF4444.toInt()
+            "深市",
             "深" -> 0xFF3B82F6.toInt()
+            "创业板",
+            "创" -> 0xFF10B981.toInt()
             else -> 0xFF6B7280.toInt()
         }
     }

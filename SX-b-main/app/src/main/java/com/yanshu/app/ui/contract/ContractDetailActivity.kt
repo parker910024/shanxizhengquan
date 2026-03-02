@@ -87,6 +87,7 @@ class ContractDetailActivity : BasicActivity<ActivityContractDetailBinding>() {
     override fun initView() {
         setupTitleBar()
         binding.webView.setupForHtmlContent()
+        binding.webView.setHorizontalScrollBarEnabled(false)
         binding.layoutSignatureArea.setOnClickListener {
             signatureLauncher.launch(Intent(this, SignatureActivity::class.java))
         }
@@ -297,16 +298,52 @@ class ContractDetailActivity : BasicActivity<ActivityContractDetailBinding>() {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="viewport" content="width=device-width, initial-scale=0.96, minimum-scale=0.96, maximum-scale=0.96, user-scalable=no">
                 <style>
+                    * {
+                        box-sizing: border-box;
+                    }
+                    html, body {
+                        width: 100%;
+                    }
                     body {
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                         font-size: 14px;
                         line-height: 1.8;
                         color: #333333;
-                        padding: 16px;
+                        padding: 12px;
                         margin: 0;
                         background: #FFFFFF;
+                        overflow-x: hidden;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    }
+                    .contract-content {
+                        max-width: 100%;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        word-break: break-word;
+                    }
+                    .contract-content table {
+                        max-width: 100%;
+                        width: 100%;
+                        table-layout: fixed;
+                    }
+                    .contract-content td,
+                    .contract-content th {
+                        word-break: break-word;
+                        overflow-wrap: break-word;
+                    }
+                    .contract-content pre,
+                    .contract-content code {
+                        white-space: pre-wrap;
+                        word-break: break-word;
+                        max-width: 100%;
+                        overflow-wrap: break-word;
+                    }
+                    .contract-content img {
+                        max-width: 100%;
+                        height: auto;
                     }
                     h2 {
                         text-align: center;
@@ -347,9 +384,10 @@ class ContractDetailActivity : BasicActivity<ActivityContractDetailBinding>() {
                     }
                     .sign-line {
                         line-height: 24px;
-                        height: 24px;
+                        min-height: 24px;
                         margin: 10px 0;
-                        white-space: nowrap;
+                        word-break: break-word;
+                        overflow-wrap: break-word;
                     }
                     .sign-user {
                         position: absolute;
@@ -367,7 +405,7 @@ class ContractDetailActivity : BasicActivity<ActivityContractDetailBinding>() {
                 $logoHtml
                 <h2>${if (title.isNotBlank()) title else contractName}</h2>
                 $baseInfoHtml
-                <div>$content</div>
+                <div class="contract-content">$content</div>
                 $signatureHtml
             </body>
             </html>

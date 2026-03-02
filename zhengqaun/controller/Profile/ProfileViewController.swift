@@ -587,7 +587,6 @@ class ProfileViewController: ZQViewController {
             if let btn = subview as? UIButton {
                 if btn.tag == 1005 {
                     btn.isHidden = !FeatureSwitchManager.shared.isXxpsEnabled
-                    if !FeatureSwitchManager.shared.nameXxps.isEmpty { btn.setTitle(FeatureSwitchManager.shared.nameXxps, for: .normal) }
                 }
                 if btn.tag == 1006 {
                     btn.isHidden = !FeatureSwitchManager.shared.isDzjyEnabled
@@ -1057,20 +1056,22 @@ extension ProfileViewController {
                 debugPrint("raw =", result.raw) // 原始响应
                 debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                 await SVProgressHUD.dismiss()
-                if let dict = result.decrypted, let detail = dict["data"] as? [String: Any], let json = detail["detail"] {
+                if let dict = result.decrypted {
                     if dict["msg"] as? String != "success" {
                         DispatchQueue.main.async {
                             Toast.showInfo(dict["msg"] as? String ?? "")
                         }
                         return
-                    } else {
+                    }
+                    
+                    if let detail = dict["data"] as? [String: Any], let json = detail["detail"] {
                         let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
                         let model = try JSONDecoder().decode(AuthenticationDetailModel.self, from: jsonData)
                         debugPrint(model)
                         if model.isAudit == "1" {
                             let resultVC = RealNameAuthResultViewController()
-                            resultVC.name = model.name
-                            resultVC.idCard = "\(model.idCard)"
+                            resultVC.name = model.name ?? ""
+                            resultVC.idCard = model.idCard ?? ""
                             resultVC.hidesBottomBarWhenPushed = true
                             navigationController?.pushViewController(resultVC, animated: true)
                         } else if model.isAudit == "3" {
@@ -1080,6 +1081,11 @@ extension ProfileViewController {
                             vc.hidesBottomBarWhenPushed = true
                             navigationController?.pushViewController(vc, animated: true)
                         }
+                    } else {
+                        // 未获取到 detail，说明尚未实名，跳转实名认证页
+                        let vc = RealNameAuthViewController()
+                        vc.hidesBottomBarWhenPushed = true
+                        navigationController?.pushViewController(vc, animated: true)
                     }
                 }
             } catch {
@@ -1121,10 +1127,11 @@ enum AuthenticationStatus: Int, Codable {
 // MARK: - AuthenticationDetailModel
 
 struct AuthenticationDetailModel: Codable {
-    var authContact, backcardimage, frontcardimage: String
-    var id: Int
-    var idCard, isAudit, name, reject: String
-    var userID: Int
+    var authContact: String?
+    var backcardimage, frontcardimage: String?
+    var id: Int?
+    var idCard, isAudit, name, reject: String?
+    var userID: Int?
 
     enum CodingKeys: String, CodingKey {
         case authContact = "auth_contact"

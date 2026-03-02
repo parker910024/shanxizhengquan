@@ -12,6 +12,7 @@ import com.yanshu.app.base.BasicActivity
 import com.yanshu.app.databinding.ActivityProfileBinding
 import com.yanshu.app.ui.password.ChangeLoginPwdActivity
 import com.yanshu.app.ui.password.ChangeTradePwdActivity
+import com.yanshu.app.util.ImageUrlUtils
 import ex.ss.lib.base.extension.viewBinding
 
 class ProfileActivity : BasicActivity<ActivityProfileBinding>() {
@@ -45,8 +46,21 @@ class ProfileActivity : BasicActivity<ActivityProfileBinding>() {
         val user = UserConfig.getUser()
         if (user != null) {
             binding.tvAccount.text = user.username.ifEmpty { user.id.toString() }
+            // 个人资料页头像：优先显示后端头像
+            if (user.avatar.isNotBlank()) {
+                ImageUrlUtils.loadWithFallback(
+                    imageView = binding.ivAvatar,
+                    path = user.avatar,
+                    placeholderResId = R.drawable.ic_profile_logo,
+                    errorResId = R.drawable.ic_profile_logo,
+                    adaptiveScaleType = true,
+                )
+            } else {
+                binding.ivAvatar.setImageResource(R.drawable.ic_profile_logo)
+            }
         } else {
             binding.tvAccount.text = "--"
+            binding.ivAvatar.setImageResource(R.drawable.ic_profile_logo)
         }
     }
 
@@ -78,7 +92,6 @@ class ProfileActivity : BasicActivity<ActivityProfileBinding>() {
             content = getString(R.string.logout_confirm_message)
             cancel = getString(R.string.common_cancel)
             done = getString(R.string.common_confirm)
-            alwaysShow = true
             onDone = { UserConfig.performLogout(this@ProfileActivity) }
         }
     }

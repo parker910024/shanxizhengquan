@@ -21,6 +21,18 @@ class AccountTradeViewController: ZQViewController {
     
     var limitUpPrice: String = ""
     var limitDownPrice: String = ""
+    var holdingId: String = ""
+    
+    private var synthesizedAllcode: String {
+        let code = stockCode
+        if exchange == "沪" { return "sh\(code)" }
+        if exchange == "深" { return "sz\(code)" }
+        if exchange == "北" || exchange == "京" { return "bj\(code)" }
+        let prefix = String(code.prefix(1))
+        if prefix == "6" { return "sh\(code)" }
+        if prefix == "4" || prefix == "8" || prefix == "9" { return "bj\(code)" }
+        return "sz\(code)" // fallback
+    }
     
     enum TradeType {
         case buy  // 买入
@@ -38,17 +50,22 @@ class AccountTradeViewController: ZQViewController {
     // 买入页面
     private let buyView = UIView()
     private var buyPriceLabel: UILabel!
+    private var buyPriceTextField: UITextField? // New property
     private var limitUpDownLabel: UILabel!
     private var positionButtons: [UIButton] = []
     private var buyQuantityTextField: UITextField!
     private var buyQuantityMinusButton: UIButton?
     private var buyQuantityPlusButton: UIButton?
+    private var sellQuantityTextField: UITextField?
     private var sellQuantityMinusButton: UIButton?
     private var sellQuantityPlusButton: UIButton?
     private var serviceFeeLabel: UILabel!
     private var availableAmountLabel: UILabel!
     private var payableLabel: UILabel!
     private let buyConfirmButton = UIButton(type: .system)
+    
+    // 权限控制
+    private var isEditBuyEnabled: Bool = true
     
     // 代码输入与查询（买入/卖出内嵌的用于布局占位；实际交互用 overlay）
     private var buyCodeTextField: UITextField!
@@ -64,15 +81,21 @@ class AccountTradeViewController: ZQViewController {
 
     // 卖出页面
     private let sellView = UIView()
+    private var sellPriceLabel: UILabel!
+    private var sellPriceTextField: UITextField?
     private var buyPriceSellLabel: UILabel!
     private var holdingQuantityLabel: UILabel!
     private var sellPositionButtons: [UIButton] = []
-    private var sellQuantityTextField: UITextField!
     private var totalAmountLabel: UILabel!
+    private var sellFeeLabel: UILabel! // 预估费用
     private let sellConfirmButton = UIButton(type: .system)
     
-    private let navBlue = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0)
-    private let tabActiveBlue = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0)
+    // 费率
+    private var sellFeeRate: Double = 0.0001
+    private var stampTaxRate: Double = 0.0003
+    
+    private let navBlue = UIColor(red: 230/255.0, green: 0, blue: 18/255.0, alpha: 1.0)
+    private let tabActiveBlue = UIColor(red: 230/255.0, green: 0, blue: 18/255.0, alpha: 1.0)
     private let tabInactiveGray = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
     
     // 数据
@@ -394,8 +417,6 @@ class AccountTradeViewController: ZQViewController {
             return
         }
         
-        // 处理控件
-        moveQuantityControlsToView(container: quantityContainer, isBuy: true, minusButton: minusBtn, textField: textFld, plusButton: plusBtn)
     }
     
     // MARK: - 处理卖出数量行控件
@@ -417,8 +438,6 @@ class AccountTradeViewController: ZQViewController {
             return
         }
         
-        // 处理控件
-        moveQuantityControlsToView(container: quantityContainer, isBuy: false, minusButton: minusBtn, textField: textFld, plusButton: plusBtn)
     }
     
     // MARK: - 辅助方法：查找数量行 container
@@ -575,14 +594,6 @@ class AccountTradeViewController: ZQViewController {
         // 代码（可输入 + 查询）
         lastView = addCodeInputRow(to: sellView, after: nil, isBuy: false)
         
-        // 买入价（只读）
-        buyPriceSellLabel = UILabel()
-        buyPriceSellLabel.text = sellBuyPrice
-        buyPriceSellLabel.textColor = .black
-        buyPriceSellLabel.font = UIFont.systemFont(ofSize: 15)
-        buyPriceSellLabel.textAlignment = .right
-        lastView = addInfoRow(to: sellView, after: lastView, title: "买入价", valueView: buyPriceSellLabel)
-        
         // 现价（只读）
         sellCurrentPriceLabel = UILabel()
         sellCurrentPriceLabel.text = currentPrice
@@ -591,19 +602,40 @@ class AccountTradeViewController: ZQViewController {
         sellCurrentPriceLabel.textAlignment = .right
         lastView = addInfoRow(to: sellView, after: lastView, title: "现价", valueView: sellCurrentPriceLabel)
         
+        // 买入价（只读）
+        buyPriceSellLabel = UILabel()
+        buyPriceSellLabel.text = sellBuyPrice
+        buyPriceSellLabel.textColor = .red
+        buyPriceSellLabel.font = UIFont.systemFont(ofSize: 15)
+        buyPriceSellLabel.textAlignment = .right
+        lastView = addInfoRow(to: sellView, after: lastView, title: "买入价", valueView: buyPriceSellLabel)
+        
+        // 卖出价格（Stepper 样式）
+        sellPriceLabel = UILabel()
+        sellPriceLabel.text = currentPrice
+        lastView = addPriceRow(to: sellView, after: lastView, isBuy: false)
+        
         // 持仓手数（只读）
         holdingQuantityLabel = UILabel()
-        holdingQuantityLabel.text = sellHoldingQty
+        holdingQuantityLabel.text = String((Int(sellHoldingQty) ?? 0) / 100)
         holdingQuantityLabel.textColor = .black
         holdingQuantityLabel.font = UIFont.systemFont(ofSize: 15)
         holdingQuantityLabel.textAlignment = .right
         lastView = addInfoRow(to: sellView, after: lastView, title: "持仓手数", valueView: holdingQuantityLabel)
         
-        // 仓位
+        // 合位
         lastView = addPositionRow(to: sellView, after: lastView, isBuy: false)
         
         // 卖出手数
         lastView = addQuantityRow(to: sellView, after: lastView, isBuy: false)
+        
+        // 预估费用（只读）
+        sellFeeLabel = UILabel()
+        sellFeeLabel.text = "0.00"
+        sellFeeLabel.textColor = .black
+        sellFeeLabel.font = UIFont.systemFont(ofSize: 15)
+        sellFeeLabel.textAlignment = .right
+        lastView = addInfoRow(to: sellView, after: lastView, title: "服务费0.01%+印花税0.03%", valueView: sellFeeLabel)
         
         // 总额(元)（只读）
         totalAmountLabel = UILabel()
@@ -705,7 +737,8 @@ class AccountTradeViewController: ZQViewController {
         textField.textColor = .black
         textField.keyboardType = .numberPad
         textField.borderStyle = .roundedRect
-        textField.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        textField.backgroundColor = isBuy ? UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0) : .clear
+        textField.isUserInteractionEnabled = isBuy
         textField.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(textField)
         if isBuy {
@@ -720,6 +753,7 @@ class AccountTradeViewController: ZQViewController {
         queryBtn.setTitleColor(navBlue, for: .normal)
         queryBtn.addTarget(self, action: #selector(queryStockTapped), for: .touchUpInside)
         queryBtn.translatesAutoresizingMaskIntoConstraints = false
+        queryBtn.isHidden = !isBuy
         container.addSubview(queryBtn)
         if isBuy {
             buyCodeQueryButton = queryBtn
@@ -738,10 +772,10 @@ class AccountTradeViewController: ZQViewController {
             container.heightAnchor.constraint(equalToConstant: 50),
             titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
             titleLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            queryBtn.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            queryBtn.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: isBuy ? -16 : 0),
             queryBtn.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            queryBtn.widthAnchor.constraint(equalToConstant: 44),
-            textField.trailingAnchor.constraint(equalTo: queryBtn.leadingAnchor, constant: -8),
+            queryBtn.widthAnchor.constraint(equalToConstant: isBuy ? 44 : 0),
+            textField.trailingAnchor.constraint(equalTo: queryBtn.leadingAnchor, constant: isBuy ? -8 : -16),
             textField.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             textField.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 12),
             textField.heightAnchor.constraint(equalToConstant: 34),
@@ -909,7 +943,7 @@ class AccountTradeViewController: ZQViewController {
     private func addInfoRow(to parent: UIView, after previousView: UIView?, title: String, valueView: UIView) -> UIView {
         let container = UIView()
         container.backgroundColor = .white
-        container.isUserInteractionEnabled = false
+        container.isUserInteractionEnabled = true
         parent.addSubview(container)
         container.translatesAutoresizingMaskIntoConstraints = false
         
@@ -972,7 +1006,7 @@ class AccountTradeViewController: ZQViewController {
         container.translatesAutoresizingMaskIntoConstraints = false
         
         let titleLabel = UILabel()
-        titleLabel.text = "仓位"
+        titleLabel.text = "合位"
         titleLabel.font = UIFont.systemFont(ofSize: 15)
         titleLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
         titleLabel.isUserInteractionEnabled = false
@@ -1097,7 +1131,9 @@ class AccountTradeViewController: ZQViewController {
         
         updatePositionButtons(isBuy: isBuy)
         
-        // 确保按钮在最上层，并且延迟执行以确保约束已生效
+        updatePositionButtons(isBuy: isBuy)
+        
+        // 确保按钮在最上层
         DispatchQueue.main.async {
             // 先确保所有非交互视图在底层
             titleLabel.superview?.sendSubviewToBack(titleLabel)
@@ -1111,76 +1147,6 @@ class AccountTradeViewController: ZQViewController {
                 // 确保按钮的父视图可以传递触摸事件
                 if let superview = button.superview {
                     superview.isUserInteractionEnabled = true
-                }
-            }
-            
-            // 重要：将按钮直接添加到 view 上，绕过 container 和 buyView/sellView
-            // 这样可以确保按钮能接收触摸事件，就像 buyConfirmButton 一样
-            for (index, button) in buttons.enumerated() {
-                if button.frame.width == 0 || button.frame.height == 0 {
-                    print("警告：按钮 \(index) frame 不正确: \(button.frame)")
-                    continue
-                }
-                
-                // 计算按钮在 view 坐标系中的绝对位置
-                guard let containerFrame = container.superview?.convert(container.frame, to: self.view) else {
-                    continue
-                }
-                
-                let buttonAbsoluteFrame = CGRect(
-                    x: containerFrame.origin.x + button.frame.origin.x,
-                    y: containerFrame.origin.y + button.frame.origin.y,
-                    width: button.frame.width,
-                    height: button.frame.height
-                )
-                
-                print("按钮 \(index) 绝对位置: \(buttonAbsoluteFrame)")
-                
-                // 创建一个新的按钮，直接添加到 view 上
-                let directButton = UIButton(type: .custom)
-                directButton.setTitle(button.title(for: .normal), for: .normal)
-                directButton.titleLabel?.font = button.titleLabel?.font
-                directButton.layer.cornerRadius = button.layer.cornerRadius
-                directButton.tag = button.tag
-                directButton.isUserInteractionEnabled = true
-                directButton.isEnabled = true
-                directButton.backgroundColor = button.backgroundColor
-                directButton.setTitleColor(button.titleColor(for: .normal), for: .normal)
-                directButton.setTitleColor(button.titleColor(for: .selected), for: .selected)
-                directButton.setTitleColor(button.titleColor(for: .highlighted), for: .highlighted)
-                directButton.adjustsImageWhenHighlighted = false
-                directButton.adjustsImageWhenDisabled = false
-                
-                // 添加事件处理
-                if isBuy {
-                    directButton.addTarget(self, action: #selector(self.buyPositionTapped(_:)), for: .touchUpInside)
-                    directButton.addTarget(self, action: #selector(self.buyPositionTouchDown(_:)), for: .touchDown)
-                } else {
-                    directButton.addTarget(self, action: #selector(self.sellPositionTapped(_:)), for: .touchUpInside)
-                    directButton.addTarget(self, action: #selector(self.sellPositionTouchDown(_:)), for: .touchDown)
-                }
-                
-                // 隐藏原始按钮
-                button.isHidden = true
-                button.isUserInteractionEnabled = false
-                
-                // 将新按钮添加到 view
-                self.view.addSubview(directButton)
-                directButton.translatesAutoresizingMaskIntoConstraints = false
-                
-                // 设置约束，使用绝对位置
-                NSLayoutConstraint.activate([
-                    directButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: buttonAbsoluteFrame.origin.x),
-                    directButton.topAnchor.constraint(equalTo: self.view.topAnchor, constant: buttonAbsoluteFrame.origin.y),
-                    directButton.widthAnchor.constraint(equalToConstant: buttonAbsoluteFrame.width),
-                    directButton.heightAnchor.constraint(equalToConstant: buttonAbsoluteFrame.height)
-                ])
-                
-                // 更新数组中的按钮引用
-                if isBuy, let buttonIndex = self.positionButtons.firstIndex(of: button) {
-                    self.positionButtons[buttonIndex] = directButton
-                } else if !isBuy, let buttonIndex = self.sellPositionButtons.firstIndex(of: button) {
-                    self.sellPositionButtons[buttonIndex] = directButton
                 }
             }
         }
@@ -1316,26 +1282,174 @@ class AccountTradeViewController: ZQViewController {
             ])
         }
         
-        // 延迟处理数量行控件，确保布局完成
-        // 只处理当前可见的标签页对应的控件，避免卖出控件拦截买入控件的事件
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // 检查是否应该处理这个控件
-            let shouldProcess = (isBuy && self.selectedIndex == 0) || (!isBuy && self.selectedIndex == 1)
-            if shouldProcess {
-                self.moveQuantityControlsToView(container: container, isBuy: isBuy, minusButton: minusButton, textField: textField, plusButton: plusButton)
-            } else {
-                // 如果当前不可见，先隐藏原始控件，避免拦截事件
-                minusButton.isHidden = true
-                minusButton.isUserInteractionEnabled = false
-                textField.isHidden = true
-                textField.isUserInteractionEnabled = false
-                plusButton.isHidden = true
-                plusButton.isUserInteractionEnabled = false
-                print("⚠️ \(isBuy ? "买入" : "卖出")数量行控件当前不可见，已隐藏")
-            }
+        return container
+    }
+    
+    // MARK: - 价格行（Stepper风格）
+    private func addPriceRow(to parent: UIView, after previousView: UIView?, isBuy: Bool) -> UIView {
+        let container = UIView()
+        container.backgroundColor = .white
+        container.isUserInteractionEnabled = true
+        container.clipsToBounds = false
+        parent.addSubview(container)
+        container.translatesAutoresizingMaskIntoConstraints = false
+        
+        let titleLabel = UILabel()
+        titleLabel.text = isBuy ? "买入价格" : "卖出价格"
+        titleLabel.font = UIFont.systemFont(ofSize: 15)
+        titleLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
+        titleLabel.isUserInteractionEnabled = false
+        container.addSubview(titleLabel)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 输入容器
+        let inputContainer = UIView()
+        inputContainer.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        inputContainer.layer.cornerRadius = 4
+        inputContainer.isUserInteractionEnabled = true
+        container.addSubview(inputContainer)
+        inputContainer.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 减号按钮
+        let minusButton = UIButton(type: .custom)
+        minusButton.setTitle("-", for: .normal)
+        minusButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        minusButton.setTitleColor(.black, for: .normal)
+        minusButton.isUserInteractionEnabled = true
+        if isBuy {
+            minusButton.addTarget(self, action: #selector(buyPriceMinusRow), for: .touchUpInside)
+        } else {
+            minusButton.addTarget(self, action: #selector(sellPriceMinusRow), for: .touchUpInside)
+        }
+        inputContainer.addSubview(minusButton)
+        minusButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 输入框
+        let textField = UITextField()
+        textField.text = currentPrice.isEmpty ? "0.00" : currentPrice
+        textField.font = UIFont.systemFont(ofSize: 15)
+        textField.textColor = .red
+        textField.textAlignment = .center
+        textField.keyboardType = .decimalPad
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 4
+        textField.isUserInteractionEnabled = true
+        textField.isEnabled = true
+        textField.borderStyle = .none
+        if isBuy {
+            textField.addTarget(self, action: #selector(buyPriceChangedRow), for: .editingChanged)
+            buyPriceTextField = textField
+        } else {
+            textField.addTarget(self, action: #selector(sellPriceChangedRow), for: .editingChanged)
+            sellPriceTextField = textField
+        }
+        inputContainer.addSubview(textField)
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 加号按钮
+        let plusButton = UIButton(type: .custom)
+        plusButton.setTitle("+", for: .normal)
+        plusButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        plusButton.setTitleColor(.black, for: .normal)
+        plusButton.isUserInteractionEnabled = true
+        if isBuy {
+            plusButton.addTarget(self, action: #selector(buyPricePlusRow), for: .touchUpInside)
+        } else {
+            plusButton.addTarget(self, action: #selector(sellPricePlusRow), for: .touchUpInside)
+        }
+        inputContainer.addSubview(plusButton)
+        plusButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        let separator = UIView()
+        separator.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        separator.isUserInteractionEnabled = false
+        container.addSubview(separator)
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: parent.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: parent.trailingAnchor),
+            container.heightAnchor.constraint(equalToConstant: 50),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            
+            inputContainer.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            inputContainer.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            inputContainer.widthAnchor.constraint(equalToConstant: 120),
+            inputContainer.heightAnchor.constraint(equalToConstant: 36),
+            
+            minusButton.leadingAnchor.constraint(equalTo: inputContainer.leadingAnchor, constant: 8),
+            minusButton.centerYAnchor.constraint(equalTo: inputContainer.centerYAnchor),
+            minusButton.widthAnchor.constraint(equalToConstant: 30),
+            minusButton.heightAnchor.constraint(equalToConstant: 30),
+            
+            textField.leadingAnchor.constraint(equalTo: minusButton.trailingAnchor, constant: 4),
+            textField.trailingAnchor.constraint(equalTo: plusButton.leadingAnchor, constant: -4),
+            textField.centerYAnchor.constraint(equalTo: inputContainer.centerYAnchor),
+            textField.heightAnchor.constraint(equalToConstant: 30),
+            
+            plusButton.trailingAnchor.constraint(equalTo: inputContainer.trailingAnchor, constant: -8),
+            plusButton.centerYAnchor.constraint(equalTo: inputContainer.centerYAnchor),
+            plusButton.widthAnchor.constraint(equalToConstant: 30),
+            plusButton.heightAnchor.constraint(equalToConstant: 30),
+            
+            separator.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            separator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            separator.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            separator.heightAnchor.constraint(equalToConstant: 1)
+        ])
+        
+        if let prev = previousView {
+            NSLayoutConstraint.activate([
+                container.topAnchor.constraint(equalTo: prev.bottomAnchor)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                container.topAnchor.constraint(equalTo: parent.topAnchor)
+            ])
         }
         
         return container
+    }
+    
+    // 我们定义几个临时 action 处理价格行
+    @objc private func buyPriceMinusRow() {
+        guard let text = buyPriceTextField?.text, let price = Double(text) else { return }
+        let newPrice = max(0, price - 0.01)
+        buyPriceTextField?.text = String(format: "%.2f", newPrice)
+        buyPriceLabel?.text = String(format: "%.2f", newPrice)
+        calculateBuyAmount()
+    }
+    @objc private func buyPricePlusRow() {
+        guard let text = buyPriceTextField?.text, let price = Double(text) else { return }
+        let newPrice = price + 0.01
+        buyPriceTextField?.text = String(format: "%.2f", newPrice)
+        buyPriceLabel?.text = String(format: "%.2f", newPrice)
+        calculateBuyAmount()
+    }
+    @objc private func buyPriceChangedRow() {
+        buyPriceLabel?.text = buyPriceTextField?.text
+        calculateBuyAmount()
+    }
+    
+    @objc private func sellPriceMinusRow() {
+        guard let text = sellPriceTextField?.text, let price = Double(text) else { return }
+        let newPrice = max(0, price - 0.01)
+        sellPriceTextField?.text = String(format: "%.2f", newPrice)
+        sellPriceLabel?.text = String(format: "%.2f", newPrice)
+        calculateSellAmount()
+    }
+    @objc private func sellPricePlusRow() {
+        guard let text = sellPriceTextField?.text, let price = Double(text) else { return }
+        let newPrice = price + 0.01
+        sellPriceTextField?.text = String(format: "%.2f", newPrice)
+        sellPriceLabel?.text = String(format: "%.2f", newPrice)
+        calculateSellAmount()
+    }
+    @objc private func sellPriceChangedRow() {
+        sellPriceLabel?.text = sellPriceTextField?.text
+        calculateSellAmount()
     }
     
     private func updatePositionButtons(isBuy: Bool) {
@@ -1344,11 +1458,12 @@ class AccountTradeViewController: ZQViewController {
         
         guard !buttons.isEmpty else { return }
         
-        let selectedBlue = UIColor(red: 25/255, green: 118/255, blue: 210/255, alpha: 1.0)
+        // 统一为主题红
+        let selectedColor = UIColor(red: 230/255, green: 0, blue: 18/255, alpha: 1.0)
         
         for (index, button) in buttons.enumerated() {
             if index == selectedIndex {
-                button.backgroundColor = selectedBlue
+                button.backgroundColor = selectedColor
                 button.setTitleColor(.white, for: .normal)
                 button.isSelected = true
             } else {
@@ -1369,6 +1484,29 @@ class AccountTradeViewController: ZQViewController {
         print("✅ 买入仓位按钮被点击: tag = \(sender.tag), frame = \(sender.frame)")
         selectedPositionIndex = sender.tag
         updatePositionButtons(isBuy: true)
+        
+        let balanceStr = availableAmountLabel?.text ?? "0"
+        let balance = Double(balanceStr) ?? 0.0
+        let price = Double(currentPrice) ?? 0.0
+        
+        if price > 0 {
+            // 考虑手续费0.01%，计算最大可买股数，手数需要整除100
+            let maxShares = Int(balance / (price * 1.0001))
+            let totalLots = maxShares / 100
+            
+            var targetLots = 0
+            switch sender.tag {
+            case 0: targetLots = totalLots / 4    // 1/4
+            case 1: targetLots = totalLots / 3    // 1/3
+            case 2: targetLots = totalLots / 2    // 1/2
+            case 3: targetLots = totalLots        // 全仓
+            default: break
+            }
+            
+            buyQuantity = targetLots
+            buyQuantityTextField?.text = "\(targetLots)"
+        }
+        
         calculateBuyAmount()
         
         let generator = UIImpactFeedbackGenerator(style: .light)
@@ -1383,134 +1521,30 @@ class AccountTradeViewController: ZQViewController {
         print("✅ 卖出仓位按钮被点击: tag = \(sender.tag), frame = \(sender.frame)")
         selectedSellPositionIndex = sender.tag
         updatePositionButtons(isBuy: false)
+        
+        let totalLotsStr = holdingQuantityLabel?.text ?? "0"
+        let totalLots = Int(totalLotsStr) ?? 0
+        
+        var targetLots = 0
+        switch sender.tag {
+        case 0: targetLots = totalLots / 4    // 1/4
+        case 1: targetLots = totalLots / 3    // 1/3
+        case 2: targetLots = totalLots / 2    // 1/2
+        case 3: targetLots = totalLots        // 全仓
+        default: break
+        }
+        
+        sellQuantity = targetLots
+        sellQuantityTextField?.text = "\(targetLots)"
+        
         calculateSellAmount()
         
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
     }
     
-    // MARK: - 将数量行的控件移到 view 上
-    private func moveQuantityControlsToView(container: UIView, isBuy: Bool, minusButton: UIButton, textField: UITextField, plusButton: UIButton) {
-        // 检查是否已经处理过
-        if isBuy && (buyQuantityMinusButton != nil || buyQuantityPlusButton != nil) {
-            print("⚠️ 买入数量行控件已经处理过，跳过")
-            return
-        }
-        if !isBuy && (sellQuantityMinusButton != nil || sellQuantityPlusButton != nil) {
-            print("⚠️ 卖出数量行控件已经处理过，跳过")
-            return
-        }
-        
-        // 计算各个控件在 view 中的绝对位置
-        guard let minusFrame = minusButton.superview?.convert(minusButton.frame, to: self.view),
-              let textFieldFrame = textField.superview?.convert(textField.frame, to: self.view),
-              let plusFrame = plusButton.superview?.convert(plusButton.frame, to: self.view) else {
-            print("⚠️ 无法计算\(isBuy ? "买入" : "卖出")数量行控件的绝对位置")
-            print("   minusButton.superview: \(String(describing: minusButton.superview))")
-            print("   textField.superview: \(String(describing: textField.superview))")
-            print("   plusButton.superview: \(String(describing: plusButton.superview))")
-            return
-        }
-        
-        print("✅ \(isBuy ? "买入" : "卖出")数量行控件位置 - minus: \(minusFrame), textField: \(textFieldFrame), plus: \(plusFrame)")
-        
-        // 创建新的减号按钮，直接添加到 view
-        let directMinusButton = UIButton(type: .custom)
-        directMinusButton.setTitle("-", for: .normal)
-        directMinusButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        directMinusButton.setTitleColor(.black, for: .normal)
-        directMinusButton.isUserInteractionEnabled = true
-        directMinusButton.isEnabled = true
-        directMinusButton.backgroundColor = .clear
-        if isBuy {
-            directMinusButton.addTarget(self, action: #selector(buyQuantityMinus), for: .touchUpInside)
-            buyQuantityMinusButton = directMinusButton
-        } else {
-            directMinusButton.addTarget(self, action: #selector(sellQuantityMinus), for: .touchUpInside)
-            sellQuantityMinusButton = directMinusButton
-        }
-        self.view.addSubview(directMinusButton)
-        directMinusButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            directMinusButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: minusFrame.origin.x),
-            directMinusButton.topAnchor.constraint(equalTo: self.view.topAnchor, constant: minusFrame.origin.y),
-            directMinusButton.widthAnchor.constraint(equalToConstant: minusFrame.width),
-            directMinusButton.heightAnchor.constraint(equalToConstant: minusFrame.height)
-        ])
-        
-        // 创建新的输入框，直接添加到 view
-        let directTextField = UITextField()
-        directTextField.text = textField.text
-        directTextField.font = UIFont.systemFont(ofSize: 15)
-        directTextField.textColor = .black
-        directTextField.textAlignment = .center
-        directTextField.keyboardType = .numberPad
-        directTextField.backgroundColor = .white
-        directTextField.layer.cornerRadius = 4
-        directTextField.isUserInteractionEnabled = true
-        directTextField.isEnabled = true
-        directTextField.borderStyle = .none
-        if isBuy {
-            directTextField.addTarget(self, action: #selector(buyQuantityChanged), for: .editingChanged)
-            buyQuantityTextField = directTextField
-        } else {
-            directTextField.addTarget(self, action: #selector(sellQuantityChanged), for: .editingChanged)
-            sellQuantityTextField = directTextField
-        }
-        self.view.addSubview(directTextField)
-        directTextField.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            directTextField.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: textFieldFrame.origin.x),
-            directTextField.topAnchor.constraint(equalTo: self.view.topAnchor, constant: textFieldFrame.origin.y),
-            directTextField.widthAnchor.constraint(equalToConstant: textFieldFrame.width),
-            directTextField.heightAnchor.constraint(equalToConstant: textFieldFrame.height)
-        ])
-        
-        // 创建新的加号按钮，直接添加到 view
-        let directPlusButton = UIButton(type: .custom)
-        directPlusButton.setTitle("+", for: .normal)
-        directPlusButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        directPlusButton.setTitleColor(.black, for: .normal)
-        directPlusButton.isUserInteractionEnabled = true
-        directPlusButton.isEnabled = true
-        directPlusButton.backgroundColor = .clear
-        if isBuy {
-            directPlusButton.addTarget(self, action: #selector(buyQuantityPlus), for: .touchUpInside)
-            buyQuantityPlusButton = directPlusButton
-        } else {
-            directPlusButton.addTarget(self, action: #selector(sellQuantityPlus), for: .touchUpInside)
-            sellQuantityPlusButton = directPlusButton
-        }
-        self.view.addSubview(directPlusButton)
-        directPlusButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            directPlusButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: plusFrame.origin.x),
-            directPlusButton.topAnchor.constraint(equalTo: self.view.topAnchor, constant: plusFrame.origin.y),
-            directPlusButton.widthAnchor.constraint(equalToConstant: plusFrame.width),
-            directPlusButton.heightAnchor.constraint(equalToConstant: plusFrame.height)
-        ])
-        
-        // 隐藏原始控件
-        minusButton.isHidden = true
-        minusButton.isUserInteractionEnabled = false
-        textField.isHidden = true
-        textField.isUserInteractionEnabled = false
-        plusButton.isHidden = true
-        plusButton.isUserInteractionEnabled = false
-        
-        print("✅ \(isBuy ? "买入" : "卖出")数量行控件已移到 view 上")
-        print("   directMinusButton.frame: \(directMinusButton.frame)")
-        print("   directTextField.frame: \(directTextField.frame)")
-        print("   directPlusButton.frame: \(directPlusButton.frame)")
-        
-        // 立即验证 frame（在下一个 runloop）
-        DispatchQueue.main.async {
-            print("   延迟验证 - directMinusButton.frame: \(directMinusButton.frame), isUserInteractionEnabled: \(directMinusButton.isUserInteractionEnabled)")
-            print("   延迟验证 - directTextField.frame: \(directTextField.frame), isUserInteractionEnabled: \(directTextField.isUserInteractionEnabled)")
-            print("   延迟验证 - directPlusButton.frame: \(directPlusButton.frame), isUserInteractionEnabled: \(directPlusButton.isUserInteractionEnabled)")
-        }
-    }
-    
+    // MARK: - Handlers
+
     @objc private func buyQuantityMinus() {
         print("✅✅✅ buyQuantityMinus 被调用")
         guard let textField = buyQuantityTextField else {
@@ -1574,7 +1608,8 @@ class AccountTradeViewController: ZQViewController {
     }
     
     private func calculateBuyAmount() {
-        let price = Double(currentPrice) ?? 0.0
+        let priceStr = buyPriceLabel?.text ?? currentPrice
+        let price = Double(priceStr.isEmpty ? currentPrice : priceStr) ?? 0.0
         let total = Double(buyQuantity) * price
         let serviceFee = total * 0.0001 // 0.01%
         
@@ -1583,19 +1618,98 @@ class AccountTradeViewController: ZQViewController {
     }
     
     private func calculateSellAmount() {
-        let price = Double(currentPrice) ?? 0.0
-        let total = Double(sellQuantity) * 100.0 * price
+        let priceStr = sellPriceTextField?.text ?? sellPriceLabel?.text ?? currentPrice
+        let price = Double(priceStr.isEmpty ? currentPrice : priceStr) ?? 0.0
+        let amount = Double(sellQuantity) * 100.0 * price
         
-        totalAmountLabel.text = String(format: "%.2f", total)
+        let sellFee = amount * sellFeeRate
+        let stampTax = amount * stampTaxRate
+        let totalDeductions = sellFee + stampTax
+        let netAmount = amount - totalDeductions
+        
+        sellFeeLabel?.text = String(format: "%.2f", totalDeductions)
+        totalAmountLabel.text = String(format: "%.2f", netAmount)
     }
     
     private func loadStockData() {
         updateLimitUpDown()
         fetchStockDetail(for: stockCode)
         fetchUserAssets()
+        fetchUserInfo()
+        fetchConfig()
         if selectedIndex == 1 {
             fetchSellHoldings(for: stockCode)
         }
+    }
+    
+    private func fetchConfig() {
+        SecureNetworkManager.shared.request(
+            api: "/api/user/getConfig",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let config = dict["data"] as? [String: Any] else { return }
+                    if let sellFeeStr = config["maic_fee"] as? String, let fee = Double(sellFeeStr), fee > 0 {
+                        self?.sellFeeRate = fee
+                    }
+                    if let taxStr = config["yh_fee"] as? String, let tax = Double(taxStr), tax > 0 {
+                        self?.stampTaxRate = tax
+                    }
+                    if self?.selectedIndex == 1 {
+                        self?.calculateSellAmount()
+                    }
+                case .failure(_):
+                    break
+                }
+            }
+        }
+    }
+    
+    private func fetchUserInfo() {
+        SecureNetworkManager.shared.request(
+            api: "/api/user/getUserInfo",
+            method: .get,
+            params: [:]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    guard let dict = res.decrypted,
+                          let data = dict["data"] as? [String: Any],
+                          let list = data["list"] as? [String: Any] else { return }
+                    
+                    if let isEditBuyStr = list["isEditBuy"] as? String {
+                        self?.isEditBuyEnabled = (isEditBuyStr != "0")
+                    } else if let isEditBuyInt = list["isEditBuy"] as? Int {
+                        self?.isEditBuyEnabled = (isEditBuyInt != 0)
+                    }
+                    self?.updateQuantityInputEditability()
+                case .failure(_):
+                    break
+                }
+            }
+        }
+    }
+    
+    private func updateQuantityInputEditability() {
+        if selectedIndex != 0 { return } // 卖出模式不受此影响
+        
+        // isEditBuy 实际上是控制买入系统「买入价格」是否可以编辑，而非买入手数。
+        // 手数输入在安卓中也是不受此字段限制、始终可手填的。
+        buyPriceLabel?.isUserInteractionEnabled = isEditBuyEnabled
+        buyPriceLabel?.alpha = isEditBuyEnabled ? 1.0 : 0.5
+        
+        buyQuantityTextField?.isEnabled = true
+        buyQuantityTextField?.isUserInteractionEnabled = true
+        buyQuantityMinusButton?.isEnabled = true
+        buyQuantityPlusButton?.isEnabled = true
+        
+        buyQuantityMinusButton?.alpha = 1.0
+        buyQuantityPlusButton?.alpha = 1.0
     }
     
     private func fetchStockDetail(for code: String) {
@@ -1640,6 +1754,8 @@ class AccountTradeViewController: ZQViewController {
                 self.currentPrice = String(format: "%.2f", price)
                 
                 self.buyPriceLabel?.text = self.currentPrice
+                self.sellPriceLabel?.text = self.currentPrice
+                self.sellPriceTextField?.text = self.currentPrice
                 self.buyCurrentPriceLabel?.text = self.currentPrice
                 self.sellCurrentPriceLabel?.text = self.currentPrice
                 
@@ -1708,7 +1824,8 @@ class AccountTradeViewController: ZQViewController {
                           let data = dict["data"] as? [[String: Any]],
                           let holding = data.first else { 
                         if self?.useProvidedHoldings == true {
-                            self?.holdingQuantityLabel?.text = self?.sellHoldingQty
+                            let qty = self?.sellHoldingQty ?? "0"
+                            self?.holdingQuantityLabel?.text = String((Int(qty) ?? 0) / 100)
                             self?.buyPriceSellLabel?.text = self?.sellBuyPrice
                         } else {
                             self?.holdingQuantityLabel?.text = "0"
@@ -1717,14 +1834,15 @@ class AccountTradeViewController: ZQViewController {
                         return 
                     }
                     let num = holding["number"] as? String ?? "0"
-                    self?.holdingQuantityLabel?.text = num
+                    self?.holdingQuantityLabel?.text = String((Int(num) ?? 0) / 100)
                     
                     // 设置买入价（持仓成本价）
                     let buyPrice = "\(holding["buyprice"] ?? "--")"
                     self?.buyPriceSellLabel?.text = buyPrice
                 case .failure(_):
                     if self?.useProvidedHoldings == true {
-                        self?.holdingQuantityLabel?.text = self?.sellHoldingQty
+                        let qty = self?.sellHoldingQty ?? "0"
+                        self?.holdingQuantityLabel?.text = String((Int(qty) ?? 0) / 100)
                         self?.buyPriceSellLabel?.text = self?.sellBuyPrice
                     }
                     break
@@ -1801,7 +1919,7 @@ class AccountTradeViewController: ZQViewController {
         sellConfirmButton.setTitle("确认卖出", for: .normal)
         sellConfirmButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
         sellConfirmButton.setTitleColor(.white, for: .normal)
-        sellConfirmButton.backgroundColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0)
+        sellConfirmButton.backgroundColor = navBlue
         sellConfirmButton.layer.cornerRadius = 8
         sellConfirmButton.addTarget(self, action: #selector(sellConfirmTapped), for: .touchUpInside)
         view.addSubview(sellConfirmButton)
@@ -1828,7 +1946,9 @@ class AccountTradeViewController: ZQViewController {
     }
     
     @objc private func buyConfirmTapped() {
-        guard let p = Double(currentPrice), p > 0 else {
+        let priceStr = buyPriceLabel?.text ?? currentPrice
+        let pStr = priceStr.isEmpty ? currentPrice : priceStr
+        guard let p = Double(pStr), p > 0 else {
             Toast.show("买入价格无效")
             return
         }
@@ -1841,7 +1961,7 @@ class AccountTradeViewController: ZQViewController {
             api: "/api/deal/addStrategy",
             method: .post,
             params: [
-                "allcode": stockCode,
+                "allcode": synthesizedAllcode,
                 "buyprice": "\(p)",
                 "canBuy": buyQuantity
             ]
@@ -1851,11 +1971,14 @@ class AccountTradeViewController: ZQViewController {
                 switch result {
                 case .success(let res):
                     if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
-                        Toast.show("买入委托已提交")
-                        self?.loadStockData() // 刷新可买
-                        self?.buyQuantity = 0
-                        self?.buyQuantityTextField?.text = "0"
-                        self?.calculateBuyAmount()
+                        let alert = UIAlertController(title: "提示", message: "买入委托已提交", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "确定", style: .default, handler: { _ in
+                            self?.loadStockData() // 刷新可买
+                            self?.buyQuantity = 0
+                            self?.buyQuantityTextField?.text = "0"
+                            self?.calculateBuyAmount()
+                        }))
+                        self?.present(alert, animated: true)
                     } else {
                         let msg = res.decrypted?["msg"] as? String ?? "提交失败"
                         Toast.show(msg)
@@ -1868,7 +1991,9 @@ class AccountTradeViewController: ZQViewController {
     }
     
     @objc private func sellConfirmTapped() {
-        guard let p = Double(currentPrice), p > 0 else {
+        let priceStr = sellPriceLabel?.text ?? currentPrice
+        let pStr = priceStr.isEmpty ? currentPrice : priceStr
+        guard let p = Double(pStr), p > 0 else {
             Toast.show("卖出价格无效")
             return
         }
@@ -1876,13 +2001,14 @@ class AccountTradeViewController: ZQViewController {
             Toast.show("请输入卖出数量")
             return
         }
-        sellConfirmButton.isEnabled = false
         SecureNetworkManager.shared.request(
-            api: "/api/deal/sell", // 接口文档未明示卖出接口，凭经验猜使用卖出/sell
-            method: .get,
+            api: "/api/deal/sell",
+            method: .post,
             params: [
-                "id": "",
-                "canBuy": sellQuantity
+                "id": Int(holdingId) ?? 0,
+                "allcode": synthesizedAllcode,
+                "canBuy": sellQuantity,
+                "sellprice": "\(p)"
             ]
         ) { [weak self] result in
             DispatchQueue.main.async {
@@ -1890,11 +2016,14 @@ class AccountTradeViewController: ZQViewController {
                 switch result {
                 case .success(let res):
                     if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
-                        Toast.show("卖出委托已提交")
-                        self?.loadStockData() // 刷新可卖
-                        self?.sellQuantity = 0
-                        self?.sellQuantityTextField?.text = "0"
-                        self?.calculateSellAmount()
+                        let alert = UIAlertController(title: "提示", message: "卖出委托已提交", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "确定", style: .default, handler: { _ in
+                            self?.loadStockData() // 刷新可卖
+                            self?.sellQuantity = 0
+                            self?.sellQuantityTextField?.text = "0"
+                            self?.calculateSellAmount()
+                        }))
+                        self?.present(alert, animated: true)
                     } else {
                         let msg = res.decrypted?["msg"] as? String ?? "提交失败"
                         Toast.show(msg)
@@ -1903,6 +2032,44 @@ class AccountTradeViewController: ZQViewController {
                     Toast.show("卖出失败: \(err.localizedDescription)")
                 }
             }
+        }
+    }
+}
+
+// MARK: - UITextFieldDelegate
+extension AccountTradeViewController: UITextFieldDelegate {
+    
+    // 监听键盘 Return 键以收起键盘
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+    
+    // 输入结束时格式化和限额检查
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        let rawValue = textField.text?.trimmingCharacters(in: .whitespaces) ?? ""
+        let intVal = Int(rawValue) ?? 0
+        
+        if textField == buyQuantityTextField {
+            let cappedVal = max(0, intVal)
+            
+            // 可选：如果需要在买入时检查买入手数不超过余额计算上限，可在此根据 `availableAmountLabel` 进一步限制 (目前留给服务器或 buyConfirmTapped做最终校验)
+            buyQuantity = cappedVal
+            textField.text = "\(cappedVal)"
+            calculateBuyAmount()
+        } else if textField == sellQuantityTextField {
+            // 卖出手数上限：当前可用持仓
+            let maxHolding = Int(holdingQuantityLabel?.text ?? "0") ?? 0
+            
+            var cappedVal = max(0, intVal)
+            if cappedVal > maxHolding {
+                cappedVal = maxHolding
+                Toast.show("超过可卖持仓上限")
+            }
+            
+            sellQuantity = cappedVal
+            textField.text = "\(cappedVal)"
+            calculateSellAmount()
         }
     }
 }

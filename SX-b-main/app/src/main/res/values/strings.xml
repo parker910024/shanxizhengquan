@@ -31,7 +31,7 @@
     <string name="home_strategy">战略配售</string>
     <string name="home_ai">AI智投</string>
     <string name="home_dragon">龙虎榜</string>
-    <string name="dragon_empty">该日暂无龙虎榜数据</string>
+    <string name="dragon_empty">暂无数据</string>
     <string name="dragon_loading">加载中…</string>
     <string name="dragon_load_fail">加载失败，请稍后重试</string>
 
@@ -238,6 +238,7 @@
     <string name="realname_title">实名认证</string>
     <string name="realname_nationality">国籍</string>
     <string name="realname_nationality_hint">请输入</string>
+    <string name="realname_nationality_value">中国</string>
     <string name="realname_name">真实姓名</string>
     <string name="realname_name_hint">请输入真实姓名</string>
     <string name="realname_id_type">证件类型</string>

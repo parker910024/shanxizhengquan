@@ -9,8 +9,8 @@ import UIKit
 
 class NewStockDetailViewController: ZQViewController {
     
-    // 传入的股票ID，用于请求详情
-    var stockId: String = ""
+    // 传入的股票完整数据
+    var stockData: NewStockSubscription?
     
     // 当前的新股代码，请求申购接口时使用
     private var currentSgCode: String = ""
@@ -102,6 +102,7 @@ class NewStockDetailViewController: ZQViewController {
         let titles = [
             "股票名称",
             "申购代码",
+            "所属行业",
             "行业市盈",
             "所属板块",
             "发行价格",
@@ -152,68 +153,36 @@ class NewStockDetailViewController: ZQViewController {
             ])
             
             detailLabels[title] = valueLabel
+            rowViews[title] = rowView
             listStackView.addArrangedSubview(rowView)
         }
     }
     
+    private var rowViews: [String: UIView] = [:]
+    
     private func loadDetailData() {
-        guard !stockId.isEmpty else { return }
-        
-        SecureNetworkManager.shared.request(
-            api: "/api/subscribe/lstDetail",
-            method: .get,
-            params: ["id": stockId]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let res):
-                guard res.statusCode == 200,
-                      let dict = res.decrypted,
-                      let data = dict["data"] as? [String: Any],
-                      let info = data["info"] as? [String: Any] else {
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    self.updateUI(with: info)
-                }
-                
-            case .failure(let err):
-                DispatchQueue.main.async {
-                    Toast.show("获取详情失败: \(err.localizedDescription)")
-                }
-            }
-        }
+        guard let data = stockData else { return }
+        updateUI(with: data)
     }
     
-    private func updateUI(with info: [String: Any]) {
-        let name = info["name"] as? String ?? ""
-        let sgCode = info["sgcode"] as? String ?? ""
+    private func updateUI(with stock: NewStockSubscription) {
+        let name = stock.stockName
+        let sgCode = stock.sgCode
         self.currentSgCode = sgCode
-        let fxRate = "\(info["fx_rate"] ?? "0")%"
+        let fxRate = stock.peRatio
         
-        let sgTypeStr: String
-        if let typeInt = info["sg_type"] as? Int {
-            sgTypeStr = "\(typeInt)"
-        } else if let typeStr = info["sg_type"] as? String {
-            sgTypeStr = typeStr
-        } else {
-            sgTypeStr = "\(info["type"] ?? "")"
-        }
+        let market = stock.board
         
-        // 板块转换
-        let market: String = {
-            switch sgTypeStr { case "1": return "沪"; case "2": return "深"; case "3": return "创"; case "4": return "北"; case "5": return "科"; default: return "沪" }
-        }()
+        let fxPrice = stock.issuePrice
         
-        let fxPrice = "\(info["fx_price"] ?? "0")"
-        
-        // 发行数量/网上发行数量计算(万股)
-        let fxNumStr = formatToWan(info["fx_num"])
-        let wsFxNumStr = formatToWan(info["wsfx_num"])
+        // 数量已经在列表层处理过了, 但列表层是带了单位的内容, 比如 "1.70万股", 此时只需过滤数字部分或直接展示
+        let fxNumStr = formatToTwoDecimals(cleanSuffix(stock.totalIssued))
+        let wsFxNumStr = formatToTwoDecimals(cleanSuffix(stock.wsfxNum))
         
         detailLabels["股票名称"]?.text = name
         detailLabels["申购代码"]?.text = sgCode
+        detailLabels["所属行业"]?.text = stock.industry.isEmpty ? "--" : stock.industry
+        rowViews["所属行业"]?.isHidden = stock.industry.isEmpty
         detailLabels["行业市盈"]?.text = fxRate
         detailLabels["所属板块"]?.text = market
         detailLabels["发行价格"]?.text = fxPrice
@@ -223,15 +192,18 @@ class NewStockDetailViewController: ZQViewController {
         gk_navTitle = name.isEmpty ? "新股详情" : name
     }
     
-    private func formatToWan(_ raw: Any?) -> String {
-        guard let raw = raw else { return "0" }
-        if let intVal = raw as? Int {
-            return String(format: "%.2f", Double(intVal) / 10000.0)
-        } else if let strVal = raw as? String, let dVal = Double(strVal) {
-            return String(format: "%.2f", dVal / 10000.0)
-        }
-        return "\(raw)"
+    // 移除字符串中的 "万股" 等单位后缀
+    private func cleanSuffix(_ str: String) -> String {
+        return str.replacingOccurrences(of: "万股", with: "").replacingOccurrences(of: "亿股", with: "").replacingOccurrences(of: "股", with: "")
     }
+    
+    // 固化保留两位小数
+    private func formatToTwoDecimals(_ numStr: String) -> String {
+        let v = Double(numStr) ?? 0.0
+        return String(format: "%.2f", v)
+    }
+    
+
     
     @objc private func submitTapped() {
         guard !currentSgCode.isEmpty else { return }

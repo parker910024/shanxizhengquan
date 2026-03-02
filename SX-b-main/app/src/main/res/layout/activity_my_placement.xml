@@ -9,11 +9,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <!-- 标题栏 -->
+    <!-- 红色标题栏 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="@color/white"
+        android:background="@color/hq_rise_color"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp">
 
@@ -21,7 +21,8 @@
             android:id="@+id/iv_back"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/icon_back" />
+            android:src="@drawable/icon_back"
+            android:tint="@color/white" />
 
         <TextView
             android:layout_width="0dp"
@@ -29,7 +30,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="配售记录"
-            android:textColor="@color/black"
+            android:textColor="@color/white"
             android:textSize="17sp"
             android:textStyle="bold" />
 
@@ -38,7 +39,7 @@
             android:layout_height="24dp" />
     </LinearLayout>
 
-    <!-- Tab 筛选 -->
+    <!-- Tab：申购中 | 中签 | 未中签（与打新记录样式一致） -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -53,7 +54,7 @@
             android:layout_height="32dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_ipo_tab_normal_red"
+            android:background="@drawable/bg_ipo_tab_selected_red"
             android:gravity="center"
             android:text="申购中"
             android:textSize="13sp" />
@@ -86,16 +87,19 @@
         android:id="@+id/rv_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:background="@color/white"
+        android:clipToPadding="false"
+        android:paddingBottom="12dp" />
 
-    <!-- 空态 -->
+    <!-- 空态：暂无记录 -->
     <TextView
         android:id="@+id/tv_empty"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:text="暂无数据"
+        android:text="暂无记录"
         android:textColor="@color/hq_text_gray"
         android:textSize="14sp"
         android:visibility="gone" />

@@ -78,7 +78,8 @@ class BankCardListActivity : BasicActivity<ActivityBankCardListBinding>() {
             val priceRes = Remote.callApi { getUserPriceAll() }
             priceRes.data?.list?.let { info ->
                 binding.tvT1Amount.text = formatAmount(info.freeze_profit)
-                binding.tvTransferableAmount.text = formatAmount(info.balance)
+                // 可转出金额 = 可取金额 = 余额 - T+1冻结（与「我的」页、转出页一致）
+                binding.tvTransferableAmount.text = formatAmount(maxOf(0.0, info.balance - info.freeze_profit))
             }
 
             // 加载银行卡列表
@@ -97,8 +98,8 @@ class BankCardListActivity : BasicActivity<ActivityBankCardListBinding>() {
         }
     }
 
-    private fun formatAmount(value: Double): String =
-        if (value == value.toLong().toDouble()) "${value.toLong()}" else "%.2f".format(value)
+    /** 金额统一保留两位小数 */
+    private fun formatAmount(value: Double): String = "%.2f".format(value)
 }
 
 private class BankCardListAdapter(

@@ -26,12 +26,8 @@ data class BankCardItem(
     val createtime: Long = 0L,
 ) {
     val displayBankName: String get() = deposit_bank
-    /** 脱敏卡号：前4后4，中间* */
-    val displayBankCard: String
-        get() = when {
-            account.length <= 8 -> account
-            else -> account.take(4) + " **** **** " + account.takeLast(4)
-        }
+    /** 银行卡号（完整展示，不脱敏） */
+    val displayBankCard: String get() = account
 }
 
 /**

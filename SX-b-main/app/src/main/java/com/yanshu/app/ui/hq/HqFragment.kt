@@ -52,8 +52,7 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
     private lateinit var placementAdapter: PlacementAdapter
     private lateinit var blockTradeAdapter: BlockTradeAdapter
 
-    private var placementLoaded = false
-    private var blockTradeLoaded = false
+    private var hasResumedOnce = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var fundInfoIndex = 0
@@ -66,21 +65,16 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
     private var selectedRankingTabIndex = 0
     private lateinit var rankingTabIndicatorHelper: TabIndicatorHelper
 
-    // Tab 瀵瑰簲鐨勫垪瀹藉害 (dp): 鐜颁环80, 娑ㄨ穼70, 娑ㄨ穼骞?0, 鎴愪氦棰?00, 鎹㈡墜鐜?0, 鏄ㄦ敹80, 浠婂紑80, 鏈€楂?0
-    private val columnWidths = listOf(80, 70, 70, 100, 70, 80, 80, 80)
-    private val columnPositions: List<Int> by lazy {
-        var sum = 0
-        columnWidths.map { width ->
-            val pos = sum
-            sum += width
-            pos
-        }
-    }
+    // 排行 tab 显示列宽（dp）：去掉第2个「涨跌」tab 后的顺序
+    private val rankingTabWidths = listOf(80, 70, 100, 70, 80, 80, 80)
+    // 实际数据列滚动偏移（dp）
+    private val rankingTabScrollOffsets = listOf(0, 80, 150, 250, 320, 400, 480)
 
     override fun initialize() {
         initTopTabs()
         initAdapters()
         initRankingTabs()
+        syncSectionTitlesWithTabs()
     }
 
     override fun initView() {
@@ -109,7 +103,13 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
             if (strategyName.isNotEmpty()) {
                 binding.tvTabStrategy.text = strategyName
             }
+            syncSectionTitlesWithTabs()
         }
+    }
+
+    private fun syncSectionTitlesWithTabs() {
+        binding.tvStrategySectionTitle.text = binding.tvTabStrategy.text
+        binding.tvProtectionSectionTitle.text = binding.tvTabProtection.text
     }
 
     // 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ 椤堕儴 Tab 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
@@ -122,12 +122,12 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
             binding.tvTabProtection,
         )
         topTabs.forEachIndexed { index, textView ->
-            textView.setOnClickListener { updateTopTabSelection(index) }
+            textView.setOnClickListener { updateTopTabSelection(index, refresh = true) }
         }
-        updateTopTabSelection(0)
+        updateTopTabSelection(0, refresh = false)
     }
 
-    private fun updateTopTabSelection(index: Int) {
+    private fun updateTopTabSelection(index: Int, refresh: Boolean = true) {
         selectedTopTabIndex = index
 
         topTabs.forEachIndexed { i, textView ->
@@ -168,28 +168,29 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
             0 -> binding.layoutMarketContent.visibility = View.VISIBLE
             1 -> {
                 binding.layoutIpoContent.visibility = View.VISIBLE
-                updateIpoDate()
+                updateSubTabDates()
             }
             2 -> {
                 binding.layoutStrategyContent.visibility = View.VISIBLE
-                if (!placementLoaded) {
-                    placementLoaded = true
-                    IPOViewModel.loadPlacementList()
-                }
+                updateSubTabDates()
             }
             3 -> {
                 binding.layoutProtectionContent.visibility = View.VISIBLE
-                if (!blockTradeLoaded) {
-                    blockTradeLoaded = true
-                    IPOViewModel.loadBlockTradeList()
-                }
+                updateSubTabDates()
             }
+        }
+
+        if (refresh) {
+            refreshCurrentTabData()
         }
     }
 
-    private fun updateIpoDate() {
+    private fun updateSubTabDates() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd E", Locale.CHINESE)
-        binding.tvIpoDate.text = dateFormat.format(Date())
+        val dateText = dateFormat.format(Date())
+        binding.tvIpoDate.text = dateText
+        binding.tvStrategyDate.text = dateText
+        binding.tvProtectionDate.text = dateText
     }
 
     // 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ 鑲＄エ鎺掕姒?Tab 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
@@ -197,7 +198,6 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
     private fun initRankingTabs() {
         rankingTabs = listOf(
             binding.tvRankPrice,
-            binding.tvRankChange,
             binding.tvRankChangePct,
             binding.tvRankVolume,
             binding.tvRankTurnover,
@@ -208,7 +208,7 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
         rankingTabIndicatorHelper = TabIndicatorHelper.createWithFixedWidths(
             tabs = rankingTabs.map { it as View },
             indicator = binding.viewRankingIndicator,
-            columnWidthsDp = columnWidths,
+            columnWidthsDp = rankingTabWidths,
             indicatorWidthDp = 24,
         )
         rankingTabs.forEachIndexed { index, textView ->
@@ -242,10 +242,9 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
 
     private fun scrollStockListToColumn(columnIndex: Int) {
         val density = resources.displayMetrics.density
-        val scrollX = (columnPositions.getOrElse(columnIndex) { 0 } * density).toInt()
+        val scrollX = (rankingTabScrollOffsets.getOrElse(columnIndex) { 0 } * density).toInt()
         binding.hsvRankingTabs.smoothScrollTo(scrollX, 0)
-        binding.layoutStockHeader.hsvHeader.smoothScrollTo(scrollX, 0)
-        stockAdapter.scrollToColumn(columnIndex)
+        stockAdapter.syncAllScrollViews(scrollX)
     }
 
     // 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ Adapter 鍒濆鍖?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
@@ -256,7 +255,9 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
         conceptSectorAdapter = SectorAdapter()
         stockAdapter = StockAdapter(
             onScrollChange = { scrollX ->
-                binding.layoutStockHeader.hsvHeader.scrollTo(scrollX, 0)
+                if (binding.hsvRankingTabs.scrollX != scrollX) {
+                    binding.hsvRankingTabs.scrollTo(scrollX, 0)
+                }
             },
             onItemClick = { item -> openStockDetail(item) },
         )
@@ -492,11 +493,6 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
 
     private fun setupScrollSync() {
         binding.hsvRankingTabs.setOnScrollChangeListener { _, scrollX, _, _, _ ->
-            binding.layoutStockHeader.hsvHeader.scrollTo(scrollX, 0)
-            stockAdapter.syncAllScrollViews(scrollX)
-        }
-        binding.layoutStockHeader.hsvHeader.setOnScrollChangeListener { _, scrollX, _, _, _ ->
-            binding.hsvRankingTabs.scrollTo(scrollX, 0)
             stockAdapter.syncAllScrollViews(scrollX)
         }
     }
@@ -557,6 +553,11 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
     override fun onResume() {
         super.onResume()
         checkPendingSubTab()
+        if (hasResumedOnce) {
+            refreshCurrentTabData()
+        } else {
+            hasResumedOnce = true
+        }
     }
 
     private fun checkPendingSubTab() {
@@ -573,7 +574,22 @@ class HqFragment : BaseFragment<FragmentHqBinding>() {
      */
     fun selectTopTab(index: Int) {
         if (index in topTabs.indices) {
-            updateTopTabSelection(index)
+            updateTopTabSelection(index, refresh = true)
+        }
+    }
+
+    /**
+     * 对外暴露：主页面底部点击“行情”时，主动刷新当前子Tab数据
+     */
+    fun refreshCurrentTabData() {
+        when (selectedTopTabIndex) {
+            0 -> viewModel.refreshMarketTab()
+            1 -> {
+                updateSubTabDates()
+                viewModel.refreshIpoTab()
+            }
+            2 -> IPOViewModel.loadPlacementList()
+            3 -> IPOViewModel.loadBlockTradeList()
         }
     }
 

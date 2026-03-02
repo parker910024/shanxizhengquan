@@ -89,7 +89,7 @@ class TradeRecordActivity : BasicActivity<ActivityTradeRecordBinding>() {
                 val name = if (item.title.isNotEmpty() || item.code.isNotEmpty()) "${item.title}(${item.code})" else "-"
                 val shares = item.number.toIntOrNull() ?: 0
                 val buyAmount = item.money.toDoubleOrNull() ?: 0.0
-                val sellAmount = shares * item.cai_buy
+                val sellAmount = shares * item.caiBuyDouble()
                 listOf(
                     TradeRecord(TradeType.BUY, name, buyAmount, item.createtime_name, shares),
                     TradeRecord(TradeType.SELL, name, sellAmount, item.outtime_name, shares)

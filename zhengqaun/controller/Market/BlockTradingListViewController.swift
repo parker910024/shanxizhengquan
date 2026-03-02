@@ -30,18 +30,19 @@ class BlockTradingListViewController: ZQViewController {
     private let historyTabButton = UIButton(type: .system)
     private let tabIndicator = UIView()
     private var selectedTab: TabType = .current
-    // 指示器宽度固定 20，下方通过两个 centerX 约束在两个 tab 之间切换
     private var tabIndicatorCenterXCurrentConstraint: NSLayoutConstraint!
     private var tabIndicatorCenterXHistoryConstraint: NSLayoutConstraint!
     
     enum TabType {
-        case current   // 当前持仓
-        case history   // 历史持仓
+        case current
+        case history
     }
     
     // 数据源
     private var currentHoldings: [BlockTradingListItem] = []
     private var historyHoldings: [BlockTradingListItem] = []
+    private var isCurrentLoading = false
+    private var isHistoryLoading = false
     private let emptyLabel = UILabel()
     
     override func viewDidLoad() {
@@ -157,6 +158,11 @@ class BlockTradingListViewController: ZQViewController {
     @objc private func historyTabTapped() {
         selectedTab = .history
         updateTabSelection()
+        // 对齐安卓：历史持仓切换时若正在加载显示「加载中…」
+        if isHistoryLoading {
+            emptyLabel.text = "加载中…"
+            emptyLabel.isHidden = false
+        }
         tableView.reloadData()
         updateEmptyState()
     }
@@ -253,23 +259,42 @@ class BlockTradingListViewController: ZQViewController {
     
     // MARK: - 大宗交易历史持仓
     private func loadHistoryHoldings() {
+        isHistoryLoading = true
+        if selectedTab == .history {
+            DispatchQueue.main.async {
+                self.emptyLabel.text = "加载中…"
+                self.emptyLabel.isHidden = false
+            }
+        }
         SecureNetworkManager.shared.request(
             api: "/api/dzjy/getNowWarehouse_lishi",
             method: .get,
             params: ["buytype": "7", "page": "1", "size": "50", "status": "2"]
         ) { [weak self] result in
             guard let self = self else { return }
+            self.isHistoryLoading = false
             switch result {
             case .success(let res):
                 guard let dict = res.decrypted,
                       let data = dict["data"] as? [String: Any],
-                      let list = data["list"] as? [[String: Any]] else { return }
+                      let list = data["list"] as? [[String: Any]] else {
+                    DispatchQueue.main.async {
+                        self.historyHoldings = []
+                        if self.selectedTab == .history {
+                            self.emptyLabel.text = "暂无数据"
+                            self.tableView.reloadData()
+                            self.updateEmptyState()
+                        }
+                    }
+                    return
+                }
                 
                 DispatchQueue.main.async {
                     self.historyHoldings = list.compactMap { item in
                         self.parseItem(item, isHistory: true)
                     }
                     if self.selectedTab == .history {
+                        self.emptyLabel.text = "暂无数据"
                         self.tableView.reloadData()
                         self.updateEmptyState()
                     }
@@ -279,6 +304,7 @@ class BlockTradingListViewController: ZQViewController {
                 DispatchQueue.main.async {
                     self.historyHoldings = []
                     if self.selectedTab == .history {
+                        self.emptyLabel.text = "暂无数据"
                         self.tableView.reloadData()
                         self.updateEmptyState()
                     }
@@ -358,7 +384,76 @@ extension BlockTradingListViewController: UITableViewDataSource, UITableViewDele
         let item = selectedTab == .current ? currentHoldings[indexPath.row] : historyHoldings[indexPath.row]
         cell.configure(with: item, isCurrent: selectedTab == .current)
         cell.selectionStyle = .none
+        
+        // 卖出按钮点击处理
+        cell.onSellClick = { [weak self] in
+            guard let self = self else { return }
+            self.handleSellClick(for: item)
+        }
+        
         return cell
+    }
+    
+    // MARK: - 卖出处理 (去掉 T+N 拦截直接弹确认）
+    private func handleSellClick(for item: BlockTradingListItem) {
+        self.showConfirmSellAlert(for: item)
+    }
+    
+    private func showConfirmSellAlert(for item: BlockTradingListItem) {
+        let rawData = item.rawData
+        let price = Double("\(rawData["cai_buy"] ?? 0)") ?? 0
+        let shares = Int("\(rawData["number"] ?? 0)") ?? 0
+        let total = price * Double(shares)
+        
+        let msg = String(format: "股票名称：%@\n买入价格：%.2f\n数量：%d股\n总计：%.2f",
+                         item.stockName.isEmpty ? item.stockCode : item.stockName, price, shares, total)
+        let alert = UIAlertController(title: "确认卖出吗?", message: msg, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "确认", style: .default, handler: { [weak self] _ in
+            self?.submitSell(for: item, price: price, shares: shares)
+        }))
+        self.present(alert, animated: true)
+    }
+    
+    private func submitSell(for item: BlockTradingListItem, price: Double, shares: Int) {
+        let lots = max(0, shares / 100)
+        if lots <= 0 {
+            Toast.show("股数无效")
+            return
+        }
+        
+        let idRaw = item.rawData["id"]
+        let idInt = Int("\(idRaw ?? "0")") ?? 0
+        let allcode = item.rawData["allcode"] as? String ?? ""
+        
+        SecureNetworkManager.shared.request(
+            api: "/api/deal/sell",
+            method: .post,
+            params: [
+                "id": idInt,
+                "allcode": allcode,
+                "canBuy": lots,
+                "sellprice": price
+            ]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let res):
+                    if let dict = res.decrypted, let retCode = dict["code"] as? Int, retCode == 1 {
+                        let alert = UIAlertController(title: "卖出成功", message: "卖出成功", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "确定", style: .default, handler: { _ in
+                            self?.loadCurrentHoldings()
+                        }))
+                        self?.present(alert, animated: true)
+                    } else {
+                        let msg = res.decrypted?["msg"] as? String ?? "卖出失败，请重试"
+                        Toast.show(msg)
+                    }
+                case .failure(let err):
+                    Toast.show("卖出失败: \(err.localizedDescription)")
+                }
+            }
+        }
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -367,7 +462,8 @@ extension BlockTradingListViewController: UITableViewDataSource, UITableViewDele
         let vc = HoldingDetailViewController()
         vc.holdingData = item.rawData
         vc.isHistorical = (selectedTab == .history)
-        vc.hiddingButton = true // 只读模式，对齐安卓 startReadOnly
+        vc.fromBulkTrade = true // 标记为撮合交易进入
+        vc.hiddingButton = false // 开放平仓按钮，在详情页处理弹窗
         navigationController?.pushViewController(vc, animated: true)
     }
 }
@@ -395,7 +491,12 @@ class BlockTradingListCell: UITableViewCell {
     private let buyTimeTitleLabel = UILabel()
     private let buyTimeLabel = UILabel()
     
+    // 卖出操作行
+    private let sellBtn = UIButton(type: .system)
+    
     private let separatorLine = UIView()
+    
+    var onSellClick: (() -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -467,6 +568,14 @@ class BlockTradingListCell: UITableViewCell {
         buyTimeLabel.textAlignment = .right
         contentView.addSubview(buyTimeLabel)
         
+        sellBtn.setTitle("卖出", for: .normal)
+        sellBtn.setTitleColor(.white, for: .normal)
+        sellBtn.backgroundColor = UIColor(red: 232/255.0, green: 76/255.0, blue: 61/255.0, alpha: 1.0)
+        sellBtn.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        sellBtn.layer.cornerRadius = 2
+        sellBtn.addTarget(self, action: #selector(handleSellClick), for: .touchUpInside)
+        contentView.addSubview(sellBtn)
+        
         separatorLine.backgroundColor = UIColor(white: 0.95, alpha: 1.0)
         contentView.addSubview(separatorLine)
         
@@ -518,12 +627,21 @@ class BlockTradingListCell: UITableViewCell {
             buyTimeLabel.centerYAnchor.constraint(equalTo: quantityTitleLabel.centerYAnchor),
             buyTimeLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
             
-            separatorLine.topAnchor.constraint(equalTo: quantityTitleLabel.bottomAnchor, constant: 12),
+            sellBtn.topAnchor.constraint(equalTo: quantityTitleLabel.bottomAnchor, constant: 12),
+            sellBtn.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -pad),
+            sellBtn.widthAnchor.constraint(equalToConstant: 60),
+            sellBtn.heightAnchor.constraint(equalToConstant: 26),
+            
+            separatorLine.topAnchor.constraint(equalTo: sellBtn.bottomAnchor, constant: 12),
             separatorLine.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             separatorLine.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             separatorLine.heightAnchor.constraint(equalToConstant: 8), 
             separatorLine.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
+    }
+    
+    @objc private func handleSellClick() {
+        onSellClick?()
     }
     
     func configure(with item: BlockTradingListItem, isCurrent: Bool) {
@@ -546,5 +664,7 @@ class BlockTradingListCell: UITableViewCell {
         
         buyTimeTitleLabel.text = isCurrent ? "买入时间" : "卖出时间"
         currentPriceTitleLabel.text = isCurrent ? "当前价" : "卖出价"
+        
+        sellBtn.isHidden = !isCurrent
     }
 }

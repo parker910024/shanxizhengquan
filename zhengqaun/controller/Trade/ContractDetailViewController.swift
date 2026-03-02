@@ -226,21 +226,22 @@ class ContractDetailViewController: ZQViewController {
         
         // 构建 HTML（对齐安卓 buildContractHtml）
         let html = buildContractHtml(contract: contract, isSigned: isSigned)
-        webView.loadHTMLString(html, baseURL: nil)
+        let baseURLStr = vpnDataModel.shared.selectAddress ?? ""
+        webView.loadHTMLString(html, baseURL: URL(string: baseURLStr))
     }
     
     private func buildContractHtml(contract: Contract, isSigned: Bool) -> String {
         // 甲方信息（来自模板）
-        let jiaName = templateData["jia_name"] as? String
-            ?? templateData["company_title"] as? String
-            ?? templateData["company_short_name"] as? String
+        let jiaName = templateData["JiaName"] as? String
+            ?? templateData["Title"] as? String
+            ?? templateData["name"] as? String
             ?? contract.partyA
-        let jiaAddress = templateData["jia_address"] as? String ?? contract.partyAAddress
-        let jiaSign = templateData["jia_sign"] as? String ?? ""
-        let jiaZhang = templateData["jia_zhang"] as? String ?? ""
+        let jiaAddress = templateData["JiaAddress"] as? String ?? contract.partyAAddress
+        let jiaSign = templateData["JiaSign"] as? String ?? ""
+        let jiaZhang = templateData["Pic"] as? String ?? ""
         let logo = templateData["logo"] as? String ?? ""
-        let templateTitle = templateData["title"] as? String ?? contract.name
-        let templateContent = templateData["content"] as? String ?? contract.content
+        let templateTitle = templateData["SubTitle"] as? String ?? templateData["Title"] as? String ?? contract.name
+        let templateContent = templateData["Content"] as? String ?? contract.content
         
         // 解析图片 URL
         func resolveTemplateImageUrl(_ path: String) -> String {
@@ -249,9 +250,14 @@ class ContractDetailViewController: ZQViewController {
             if raw.hasPrefix("http://") || raw.hasPrefix("https://") { return raw }
             var normalized = raw
             if normalized.hasPrefix("/") { normalized.removeFirst() }
-            var base = vpnDataModel.shared.selectAddress ?? ""
-            if base.hasSuffix("/") { base.removeLast() }
-            return base + "/" + normalized
+            
+            if normalized.hasPrefix("upload/") {
+                var base = vpnDataModel.shared.selectAddress ?? ""
+                if base.hasSuffix("/") { base.removeLast() }
+                return base + "/" + normalized
+            } else {
+                return "https://snake-stk-test5.baihemeiye.top/" + normalized
+            }
         }
         
         let logoUrl = resolveTemplateImageUrl(logo)
@@ -271,8 +277,10 @@ class ContractDetailViewController: ZQViewController {
             ? (authData["id_card"] as? String ?? "")
             : contract.partyBIdCard
         
+        let signDateFormatter = DateFormatter()
+        signDateFormatter.dateFormat = "yyyy年MM月dd日"
         let signDate = contract.signDate != nil
-            ? DateFormatter.localizedString(from: contract.signDate!, dateStyle: .medium, timeStyle: .none)
+            ? signDateFormatter.string(from: contract.signDate!)
             : "--"
         
         // 签名图 URL

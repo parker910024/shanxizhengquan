@@ -278,16 +278,17 @@ class BindBankCardViewController: ZQViewController {
                 debugPrint("raw =", result.raw) // 原始响应
                 debugPrint("decrypted =", result.decrypted ?? "无法解密") // 解密后的明文（如果能解）
                 await SVProgressHUD.dismiss()
-                if let dict = result.decrypted, let detail = dict["data"] as? [String: Any], let json = detail["detail"] {
+                if let dict = result.decrypted {
                     if dict["msg"] as? String != "success" {
                         DispatchQueue.main.async {
                             Toast.showInfo(dict["msg"] as? String ?? "")
                         }
                         return
-                    } else {
+                    }
+                    if let detail = dict["data"] as? [String: Any], let json = detail["detail"] {
                         let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
                         let model = try JSONDecoder().decode(AuthenticationDetailModel.self, from: jsonData)
-                        self.name = model.name
+                        self.name = model.name ?? ""
                     }
                 }
             } catch {

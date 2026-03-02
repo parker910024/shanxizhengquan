@@ -17,6 +17,7 @@ import com.yanshu.app.databinding.ActivityTransferOutBinding
 import com.yanshu.app.databinding.ItemTransferOutRecordBinding
 import com.yanshu.app.repo.contract.ContractRemote
 import com.yanshu.app.ui.dialog.AppToast
+import com.yanshu.app.ui.dialog.BankCardSelectBottomDialog
 import com.yanshu.app.ui.dialog.PayPasswordBottomDialog
 import ex.ss.lib.base.extension.viewBinding
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class TransferOutActivity : BasicActivity<ActivityTransferOutBinding>() {
     private var transferableAmount = 0.0
     private var minTransferAmount = DEFAULT_MIN_TRANSFER
     private var defaultAccountId: String = ""
+    private var firstCardNumber: String = ""
 
     private lateinit var recordAdapter: TransferOutRecordAdapter
 
@@ -51,6 +53,14 @@ class TransferOutActivity : BasicActivity<ActivityTransferOutBinding>() {
 
         binding.tvWithdrawAll.setOnClickListener { setAmountToAll() }
         binding.btnTransferOut.setOnClickListener { submitTransferOut() }
+        binding.rowBankCard.setOnClickListener {
+            // 底部弹窗展示所有银行卡，点击某张即选中
+            BankCardSelectBottomDialog.show(supportFragmentManager) { item ->
+                defaultAccountId = item.id.toString()
+                firstCardNumber = item.displayBankCard
+                binding.tvBankCard.text = firstCardNumber
+            }
+        }
 
         recordAdapter = TransferOutRecordAdapter()
         binding.rvRecords.layoutManager = LinearLayoutManager(this)
@@ -61,9 +71,8 @@ class TransferOutActivity : BasicActivity<ActivityTransferOutBinding>() {
         binding.etAmount.setText(formatAmount(transferableAmount))
     }
 
-    private fun formatAmount(value: Double): String {
-        return if (value == value.toLong().toDouble()) "${value.toLong()}" else "%.2f".format(value)
-    }
+    /** 金额统一保留两位小数 */
+    private fun formatAmount(value: Double): String = "%.2f".format(value)
 
     private fun submitTransferOut() {
         val input = binding.etAmount.text.toString().trim()
@@ -126,12 +135,15 @@ class TransferOutActivity : BasicActivity<ActivityTransferOutBinding>() {
                 ?.toDoubleOrNull()
                 ?.takeIf { it > 0.0 }
                 ?: DEFAULT_MIN_TRANSFER
+            binding.tvMinHint.text = "最小转出金额${minTransferAmount.toInt()}"
 
             val logRes = ContractRemote.callApiSilent { getCapitalLog(1) }
             logRes.data?.let { data ->
                 data.userInfo?.let { info ->
-                    transferableAmount = info.balance
+                    // 可转出金额 = 可取金额 = 余额 - T+1冻结
+                    transferableAmount = maxOf(0.0, info.balance - info.freeze_profit)
                     binding.tvTransferableAmount.text = formatAmount(transferableAmount)
+                    binding.tvT1Funds.text = formatAmount(info.freeze_profit)
                 }
 
                 val list = data.list.orEmpty()
@@ -148,6 +160,8 @@ class TransferOutActivity : BasicActivity<ActivityTransferOutBinding>() {
             val cardRes = ContractRemote.callApiSilent { getBankCardList() }
             val firstCard = cardRes.data?.list?.data?.firstOrNull()
             defaultAccountId = firstCard?.id?.toString() ?: ""
+            firstCardNumber = firstCard?.account?.trim() ?: ""
+            binding.tvBankCard.text = if (firstCardNumber.isEmpty()) "请先绑定银行卡" else firstCardNumber
         }
     }
 }
@@ -174,7 +188,7 @@ private class TransferOutRecordAdapter : RecyclerView.Adapter<TransferOutRecordA
     inner class Holder(private val b: ItemTransferOutRecordBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(item: CapitalLogItem) {
             b.tvType.text = item.pay_type_name.ifEmpty { "银证转出" }
-            b.tvAmount.text = "-${item.money.toLong()}"
+            b.tvAmount.text = "-${"%.2f".format(item.money)}"
 
             val statusText = if (item.reject.isNotEmpty()) "${item.is_pay_name} ${item.reject}" else item.is_pay_name
             b.tvStatus.text = statusText

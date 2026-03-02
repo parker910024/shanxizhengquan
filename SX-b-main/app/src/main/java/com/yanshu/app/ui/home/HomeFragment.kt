@@ -97,8 +97,9 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
         binding.llTransferOut.setOnClickListener { TransferOutActivity.start(requireContext()) }
         
         // Quick functions row 2
+        // 新股申购 -> 跳转到行情页面的新股申购Tab
         binding.llNewStock.setOnClickListener { 
-            com.yanshu.app.ui.ipo.NewStockSubscriptionActivity.start(requireContext())
+            (activity as? MainActivity)?.navigateToHq(1) // 1 = 新股申购
         }
         binding.llOtc.setOnClickListener {
             (activity as? MainActivity)?.navigateToHq(3)

@@ -13,6 +13,8 @@ class MainPageAdapter(
 
     private val fragments by lazy { fragmentInvoker.invoke() }
 
+    fun getFragmentAt(position: Int): Fragment? = fragments.getOrNull(position)
+
     override fun getItemCount(): Int = fragments.size
 
     override fun createFragment(position: Int): Fragment {

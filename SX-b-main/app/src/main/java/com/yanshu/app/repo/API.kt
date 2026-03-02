@@ -178,7 +178,7 @@ interface API {
     @GET("api/deal/getNowWarehouse_lishi")
     suspend fun getDealHistoryLishi(
         @Query("page") page: Int = 1,
-        @Query("size") size: Int = 20,
+        @Query("size") size: Int = 50,
         @Query("buytype") buytype: Int = 1,
         @Query("status") status: Int = 2,
         @Query("type") type: Int = 2,
@@ -229,7 +229,7 @@ interface API {
     @GET("api/deal/getNowWarehouse")
     suspend fun getDealHoldingList(
         @Query("page") page: Int = 1,
-        @Query("size") size: Int = 10,
+        @Query("size") size: Int = 50,
         @Query("buytype") buytype: String = "1",
         @Query("status") status: String = "1",
     ): BaseResponse<HoldingListData>

@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.yanshu.app.R
@@ -67,7 +68,7 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
             context.startActivity(Intent(context, BuyActivity::class.java).apply {
                 putExtra(EXTRA_ALLCODE, item.allcode)
                 putExtra(EXTRA_NAME, item.title)
-                putExtra(EXTRA_PRICE, item.cai_buy)
+                putExtra(EXTRA_PRICE, item.caiBuyDouble())
                 putExtra(EXTRA_IS_SELL, true)
                 putExtra(EXTRA_HOLDING_ID, item.id)
                 putExtra(EXTRA_HOLDING_LOTS, item.canBuy.toIntOrNull() ?: 0)
@@ -98,6 +99,7 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
     private var userBalance: Double = 0.0
     private var buyFeeRate: Double = DEFAULT_FEE_RATE
     private var autoLotsApplied = false
+    private var isEditBuyEnabled = true  // 后台控制买入价格是否可编辑
 
     // Sell mode
     private var holdingId: Int = 0
@@ -150,6 +152,7 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
         loadConfig()
         if (!isSellMode) {
             loadBalance()
+            loadUserInfo()  // 获取 isEditBuy 配置
         } else {
             verifySellable()
         }
@@ -226,6 +229,7 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
             binding.dividerFee.visibility = View.VISIBLE
             binding.layoutAvailableBalance.visibility = View.VISIBLE
             binding.dividerAvailableBalance.visibility = View.VISIBLE
+            updateTradePriceEditability()
         }
     }
 
@@ -304,6 +308,26 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
             }
         }
 
+        // 买入手数/卖出手数：支持点击后手动输入
+        binding.etLots.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                val raw = s?.toString()?.trim() ?: ""
+                val parsed = raw.toIntOrNull() ?: 0
+                val capped = when {
+                    parsed < 0 -> 0
+                    isSellMode && parsed > holdingLots -> holdingLots
+                    else -> parsed
+                }
+                if (capped != lots) {
+                    lots = capped
+                    recalculate()
+                }
+                autoLotsApplied = true
+            }
+        })
+
         // Position ratio buttons
         positionButtons.forEachIndexed { index, btn ->
             btn.setOnClickListener {
@@ -315,6 +339,17 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
 
         // Confirm
         binding.btnConfirm.setOnClickListener { showConfirmDialog() }
+
+        // 点击内容区外部：收起键盘并取消输入框焦点，不再停留在框内
+        binding.scrollContent.setOnClickListener { hideKeyboardAndClearFocus() }
+    }
+
+    /** 收起软键盘并清除价格、手数输入框焦点 */
+    private fun hideKeyboardAndClearFocus() {
+        binding.etTradePrice.clearFocus()
+        binding.etLots.clearFocus()
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        imm?.hideSoftInputFromWindow(binding.root.windowToken, 0)
     }
 
     // ─── Tab switching ───
@@ -328,6 +363,7 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
         autoLotsApplied = false
         syncLotsDisplay()
         updateModeUI()
+        loadUserInfo()  // 切回买入模式时重新加载编辑权限
         loadBalance()
         loadConfig()
         recalculate()
@@ -429,6 +465,34 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
         }
     }
 
+    /** 获取用户个人信息，读取 isEditBuy 字段控制买入价格编辑权限 */
+    private fun loadUserInfo() {
+        lifecycleScope.launch {
+            try {
+                val resp = ContractRemote.callApiSilent { getUserInfo() }
+                val profile = resp.data?.list ?: return@launch
+                isEditBuyEnabled = profile.isEditBuy != "0"
+                Log.d(TAG, "loadUserInfo: isEditBuy=${profile.isEditBuy} => enabled=$isEditBuyEnabled")
+                updateTradePriceEditability()
+            } catch (e: Exception) {
+                Log.e(TAG, "loadUserInfo error", e)
+            }
+        }
+    }
+
+    /** 根据 isEditBuy 控制买入价格输入框和加减按钮的可交互性 */
+    private fun updateTradePriceEditability() {
+        if (isSellMode) return  // 卖出模式不受限制
+        val editable = isEditBuyEnabled
+        binding.etTradePrice.isEnabled = editable
+        binding.etTradePrice.isFocusable = editable
+        binding.etTradePrice.isFocusableInTouchMode = editable
+        binding.btnPriceDecrease.isEnabled = editable
+        binding.btnPriceIncrease.isEnabled = editable
+        binding.btnPriceDecrease.alpha = if (editable) 1.0f else 0.4f
+        binding.btnPriceIncrease.alpha = if (editable) 1.0f else 0.4f
+    }
+
     private fun loadBalance() {
         lifecycleScope.launch {
             try {
@@ -465,8 +529,9 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
                     if (price != null && price > 0) {
                         currentPrice = price
                         binding.tvCurrentPrice.text = formatPrice(price)
-                        if (tradePrice <= 0) {
-                            tradePrice = price
+                        // 强制将买入价格同步为最新现价（除非用户正在手动编辑）
+                        tradePrice = price
+                        if (!binding.etTradePrice.hasFocus()) {
                             binding.etTradePrice.setText(formatPrice(price))
                         }
                         updateLimitPrices()
@@ -545,7 +610,10 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
     }
 
     private fun syncLotsDisplay() {
-        binding.tvLots.text = "$lots"
+        val str = "$lots"
+        if (binding.etLots.text?.toString() != str) {
+            binding.etLots.setText(str)
+        }
     }
 
     private fun recalculate() {
@@ -714,8 +782,12 @@ class BuyActivity : BasicActivity<ActivityBuyBinding>() {
             }
             binding.btnConfirm.isEnabled = true
             if (resp.isSuccess()) {
-                AppToast.show(this@BuyActivity, "卖出成功")
-                finish()
+                AppDialog.show(supportFragmentManager) {
+                    title = "平仓成功"
+                    content = "平仓成功"
+                    done = "确定"
+                    onDone = { finish() }
+                }
             } else if (isApiNotFound(resp.failed.msg)) {
                 AppToast.show(this@BuyActivity, "卖出接口未开放，请联系后端开通")
             } else {

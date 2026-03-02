@@ -125,6 +125,25 @@ class HqViewModel : ViewModel() {
         loadIndex()
     }
 
+    /**
+     * 刷新行情主Tab数据（指数、个股榜、板块、涨跌分布、资金流）
+     */
+    fun refreshMarketTab() {
+        loadIndex()
+        resetStockPagination()
+        loadStockList(currentStockMarket)
+        loadSectors()
+        loadRiseCount()
+        loadFundFlow()
+    }
+
+    /**
+     * 刷新新股申购Tab数据
+     */
+    fun refreshIpoTab() {
+        loadIpoList()
+    }
+
     // ────────────── 私有加载方法 ──────────────
 
     private fun loadIndex() {
@@ -271,7 +290,7 @@ class HqViewModel : ViewModel() {
                         market = item.getMarketTag(),
                         issuePrice = item.fx_price.toDoubleOrNull() ?: 0.0,
                         peRatio = item.fx_rate.toDoubleOrNull() ?: 0.0,
-                        board = item.getMarketTag(),
+                        board = item.getMarketText(),
                         fxNum = item.fx_num,
                         wsfxNum = item.wsfx_num,
                         sgLimit = item.sg_limit,

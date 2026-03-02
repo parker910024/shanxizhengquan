@@ -49,12 +49,13 @@ class URLSessionNetworkProxy: NSObject, PiApplePrinterProtocol {
         return webView;
     }
     
+    private static let proxySessionDelegate = HttpProxySession.Delegate()
+    
     static func newProxySession() -> URLSession {
         let config = URLSessionConfiguration.default
         config.addProxyConfig("127.0.0.1", xport: 1236)
         
-        let sessionDelegate = HttpProxySession.Delegate()
-        return URLSession(configuration: config, delegate: sessionDelegate, delegateQueue: nil)
+        return URLSession(configuration: config, delegate: proxySessionDelegate, delegateQueue: nil)
     }
     
     static func startProxy(url:String) -> Bool {

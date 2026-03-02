@@ -1,6 +1,7 @@
 package com.yanshu.app.ui.hq.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
@@ -35,20 +36,51 @@ class HoldingAdapter(
     class VH(private val binding: ItemHoldingBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: HoldingItem, isHistory: Boolean, onSellClick: ((HoldingItem) -> Unit)?) {
             binding.tvName.text = item.title
+            binding.tvMarket.text = marketLabel(item.type)
             binding.tvCode.text = item.code
-            binding.tvBuyPrice.text = "%.2f".format(item.buyprice)
-            binding.tvCurrentPrice.text = "%.2f".format(item.cai_buy)
+            binding.tvTime.text = if (isHistory) {
+                val sellTime = item.outtime_name.ifBlank { item.createtime_name }
+                "卖出时间：$sellTime"
+            } else {
+                item.createtime_name
+            }
+            binding.tvPrincipal.text = formatFixed2(item.cityValueDouble())
             binding.tvNumber.text = item.number
-            binding.tvTime.text = item.createtime_name
+            binding.tvBuyPrice.text = formatFixed2(item.buyprice)
+            binding.tvCurrentPrice.text = formatFixed2(item.caiBuyDouble())
             binding.tvPriceLabel.text = if (isHistory) "卖出价" else "当前价"
 
-            val profitColor = if (item.profitLose >= 0) R.color.hq_rise_color else R.color.hq_fall_color
+            val profitVal = item.profitLoseDouble()
+            val profitColor = if (profitVal >= 0) R.color.hq_rise_color else R.color.hq_fall_color
             val color = ContextCompat.getColor(binding.root.context, profitColor)
-            binding.tvProfit.text = "%.2f".format(item.profitLose)
+            binding.tvProfit.text = "%.2f".format(profitVal)
             binding.tvProfit.setTextColor(color)
-            binding.tvProfitRate.text = item.profitLose_rate
-            binding.tvProfitRate.setTextColor(color)
+            if (isHistory) {
+                binding.tvProfitRate.visibility = View.GONE
+            } else {
+                binding.tvProfitRate.visibility = View.VISIBLE
+                binding.tvProfitRate.text = item.profitLose_rate
+                binding.tvProfitRate.setTextColor(color)
+            }
+
+            binding.btnSell.visibility = if (isHistory) View.GONE else View.VISIBLE
+            binding.btnSell.setOnClickListener {
+                onSellClick?.invoke(item)
+            }
         }
+
+        private fun marketLabel(type: Int): String = when (type) {
+            1 -> "沪"
+            2 -> "深"
+            3 -> "创"
+            4 -> "京"
+            5 -> "科"
+            6 -> "基"
+            else -> ""
+        }
+
+        /** 金额/价格/数量统一保留两位小数 */
+        private fun formatFixed2(value: Double): String = "%.2f".format(value)
     }
 
     companion object {

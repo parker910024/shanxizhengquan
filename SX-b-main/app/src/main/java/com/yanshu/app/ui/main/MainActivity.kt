@@ -37,6 +37,7 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
     override val binding: ActivityMainBinding by viewBinding()
 
     private var selectedMainTabIndex: Int = TAB_HOME
+    private var mainPageAdapter: MainPageAdapter? = null
 
     override fun statusBarColor(): Int {
         return if (selectedMainTabIndex == TAB_HOME) {
@@ -99,7 +100,7 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
         Log.d("sp_ts", "MainActivity setupViewPager() creating adapter + fragments")
         // 仅预加载相邻页，减少未登录或 token 失效时同时触发的请求数
         binding.vpMain.offscreenPageLimit = 2
-        binding.vpMain.adapter = MainPageAdapter(supportFragmentManager, lifecycle) {
+        val adapter = MainPageAdapter(supportFragmentManager, lifecycle) {
             listOf(
                 HomeFragment(),
                 HqFragment(),
@@ -108,6 +109,8 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
                 UserFragment()
             )
         }
+        mainPageAdapter = adapter
+        binding.vpMain.adapter = adapter
         binding.vpMain.isUserInputEnabled = false
     }
 
@@ -128,7 +131,7 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
         })
 
         // Tab 1: 行情
-        TabWrapper.register(createTabItem(1, listOf(binding.linHq)) { isSelected ->
+        val hqTabItem = createTabItem(1, listOf(binding.linHq)) { isSelected ->
             if (isSelected) {
                 binding.tvHq.setTextColor(
                     ContextCompat.getColor(this, R.color.text_selected_color)
@@ -140,7 +143,13 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
                 )
                 binding.ivHq.setImageResource(R.drawable.tab_hq_unselected)
             }
-        })
+        }.setOnClickCheck {
+            if (selectedMainTabIndex == 1) {
+                notifyHqRefresh()
+            }
+            true
+        }
+        TabWrapper.register(hqTabItem)
 
         // Tab 2: 交易
         TabWrapper.register(createTabItem(2, listOf(binding.linTrade)) { isSelected ->
@@ -189,8 +198,15 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
 
         TabWrapper.bindViewPager(binding.vpMain) { tabIndex ->
             applyStatusBarForMainTab(tabIndex)
+            if (tabIndex == 1) {
+                notifyHqRefresh()
+            }
         }
         TabWrapper.selectTab(0)
+    }
+
+    private fun notifyHqRefresh() {
+        (mainPageAdapter?.getFragmentAt(1) as? HqFragment)?.refreshCurrentTabData()
     }
 
     private fun applyStatusBarForMainTab(tabIndex: Int) {
@@ -205,5 +221,6 @@ class MainActivity : BasicActivity<ActivityMainBinding>() {
     override fun onDestroy() {
         super.onDestroy()
         binding.vpMain.adapter = null
+        mainPageAdapter = null
     }
 }

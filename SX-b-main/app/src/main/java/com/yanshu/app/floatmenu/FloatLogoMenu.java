@@ -341,7 +341,9 @@ public class FloatLogoMenu {
             public void dismiss() {
                 mFloatLogo.setDrawDarkBg(true);
                 mOnMenuClickListener.dismiss();
-                mHideTimer.start();
+                if (mHideTimer != null) {
+                    mHideTimer.start();
+                }
             }
         });
     }

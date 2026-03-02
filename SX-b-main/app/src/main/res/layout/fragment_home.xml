@@ -175,10 +175,11 @@
                     android:gravity="center"
                     android:orientation="vertical">
 
+                    <!-- 图标与“银证转入”互换，修正颠倒问题 -->
                     <ImageView
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:src="@drawable/ic_home_func_position" />
+                        android:src="@drawable/ic_home_func_transfer_in" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -197,10 +198,11 @@
                     android:gravity="center"
                     android:orientation="vertical">
 
+                    <!-- 图标与“持仓记录”互换，修正颠倒问题 -->
                     <ImageView
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:src="@drawable/ic_home_func_transfer_in" />
+                        android:src="@drawable/ic_home_func_position" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -252,7 +254,7 @@
                     <ImageView
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:src="@drawable/ic_home_func_new_stock" />
+                        android:src="@drawable/ic_home_func_dragon" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -342,7 +344,7 @@
                     <ImageView
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:src="@drawable/ic_home_func_dragon" />
+                        android:src="@drawable/ic_home_func_new_stock" />
 
                     <TextView
                         android:layout_width="wrap_content"

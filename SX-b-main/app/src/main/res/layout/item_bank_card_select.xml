@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="14dp"
+    android:background="?attr/selectableItemBackground"
+    android:minHeight="56dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/tv_bank_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#303030"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        tools:text="中国农业银行" />
+
+    <TextView
+        android:id="@+id/tv_card_no"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="#606060"
+        android:textSize="14sp"
+        tools:text="6217 **** **** 3333" />
+</LinearLayout>

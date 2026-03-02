@@ -28,7 +28,7 @@ class HomeViewController: ZQViewController {
         ("银证转入", "icon1"),
         ("银证转出", "icon11"),
         ("新股申购", "icon_home_6"),
-        ("场外撮合交易", "icon_home_9"),
+        ("撮合交易", "icon_home_9"),
         ("线下配售", "icon12"),
         ("AI智投", "icon_home_13"),
         ("龙虎榜", "icon4")
@@ -41,7 +41,7 @@ class HomeViewController: ZQViewController {
         ("银证转入", "icon1"),
         ("银证转出", "icon11"),
         ("新股申购", "icon_home_6"),
-        ("场外撮合交易", "icon_home_9"),
+        ("撮合交易", "icon_home_9"),
         ("线下配售", "icon12"),
         ("AI智投", "icon_home_13"),
         ("龙虎榜", "icon4")
@@ -123,11 +123,13 @@ class HomeViewController: ZQViewController {
                 return true
             }
             .map { item in
-                if item.0 == "线下配售" {
-                    return (mgr.nameXxps, item.1)
+                if item.0 == "撮合交易" {
+                    let name = mgr.nameDzjy.isEmpty ? "撮合交易" : mgr.nameDzjy
+                    return (name, item.1)
                 }
-                if item.0 == "场外撮合交易" {
-                    return (mgr.nameDzjy, item.1)
+                if item.0 == "线下配售" {
+                    let name = mgr.nameXxps.isEmpty ? "线下配售" : mgr.nameXxps
+                    return (name, item.1)
                 }
                 return item
             }
@@ -914,9 +916,12 @@ extension HomeViewController: UITableViewDataSource {
                 }
                 
                 if title == "新股申购" || (!mgr.nameXgsg.isEmpty && title == mgr.nameXgsg) {
-                    let vc = NewStockSubscriptionViewController()
-                    vc.hidesBottomBarWhenPushed = true
-                    self?.navigationController?.pushViewController(vc, animated: true)
+                    if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
+                       let marketNav = vcs[1] as? UINavigationController,
+                       let marketVC = marketNav.viewControllers.first as? MarketViewController {
+                        tabBar.selectedIndex = 1
+                        marketVC.switchToTab(index: 1)
+                    }
                     return
                 }
                 
@@ -947,8 +952,8 @@ extension HomeViewController: UITableViewDataSource {
                                 let model = try JSONDecoder().decode(AuthenticationDetailModel.self, from: jsonData)
                                 if model.isAudit == "1" {
                                     let resultVC = RealNameAuthResultViewController()
-                                    resultVC.name = model.name
-                                    resultVC.idCard = "\(model.idCard)"
+                                    resultVC.name = model.name ?? ""
+                                    resultVC.idCard = model.idCard ?? ""
                                     resultVC.hidesBottomBarWhenPushed = true
                                     self?.navigationController?.pushViewController(resultVC, animated: true)
                                 } else if model.isAudit == "3" {
@@ -991,7 +996,7 @@ extension HomeViewController: UITableViewDataSource {
                     vc.initialTabIndex = 1 // 默认选中银证转出
                     vc.hidesBottomBarWhenPushed = true
                     self?.navigationController?.pushViewController(vc, animated: true)
-                case "场外撮合交易":
+                case "撮合交易":
                     fallthrough
                 case _ where !mgr.nameDzjy.isEmpty && title == mgr.nameDzjy:
                     // 对齐安卓：跳转到行情页面的天启护盘 tab（index 3）
@@ -1002,6 +1007,8 @@ extension HomeViewController: UITableViewDataSource {
                         marketVC.switchToTab(index: 3)
                     }
                 case "线下配售":
+                    fallthrough
+                case _ where !mgr.nameXxps.isEmpty && title == mgr.nameXxps:
                     // 对齐安卓：跳转到行情页面的战略配售 tab（index 2）
                     if let tabBar = self?.tabBarController, let vcs = tabBar.viewControllers, vcs.count > 1,
                        let marketNav = vcs[1] as? UINavigationController,

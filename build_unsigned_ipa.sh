@@ -14,9 +14,8 @@ xcodebuild clean build \
   CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
-  SYMROOT="$(pwd)/build" \
-  | xcpretty || echo "xcodebuild 结束，检查是否成功"
-
+  SYMROOT="$(pwd)/build" || echo "xcodebuild 结束，检查是否成功"
+    
 APP_PATH="build/Release-iphoneos/zhengqaun.app"
 
 if [ -d "$APP_PATH" ]; then

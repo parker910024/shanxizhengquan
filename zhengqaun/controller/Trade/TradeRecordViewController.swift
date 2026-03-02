@@ -123,7 +123,7 @@ class TradeRecordViewController: ZQViewController {
         SecureNetworkManager.shared.request(
             api: "/api/deal/getNowWarehouse_lishi",
             method: .get,
-            params: ["buytype": "1", "page": "1", "size": "50", "status": "2", "s_time": startDate, "e_time": endDate]
+            params: ["buytype": "1", "page": "1", "size": "50", "status": "2", "type": "2", "s_time": startDate, "e_time": endDate]
         ) { [weak self] result in
             guard let self = self else { return }
             switch result {
@@ -149,15 +149,32 @@ class TradeRecordViewController: ZQViewController {
                         else { exchangeStr = "深" }
                     }
                     
-                    let buyPrice = item["buyprice"] as? Double ?? 0
-                    let sellPrice = Double("\(item["cai_buy"] ?? 0)") ?? 0
-                    let number = item["number"] as? String ?? "\(item["number"] as? Int ?? 0)"
-                    let money = item["money"] as? String ?? "--"
-                    let pl = item["profitLose"] as? String ?? "0"
+                    // 对齐安卓：所有字段兼容 Double/String/Int/NSNumber
+                    let buyPriceVal: Double
+                    if let d = item["buyprice"] as? Double { buyPriceVal = d }
+                    else if let n = item["buyprice"] as? NSNumber { buyPriceVal = n.doubleValue }
+                    else if let s = item["buyprice"] as? String, let d = Double(s) { buyPriceVal = d }
+                    else { buyPriceVal = 0 }
+                    
+                    let sellPriceVal: Double
+                    if let d = item["cai_buy"] as? Double { sellPriceVal = d }
+                    else if let n = item["cai_buy"] as? NSNumber { sellPriceVal = n.doubleValue }
+                    else if let s = item["cai_buy"] as? String, let d = Double(s) { sellPriceVal = d }
+                    else { sellPriceVal = 0 }
+                    
+                    let numberVal: Double
+                    if let d = item["number"] as? Double { numberVal = d }
+                    else if let n = item["number"] as? NSNumber { numberVal = n.doubleValue }
+                    else if let s = item["number"] as? String, let d = Double(s) { numberVal = d }
+                    else { numberVal = 0 }
+                    let number = String(format: "%.0f", numberVal)
+                    
+                    let money = "\(item["money"] ?? "0")"
                     let createTime = item["createtime_name"] as? String ?? "--"
                     let outTime = item["outtime_name"] as? String ?? "--"
                     
-                    let sell = String(format: "%.2f", sellPrice * (Double(number) ?? 0))
+                    // 卖出金额：统一用 cai_buy * number 计算，避免后端类型变化算错
+                    let sell = String(format: "%.2f", sellPriceVal * numberVal)
                     tempRecords.append(TradeRecordItem(isSell: false,
                                                        stockName: name,
                                                        stockCode: code,

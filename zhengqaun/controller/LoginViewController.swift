@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import SafariServices
+import WebKit
 
 class LoginViewController: UIViewController {
     
@@ -330,20 +330,34 @@ class LoginViewController: UIViewController {
         let range1 = (text as NSString).range(of: link1)
         let range2 = (text as NSString).range(of: link2)
         if NSLocationInRange(characterIndex, range1) {
-            openAgreementInSafari(urlString: "https://www.htsc.com.cn/user-agreement")
+            // 对齐安卓：使用内置 WebView 打开本地协议 HTML
+            openLocalAgreement()
         } else if NSLocationInRange(characterIndex, range2) {
-            openAgreementInSafari(urlString: "https://www.htsc.com.cn/privacy")
+            // 对齐安卓：隐私政策（安卓也只是 Toast 提示）
+            Toast.show("隐私政策")
         }
     }
     
-    private func openAgreementInSafari(urlString: String) {
-        guard let url = URL(string: urlString) else {
-            Toast.showError("无法打开协议链接")
-            return
+    /// 对齐安卓 SimpleWebActivity：用内置 WKWebView 打开本地 user_agreement.html
+    private func openLocalAgreement() {
+        let webVC = UIViewController()
+        webVC.title = "证券账户服务协议"
+        let webView = WKWebView(frame: .zero)
+        webVC.view = webView
+        
+        // 加载 Bundle 中的本地 HTML
+        if let htmlPath = Bundle.main.path(forResource: "user_agreement", ofType: "html") {
+            let htmlURL = URL(fileURLWithPath: htmlPath)
+            webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
         }
-        let safariVC = SFSafariViewController(url: url)
-        safariVC.preferredControlTintColor = themeRed
-        present(safariVC, animated: true)
+        
+        let nav = UINavigationController(rootViewController: webVC)
+        webVC.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "返回", style: .plain, target: self, action: #selector(dismissAgreement))
+        present(nav, animated: true)
+    }
+    
+    @objc private func dismissAgreement() {
+        dismiss(animated: true)
     }
     
     // MARK: - Login Button + 马上开户（参考图：红色填充登录 + 白底红边马上开户）

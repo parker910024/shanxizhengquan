@@ -36,7 +36,7 @@ class BulkTradeBuyDialog : BaseDialog<DialogBulkTradeBuyBinding>() {
         val item = stockItem ?: return
 
         price = item.cai_buy.toDoubleOrNull() ?: 0.0
-        maxQuantity = item.max_num
+        maxQuantity = item.maxNumInt()
 
         binding.tvStockName.text = item.title
         binding.tvStockCode.text = item.code

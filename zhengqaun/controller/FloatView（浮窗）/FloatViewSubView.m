@@ -115,11 +115,11 @@
                                                                  constant:(self.bounds.size.width/6.0)];
         NSLayoutConstraint * h_r = [NSLayoutConstraint constraintWithItem:self.label
                                                                 attribute:NSLayoutAttributeRight
-                                                                relatedBy:NSLayoutRelationGreaterThanOrEqual
+                                                                relatedBy:NSLayoutRelationLessThanOrEqual
                                                                    toItem:self
                                                                 attribute:NSLayoutAttributeRight
                                                                multiplier:1.0
-                                                                 constant:(self.bounds.size.width/6.0)];
+                                                                 constant:-(self.bounds.size.width/6.0)];
         NSLayoutConstraint * v_t = [NSLayoutConstraint constraintWithItem:self.label
                                                                 attribute:NSLayoutAttributeTop
                                                                 relatedBy:NSLayoutRelationGreaterThanOrEqual
@@ -129,11 +129,11 @@
                                                                  constant:(self.bounds.size.height/6.0)];
         NSLayoutConstraint * v_b = [NSLayoutConstraint constraintWithItem:self.label
                                                                 attribute:NSLayoutAttributeBottom
-                                                                relatedBy:NSLayoutRelationGreaterThanOrEqual
+                                                                relatedBy:NSLayoutRelationLessThanOrEqual
                                                                    toItem:self
                                                                 attribute:NSLayoutAttributeBottom
                                                                multiplier:1.0
-                                                                 constant:(self.bounds.size.height/6.0)];
+                                                                 constant:-(self.bounds.size.height/6.0)];
         [self addConstraints:@[h_c , v_c , h_l , h_r , v_t , v_b]];
     }
 

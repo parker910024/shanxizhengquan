@@ -2,33 +2,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_placement_record_card"
+    android:orientation="vertical"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
 
-    <!-- 名称+代码 -->
+    <!-- 第一行：市场标签(京) + 名称 代码 + 详情+ -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1.2"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_market_tag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:background="@drawable/bg_placement_market_tag"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:text="京"
+            android:textColor="@color/white"
+            android:textSize="11sp" />
 
-            <TextView
-                android:id="@+id/tv_market_tag"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:paddingHorizontal="3dp"
-                android:paddingVertical="1dp"
-                android:textColor="@color/hq_rise_color"
-                android:textSize="10sp" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/tv_name"
@@ -37,52 +42,107 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/hq_stock_name_color"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_code"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/hq_stock_code_color"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tv_code"
+            android:id="@+id/tv_action"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/hq_stock_code_color"
-            android:textSize="12sp" />
+            android:text="详情+"
+            android:textColor="@color/hq_rise_color"
+            android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- 配售价 -->
-    <TextView
-        android:id="@+id/tv_price"
-        android:layout_width="0dp"
+    <!-- 发行价格 | 中签率 | 发行总数 -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:textColor="@color/hq_rise_color"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
 
-    <!-- 发行总数 -->
-    <TextView
-        android:id="@+id/tv_total"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:textColor="@color/hq_stock_name_color"
-        android:textSize="13sp" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
 
-    <!-- 操作 -->
-    <TextView
-        android:id="@+id/tv_action"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:background="@color/hq_rise_color"
-        android:gravity="center"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="6dp"
-        android:text="详情"
-        android:textColor="@color/white"
-        android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tv_price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¥7.67"
+                android:textColor="@color/hq_stock_name_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="发行价格"
+                android:textColor="@color/hq_stock_code_color"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_zq_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.00%"
+                android:textColor="@color/hq_stock_name_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="中签率"
+                android:textColor="@color/hq_stock_code_color"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_total"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2953.08万股"
+                android:textColor="@color/hq_stock_name_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="发行总数"
+                android:textColor="@color/hq_stock_code_color"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

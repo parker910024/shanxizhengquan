@@ -157,7 +157,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="阅读并同意《用户协议》《隐私政策》"
+            android:text="阅读并同意《账户免责条款、隐私协议》"
             android:textColor="@color/login_agreement_text"
             android:textSize="16sp" />
     </LinearLayout>

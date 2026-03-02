@@ -18,6 +18,7 @@ import com.yanshu.app.databinding.ActivityLoginBinding
 import com.yanshu.app.model.UserViewModel
 import com.yanshu.app.ui.dialog.AppToast
 import com.yanshu.app.ui.main.MainActivity
+import com.yanshu.app.ui.web.SimpleWebActivity
 import ex.ss.lib.base.extension.viewBinding
 import java.util.regex.Pattern
 
@@ -80,59 +81,38 @@ class LoginActivity : BasicActivity<ActivityLoginBinding>() {
     }
     
     private fun setupAgreementText() {
-        val fullText = "阅读并同意《用户协议》《隐私政策》"
+        val fullText = "阅读并同意《账户免责条款、隐私协议》"
         val spannableString = SpannableString(fullText)
-
-        val prefixEnd = fullText.indexOf("《用户协议》")
+        val linkText = "《账户免责条款、隐私协议》"
+        val prefixEnd = fullText.indexOf(linkText)
         spannableString.setSpan(
             ForegroundColorSpan(ContextCompat.getColor(this, R.color.login_agreement_text)),
             0,
             prefixEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
-
-        // 用户协议链接
-        val userAgreementStart = fullText.indexOf("《用户协议》")
-        val userAgreementEnd = userAgreementStart + "《用户协议》".length
+        val linkStart = fullText.indexOf(linkText)
+        val linkEnd = linkStart + linkText.length
         spannableString.setSpan(
             object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    // TODO: 跳转到用户协议页面
-                    AppToast.show("用户协议")
+                    SimpleWebActivity.start(
+                        this@LoginActivity,
+                        "证券账户服务协议",
+                        "file:///android_asset/user_agreement.html"
+                    )
                 }
             },
-            userAgreementStart,
-            userAgreementEnd,
+            linkStart,
+            linkEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         spannableString.setSpan(
             ForegroundColorSpan(ContextCompat.getColor(this, R.color.login_agreement_link)),
-            userAgreementStart,
-            userAgreementEnd,
+            linkStart,
+            linkEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
-        
-        // 隐私政策链接
-        val privacyStart = fullText.indexOf("《隐私政策》")
-        val privacyEnd = privacyStart + "《隐私政策》".length
-        spannableString.setSpan(
-            object : ClickableSpan() {
-                override fun onClick(widget: View) {
-                    // TODO: 跳转到隐私政策页面
-                    AppToast.show("隐私政策")
-                }
-            },
-            privacyStart,
-            privacyEnd,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        spannableString.setSpan(
-            ForegroundColorSpan(ContextCompat.getColor(this, R.color.login_agreement_link)),
-            privacyStart,
-            privacyEnd,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        
         binding.tvAgreement.text = spannableString
         binding.tvAgreement.movementMethod = LinkMovementMethod.getInstance()
     }
@@ -158,7 +138,7 @@ class LoginActivity : BasicActivity<ActivityLoginBinding>() {
         }
         
         if (!binding.cbAgreement.isChecked) {
-            AppToast.show("请先阅读并同意用户协议和隐私政策")
+            AppToast.show("请先阅读并同意账户免责条款、隐私协议")
             return
         }
         

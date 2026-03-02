@@ -16,14 +16,17 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 class DragonActivity : BasicActivity<ActivityDragonBinding>() {
 
     override val binding: ActivityDragonBinding by viewBinding()
 
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    private val today = Calendar.getInstance()
-    private var currentDate = Calendar.getInstance()
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("Asia/Shanghai")
+    }
+    private val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"))
+    private var currentDate = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"))
     private lateinit var adapter: DragonAdapter
 
     override fun initView() {
@@ -65,9 +68,8 @@ class DragonActivity : BasicActivity<ActivityDragonBinding>() {
             updateDateUI()
             loadData()
         }
-        binding.ivCalendar.setOnClickListener {
-            showDatePickerDialog()
-        }
+        binding.ivCalendar.setOnClickListener { showDatePickerDialog() }
+        binding.layoutDateCenter.setOnClickListener { showDatePickerDialog() }
         updateDateUI()
     }
 
@@ -108,10 +110,12 @@ class DragonActivity : BasicActivity<ActivityDragonBinding>() {
 
             result.fold(
                 onSuccess = { list ->
+                    android.util.Log.d("DragonActivity", "dragon list loaded: date=$dateStr, size=${list.size}")
+                    debugLogDragonList(dateStr, list)
                     if (list.isEmpty()) {
                         binding.tvEmpty.visibility = View.VISIBLE
                         binding.rvDragonList.visibility = View.GONE
-                        binding.tvEmpty.text = getString(R.string.dragon_empty)
+                        binding.tvEmpty.text = "所选日期$dateStr 暂无龙虎榜数据（可能为非交易日）"
                     } else {
                         binding.rvDragonList.visibility = View.VISIBLE
                         binding.tvEmpty.visibility = View.GONE
@@ -126,6 +130,20 @@ class DragonActivity : BasicActivity<ActivityDragonBinding>() {
                 }
             )
         }
+    }
+
+    private fun debugLogDragonList(dateStr: String, list: List<DragonItem>) {
+        android.util.Log.d("DragonActivity", "dragon dump begin: date=$dateStr, size=${list.size}")
+        list.forEachIndexed { index, item ->
+            android.util.Log.d(
+                "DragonActivity",
+                "dragon[$index] date=${item.tradeDate} code=${item.code} name=${item.name} " +
+                    "close=${String.format("%.2f", item.closePrice)} " +
+                    "chg=${String.format("%.2f%%", item.changePct)} " +
+                    "netBuy=${String.format("%.2f", item.netBuy)} market=${item.market}"
+            )
+        }
+        android.util.Log.d("DragonActivity", "dragon dump end: date=$dateStr, size=${list.size}")
     }
 }
 

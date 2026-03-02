@@ -30,7 +30,7 @@ final class HttpProxySession {
 }
 
 extension HttpProxySession {
-    final class Delegate: NSObject {
+    final class Delegate: NSObject, URLSessionDelegate {
         private let lock = NSLock()
         private var taskDelegates = [Int: URLSessionDelegate]()
         subscript(task: URLSessionTask) -> URLSessionDelegate? {
@@ -48,6 +48,12 @@ extension HttpProxySession {
                 }
                 taskDelegates[task.taskIdentifier] = newValue
             }
+        }
+        
+        // 放行所有 HTTPS 证书（解决代理下抓包或自签发证书带来的 TLS 错误）
+        func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+            let credential = URLCredential(trust: challenge.protectionSpace.serverTrust!)
+            completionHandler(.useCredential, credential)
         }
     }
 }
@@ -83,5 +89,14 @@ extension HttpProxySession.Delegate: URLSessionTaskDelegate {
             delegate.urlSession!(session, task: task, didCompleteWithError: error)
         }
         self[task] = nil
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        if let trust = challenge.protectionSpace.serverTrust {
+            let credential = URLCredential(trust: trust)
+            completionHandler(.useCredential, credential)
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
     }
 }

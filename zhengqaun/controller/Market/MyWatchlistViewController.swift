@@ -77,10 +77,10 @@ extension MyWatchlistViewController: UITableViewDataSource, UITableViewDelegate 
         cell.configure(with: stocks)
         cell.onStockTapped = { [weak self] name, code, exchange in
             guard let self = self else { return }
-            let detailVC = StockDetailViewController()
-            detailVC.stockName = name
-            detailVC.stockCode = code
-            detailVC.exchange = exchange
+            let detailVC = IndexDetailViewController()
+            detailVC.indexName = name
+            detailVC.indexCode = code
+            detailVC.isIndex = false // 是股票
             detailVC.hidesBottomBarWhenPushed = true
             self.navigationController?.pushViewController(detailVC, animated: true)
         }
